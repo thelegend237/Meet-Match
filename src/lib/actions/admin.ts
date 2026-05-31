@@ -1,0 +1,128 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth/session";
+
+async function getAdminProfile() {
+  const profile = await getCurrentProfile();
+  if (!profile || !["admin", "superadmin"].includes(profile.role)) {
+    return {
+      error: "Session expirée ou accès refusé. Reconnectez-vous.",
+      profile: null,
+    };
+  }
+  return { error: null, profile };
+}
+
+export async function proposeMatchAction(userAId: string, userBId: string) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("propose_match", {
+    p_admin_id: admin.id,
+    p_user_a_id: userAId,
+    p_user_b_id: userBId,
+    p_amount: 49,
+    p_currency: "EUR",
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/matching");
+  revalidatePath("/admin/matchs");
+  revalidatePath("/admin");
+  revalidatePath("/decouvrir");
+  return { success: true, matchId: data };
+}
+
+export async function updateMatchStatusAction(
+  matchId: string,
+  status: "success" | "failed" | "cancelled"
+) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("update_match_status", {
+    p_admin_id: admin.id,
+    p_match_id: matchId,
+    p_status: status,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/matchs");
+  revalidatePath("/admin/matching");
+  revalidatePath("/admin");
+  revalidatePath("/decouvrir");
+  return { success: true };
+}
+
+export async function grantFreeAccessAction(
+  userId: string,
+  accessType: "registration" | "matching" | "full"
+) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("grant_free_access", {
+    p_admin_id: admin.id,
+    p_user_id: userId,
+    p_access_type: accessType,
+    p_reason: "Accordé par administrateur",
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/utilisateurs");
+  return { success: true };
+}
+
+export async function updateChatStatusAction(
+  chatId: string,
+  status: "open" | "closed"
+) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("chats")
+    .update({
+      status,
+      closed_at: status === "closed" ? new Date().toISOString() : null,
+    })
+    .eq("id", chatId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/conversations/${chatId}`);
+  revalidatePath("/admin/conversations");
+  revalidatePath("/admin/conversations/matchs");
+  return { success: true };
+}
+
+export async function sendAdminMessage(chatId: string, content: string) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("messages").insert({
+    chat_id: chatId,
+    sender_id: admin.id,
+    content,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/conversations/${chatId}`);
+  return { success: true };
+}
