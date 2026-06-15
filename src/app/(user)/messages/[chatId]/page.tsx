@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
+import { markChatMessagesAsRead } from "@/lib/chat/mark-read";
+import { TEAM_AVATAR_URL, TEAM_DISPLAY_NAME } from "@/lib/chat/team";
 import { getChatThread } from "@/lib/user/chats";
 import { ChatThread } from "@/components/user/chat-thread";
 
@@ -14,33 +16,42 @@ export default async function MessageThreadPage({ params }: PageProps) {
 
   if (!thread) notFound();
 
-  const title =
-    thread.chat.type === "match_group" && thread.partnerName
-      ? thread.partnerName
-      : "Discussion";
+  await markChatMessagesAsRead(chatId, profile.id);
 
-  const senderById = Object.fromEntries(thread.senderById);
+  const isMatchGroup = thread.chat.type === "match_group";
+  const participants = [...thread.participants].sort((a, b) => {
+    if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
+    if (a.isSelf !== b.isSelf) return a.isSelf ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+  const isAdminContact = thread.chat.type === "admin_contact";
+  const title =
+    isMatchGroup && thread.partnerName
+      ? thread.partnerName
+      : isAdminContact
+        ? TEAM_DISPLAY_NAME
+        : "Discussion";
 
   return (
-    <div className="-mx-4 flex h-[calc(100dvh-3.5rem)] flex-col sm:mx-0 md:h-[calc(100dvh-5rem)]">
-      <ChatThread
-        chatId={chatId}
-        initialMessages={thread.messages}
-        senderById={senderById}
-        currentUserId={profile.id}
-        canSend={thread.canSend}
-        className="h-full rounded-none border-0 shadow-none sm:rounded-2xl sm:border sm:shadow-sm"
-        header={{
-          title,
-          subtitle:
-            thread.chat.type === "match_group"
-              ? "Discussion accompagnée · Admin présent"
-              : "Contact Meet & Match",
-          avatarUrl: thread.partnerPhoto,
-          backHref: "/messages",
-          isOpen: thread.chat.status === "open",
-        }}
-      />
-    </div>
+    <ChatThread
+      chatId={chatId}
+      initialMessages={thread.messages}
+      senderById={thread.senderById}
+      currentUserId={profile.id}
+      canSend={thread.canSend}
+      className="h-full min-h-0 flex-1"
+      header={{
+        title,
+        subtitle: isMatchGroup
+          ? undefined
+          : "Contact accompagné par l'équipe",
+        avatarUrl: isAdminContact ? TEAM_AVATAR_URL : thread.partnerPhoto,
+        backHref: "/messages",
+        isOpen: thread.chat.status === "open",
+        isMatchGroup,
+        matchId: thread.matchId,
+        participants,
+      }}
+    />
   );
 }

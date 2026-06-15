@@ -13,6 +13,7 @@ import {
   Target,
   Phone,
   Mail,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -187,9 +188,8 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
   let lastSection = "";
 
   return (
-    <div className="-mx-4 min-h-[100dvh] bg-white sm:mx-0 sm:min-h-0 sm:rounded-2xl sm:border sm:border-border">
-      {/* Header style Badoo */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-white px-3 py-3">
+    <div className="mm-card-elevated mx-auto max-w-lg overflow-hidden">
+      <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-card px-4 py-3">
         <button
           type="button"
           onClick={() => router.push("/profil")}
@@ -501,7 +501,8 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                 disabled={isPending}
                 onClick={() => saveField(activeField)}
               >
-                Enregistrer
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending ? "Enregistrement..." : "Enregistrer"}
               </Button>
             </div>
           </div>

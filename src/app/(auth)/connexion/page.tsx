@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { ConnexionForm } from "@/components/auth/connexion-form";
 
 export default function ConnexionPage() {
   return (
-    <div className="mx-auto w-full max-w-md">
+    <AuthPageShell footer={null}>
       <Suspense
         fallback={
           <div className="flex justify-center py-12">
@@ -14,6 +15,6 @@ export default function ConnexionPage() {
       >
         <ConnexionForm />
       </Suspense>
-    </div>
+    </AuthPageShell>
   );
 }

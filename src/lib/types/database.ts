@@ -136,20 +136,34 @@ export interface AdminCompareProfile {
   photos: string[];
 }
 
-export interface MutualLikePair {
+export type MatchProposalSource = "mutual" | "one_way" | "manual";
+
+export interface MatchProposalPair {
   userAId: string;
   userBId: string;
   userAName: string;
   userBName: string;
-  mutualAt: string;
   profileA: AdminCompareProfile;
   profileB: AdminCompareProfile;
+  source: MatchProposalSource;
+  /** Date du signal (like réciproque ou unidirectionnel) */
+  signalAt?: string;
+  /** Like unidirectionnel : qui a liké qui */
+  likedByUserId?: string;
+  likedToUserId?: string;
 }
+
+/** @deprecated Utiliser MatchProposalPair */
+export type MutualLikePair = MatchProposalPair & {
+  mutualAt: string;
+  source: "mutual";
+};
 
 export interface AdminUserListItem {
   id: string;
   display_name: string;
   email: string;
+  date_of_birth: string | null;
   primary_photo_url: string | null;
   status: ProfileStatus;
   profile_completion: number;
@@ -242,12 +256,29 @@ export interface ProfilePhoto {
   sort_order: number;
 }
 
+export interface MessageReaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+}
+
+export interface ReactionSummary {
+  emoji: string;
+  count: number;
+  userIds: string[];
+  reactedByMe: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   chat_id: string;
   sender_id: string | null;
   content: string;
   created_at: string;
+  read_at?: string | null;
+  reactions?: MessageReaction[];
 }
 
 export interface ChatSummary {
@@ -259,4 +290,9 @@ export interface ChatSummary {
   title: string;
   photo: string | null;
   last_message: { content: string; created_at: string } | null;
+  unread_count?: number;
+  /** Jusqu'à 2 photos pour les discussions match (avatars empilés) */
+  avatar_urls?: (string | null)[];
+  /** last_seen_at des membres hors staff, pour le badge « en ligne » */
+  participant_last_seen_at?: (string | null)[];
 }

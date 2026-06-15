@@ -3,24 +3,20 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AlertCircle, LogIn, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
-import { getHomeForRole } from "@/lib/auth/routes";
+import { getHomeForRole, safeRedirectPath } from "@/lib/auth/routes";
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
+import { SocialAuthButtons, AuthDivider } from "@/components/auth/social-auth-buttons";
+import { AuthFormCard } from "@/components/auth/auth-page-shell";
+import {
+  IconInput,
+  PasswordField,
+  PrimaryFormButton,
+} from "@/components/public/inscription/inscription-ui";
 
 export function ConnexionForm() {
   const searchParams = useSearchParams();
@@ -29,6 +25,7 @@ export function ConnexionForm() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
@@ -81,15 +78,10 @@ export function ConnexionForm() {
         throw new Error("Ce compte a été supprimé.");
       }
 
-      const redirectTo = searchParams.get("redirect");
       const destination =
-        redirectTo &&
-        redirectTo.startsWith("/") &&
-        !redirectTo.startsWith("//")
-          ? redirectTo
-          : getHomeForRole(profile?.role);
+        safeRedirectPath(searchParams.get("redirect")) ??
+        getHomeForRole(profile?.role);
 
-      // Navigation complète pour garantir l'envoi des cookies de session
       window.location.assign(destination);
       return;
     } catch (err) {
@@ -113,65 +105,90 @@ export function ConnexionForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Connexion</CardTitle>
-        <CardDescription>
-          Accédez à votre espace Meet & Match.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {authError && (
-          <div className="mb-4 flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>Le lien de connexion a expiré. Connectez-vous avec votre mot de passe.</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" {...register("email")} />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Link
-                href="/mot-de-passe-oublie"
-                className="text-xs text-secondary hover:underline"
-              >
-                Mot de passe oublié ?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register("password")}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
-          </div>
-
-          <Button type="submit" variant="secondary" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Se connecter
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="justify-center">
-        <p className="text-sm text-muted-foreground">
+    <AuthFormCard
+      title="Connexion"
+      subtitle="Accédez à votre espace Meet & Match."
+      icon={LogIn}
+      footer={
+        <p className="text-center text-sm text-[#6b5f7a]">
           Pas encore de compte ?{" "}
-          <Link href="/inscription" className="font-medium text-secondary hover:underline">
+          <Link
+            href="/inscription"
+            className="font-semibold text-[#e91e8c] hover:underline"
+          >
             S&apos;inscrire
           </Link>
         </p>
-      </CardFooter>
-    </Card>
+      }
+    >
+      {authError && (
+        <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/5 px-3.5 py-3 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Le lien de connexion a expiré. Réessayez avec votre email ou un
+            compte social.
+          </span>
+        </div>
+      )}
+
+      <SocialAuthButtons disabled={isSubmitting} className="mb-1" />
+
+      <AuthDivider />
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <IconInput
+            icon={Mail}
+            label="Email"
+            type="email"
+            autoComplete="email"
+            placeholder="vous@exemple.com"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="mt-1.5 text-sm text-destructive">
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-[#2e1a47]">
+              Mot de passe
+            </span>
+            <Link
+              href="/mot-de-passe-oublie"
+              className="text-xs font-semibold text-[#e91e8c] hover:underline"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
+          <Controller
+            name="password"
+            control={control}
+            render={({ field }) => (
+              <PasswordField
+                label=""
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                placeholder="Votre mot de passe"
+                autoComplete="current-password"
+                showStrength={false}
+              />
+            )}
+          />
+          {errors.password && (
+            <p className="mt-1.5 text-sm text-destructive">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        <PrimaryFormButton type="submit" pending={isSubmitting}>
+          Se connecter
+        </PrimaryFormButton>
+      </form>
+    </AuthFormCard>
   );
 }

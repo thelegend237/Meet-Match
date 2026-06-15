@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
 import { getMyLikedProfiles } from "@/lib/actions/likes";
 import { MyLikesList } from "@/components/user/my-likes-list";
-import { Button } from "@/components/ui/button";
+import { PageHeader, PageStack } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/layout/empty-state";
+import { Heart } from "lucide-react";
 
 export const metadata = {
   title: "Mes likes",
@@ -14,38 +14,42 @@ export default async function MesLikesPage() {
 
   if (!hasPlatformAccess(profile)) {
     return (
-      <div className="space-y-4 text-center">
-        <p className="text-muted-foreground">
-          Activez votre compte pour voir vos likes.
-        </p>
-        <Button variant="secondary" asChild>
-          <Link href="/paiements">Activer mon compte</Link>
-        </Button>
-      </div>
+      <PageStack>
+        <PageHeader
+          title="Mes likes envoyés"
+          backHref="/decouvrir"
+          backLabel="Découvrir"
+        />
+        <EmptyState
+          icon={Heart}
+          title="Compte à activer"
+          description="Activez votre compte pour voir les profils que vous avez likés."
+          actionHref="/paiements"
+          actionLabel="Activer mon compte"
+        />
+      </PageStack>
     );
   }
 
   const likedProfiles = await getMyLikedProfiles();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-2">
-          <Link href="/decouvrir">
-            <ArrowLeft className="h-4 w-4" />
-            Découvrir
-          </Link>
-        </Button>
-        <h1 className="font-serif text-2xl font-bold text-primary sm:text-3xl">
-          Mes likes envoyés
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Les profils qui vous intéressent. Si l&apos;intérêt est partagé,
-          l&apos;équipe pourra vous proposer une mise en relation.
-        </p>
-      </div>
-
+    <PageStack>
+      <PageHeader
+        title="Mes likes envoyés"
+        description="Les profils qui vous intéressent. Si l'intérêt est partagé, l'équipe pourra vous proposer une mise en relation."
+        backHref="/decouvrir"
+        backLabel="Découvrir"
+        action={
+          likedProfiles.length > 0 ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#fce7f3] px-4 py-2 text-sm font-semibold text-[#e91e8c]">
+              <Heart className="h-4 w-4 fill-current" />
+              {likedProfiles.length} like{likedProfiles.length > 1 ? "s" : ""}
+            </span>
+          ) : undefined
+        }
+      />
       <MyLikesList profiles={likedProfiles} />
-    </div>
+    </PageStack>
   );
 }

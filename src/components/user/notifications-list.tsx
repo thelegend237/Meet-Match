@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "@/lib/utils/date";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,25 +46,44 @@ interface NotificationsListProps {
 export function NotificationsList({ notifications }: NotificationsListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const unread = notifications.filter((n) => !n.is_read);
+  const [items, setItems] = useState(notifications);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const unread = items.filter((n) => !n.is_read);
 
   function handleMarkAll() {
+    setItems((prev) => prev.map((n) => ({ ...n, is_read: true })));
     startTransition(async () => {
-      await markAllNotificationsRead();
-      router.refresh();
+      const prev = items;
+      try {
+        await markAllNotificationsRead();
+      } catch {
+        setItems(prev);
+        router.refresh();
+      }
     });
   }
 
   function handleMarkRead(id: string) {
+    setPendingId(id);
+    setItems((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+    );
     startTransition(async () => {
-      await markNotificationRead(id);
-      router.refresh();
+      const prev = items;
+      try {
+        await markNotificationRead(id);
+      } catch {
+        setItems(prev);
+        router.refresh();
+      } finally {
+        setPendingId(null);
+      }
     });
   }
 
-  if (notifications.length === 0) {
+  if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card p-12 text-center">
+      <div className="mm-card px-6 py-12 text-center">
         <p className="text-muted-foreground">Aucune notification pour le moment.</p>
       </div>
     );
@@ -83,8 +103,8 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
           </Button>
         </div>
       )}
-      <ul className="space-y-3">
-        {notifications.map((n) => {
+      <div className="space-y-3">
+        {items.map((n) => {
           const link = getNotificationLink(n);
           const content = (
             <>
@@ -107,13 +127,13 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
           );
 
           return (
-            <li
+            <div
               key={n.id}
-              className={`rounded-xl border p-4 transition-colors ${
+              className={
                 n.is_read
-                  ? "border-border bg-card"
-                  : "border-secondary/30 bg-accent/30"
-              }`}
+                  ? "mm-card p-4"
+                  : "mm-card border-secondary/25 bg-accent/40 p-4"
+              }
             >
               <div className="flex items-start justify-between gap-3">
                 {link ? (
@@ -134,14 +154,18 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
                     disabled={isPending}
                     onClick={() => handleMarkRead(n.id)}
                   >
-                    Lu
+                    {pendingId === n.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Lu"
+                    )}
                   </Button>
                 )}
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

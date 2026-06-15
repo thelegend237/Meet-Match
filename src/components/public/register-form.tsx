@@ -22,7 +22,7 @@ export function RegisterForm({ variant = "card" }: RegisterFormProps) {
   if (variant === "embedded") {
     return (
       <Suspense fallback={<RegisterFallback />}>
-        <OnboardingWizard mode="public" />
+        <OnboardingWizard mode="public" embedded />
       </Suspense>
     );
   }
@@ -30,7 +30,7 @@ export function RegisterForm({ variant = "card" }: RegisterFormProps) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6">
       <Suspense fallback={<RegisterFallback />}>
-        <OnboardingWizard mode="public" />
+        <OnboardingWizard mode="public" embedded />
       </Suspense>
     </div>
   );

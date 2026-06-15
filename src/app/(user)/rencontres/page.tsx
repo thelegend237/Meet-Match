@@ -10,6 +10,8 @@ import {
   ProfileCompletionBanner,
   PaymentRequiredBanner,
 } from "@/components/user/profile-banners";
+import { PageStack } from "@/components/layout/page-header";
+import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
 import { loadDiscoveryProfiles } from "@/lib/discover/load-profiles";
 import { getRencontresProfiles } from "@/lib/discover/rencontres";
@@ -27,19 +29,17 @@ export default async function RencontresPage() {
 
   if (!hasPlatformAccess(profile)) {
     return (
-      <div className="space-y-5">
+      <PageStack>
         <PaymentRequiredBanner profile={profile} />
         <ProfileCompletionBanner profile={profile} />
-        <div className="rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
-          <Layers className="mx-auto h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" />
-          <p className="mt-4 text-base font-medium text-primary">
-            Activez votre compte pour voir les rencontres du jour
-          </p>
-          <Button variant="secondary" className="mt-6 h-12 w-full sm:w-auto" asChild>
-            <Link href="/paiements">Activer mon compte</Link>
-          </Button>
-        </div>
-      </div>
+        <EmptyState
+          icon={Layers}
+          title="Activez votre compte"
+          description="Réglez les frais d'inscription pour voir les suggestions du jour."
+          actionHref="/paiements"
+          actionLabel="Activer mon compte"
+        />
+      </PageStack>
     );
   }
 
@@ -68,31 +68,29 @@ export default async function RencontresPage() {
   const viewerLocation = getViewerLocation(profile);
 
   return (
-    <div className="-mx-4 space-y-2 sm:mx-0">
+    <PageStack className="gap-4">
       {profile.profile_completion < 100 && (
-        <div className="px-4 sm:px-0">
-          <ProfileCompletionBanner profile={profile} />
-        </div>
+        <ProfileCompletionBanner profile={profile} />
       )}
 
       {rencontresProfiles.length === 0 ? (
-        <div className="mx-4 rounded-2xl border border-border bg-card p-8 text-center sm:mx-0">
-          <Layers className="mx-auto h-10 w-10 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">
-            Aucune suggestion du jour pour le moment.
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Explorez tous les profils dans Découvrir ou revenez demain.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button variant="secondary" asChild>
-              <Link href="/decouvrir">Découvrir</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/decouvrir/likes">Mes likes ({likedIds.length})</Link>
-            </Button>
-          </div>
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="Aucune suggestion du jour"
+          description="Explorez tous les profils dans Découvrir ou revenez demain."
+          action={
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button variant="secondary" className="rounded-full" asChild>
+                <Link href="/decouvrir">Découvrir</Link>
+              </Button>
+              <Button variant="outline" className="rounded-full" asChild>
+                <Link href="/decouvrir/likes">
+                  Mes likes ({likedIds.length})
+                </Link>
+              </Button>
+            </div>
+          }
+        />
       ) : (
         <RencontresFeed
           profiles={rencontresProfiles}
@@ -102,6 +100,6 @@ export default async function RencontresPage() {
           viewerLocation={viewerLocation}
         />
       )}
-    </div>
+    </PageStack>
   );
 }

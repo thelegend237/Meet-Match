@@ -14,6 +14,7 @@
 | `008_fix_signup_profile_trigger.sql` | **Correctif** inscription (erreur 500 à la création de compte) |
 | `009_profile_geolocation.sql` | **PostGIS** : cache géocode, coordonnées profil, RPC `discover_profiles` |
 | `010_profile_passes.sql` | **Pass découverte** : table `profile_passes`, exclusion des profils passés |
+| `011_oauth_profile_names.sql` | Noms profil pour inscription **Google / Facebook** |
 | `seed.sql` | Paramètres tarifaires initiaux |
 | `seed_test_data.sql` | **130 comptes de test** (128 users + 2 admins) — voir `TEST_DATA.md` |
 
@@ -44,6 +45,7 @@ psql -f supabase/seed.sql  # ou via SQL Editor
    - `008_fix_signup_profile_trigger.sql`
    - `009_profile_geolocation.sql`
    - `010_profile_passes.sql`
+   - `011_oauth_profile_names.sql`
    - `seed.sql`
    - `seed_test_data.sql` (optionnel — données de démo)
 
@@ -85,6 +87,22 @@ ON CONFLICT (id) DO NOTHING;
 - Un utilisateur **ne peut pas** liker deux fois le même profil
 - Un utilisateur **ne peut pas** modifier son rôle ou `is_deleted`
 - Les matchs actifs ouvrent automatiquement le chat après double paiement/free
+
+## Connexion Google / Facebook (OAuth)
+
+Dans le **Dashboard Supabase** :
+
+1. **Authentication → URL Configuration**
+   - Site URL : `http://localhost:3000` (dev) ou votre domaine prod
+   - Redirect URLs : `http://localhost:3000/auth/callback` et `https://votre-domaine.com/auth/callback`
+
+2. **Authentication → Providers**
+   - **Google** : activer, renseigner Client ID / Secret ( [Google Cloud Console](https://console.cloud.google.com/) )
+   - **Facebook** : activer, renseigner App ID / Secret ( [Meta for Developers](https://developers.facebook.com/) )
+
+3. Exécuter la migration **`011_oauth_profile_names.sql`** (nom affiché depuis Google/Facebook)
+
+L’app utilise `signInWithOAuth` puis `/auth/callback`. Les nouveaux comptes sont redirigés vers l’onboarding profil.
 
 ## Variables d'environnement (Next.js)
 

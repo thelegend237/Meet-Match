@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Heart,
   MessageCircle,
@@ -36,17 +36,18 @@ function statusVariant(
 }
 
 function MatchCard({ match }: { match: UserMatch }) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [localPaymentDone, setLocalPaymentDone] = useState(false);
 
   const needsPayment =
     match.status === "pending_payment" &&
     match.myPayment?.status === "unpaid";
+  const needsPaymentLocal = needsPayment && !localPaymentDone;
 
   const waitingPartner =
     match.status === "pending_payment" &&
-    match.myPayment &&
-    ["paid", "free"].includes(match.myPayment.status) &&
+    (localPaymentDone ||
+      (match.myPayment && ["paid", "free"].includes(match.myPayment.status))) &&
     !match.partnerHasPaid;
 
   function handlePay() {
@@ -72,7 +73,7 @@ function MatchCard({ match }: { match: UserMatch }) {
           description:
             "Votre paiement a été pris en compte. Le match sera activé lorsque les deux parties auront payé.",
         });
-        router.refresh();
+        setLocalPaymentDone(true);
       }
     });
   }
@@ -80,7 +81,7 @@ function MatchCard({ match }: { match: UserMatch }) {
   return (
     <article
       id={`match-${match.id}`}
-      className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+      className="mm-card overflow-hidden p-0"
     >
       <div className="flex gap-4 p-4">
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
@@ -124,7 +125,7 @@ function MatchCard({ match }: { match: UserMatch }) {
       </div>
 
       <div className="border-t border-border bg-muted/30 px-4 py-3">
-        {match.status === "pending_payment" && needsPayment && match.myPayment && (
+        {match.status === "pending_payment" && needsPaymentLocal && match.myPayment && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
               Un administrateur vous propose ce match. Payez les frais de mise en
@@ -219,10 +220,14 @@ export function MatchesList({ matches }: MatchesListProps) {
 
   if (matches.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-10 text-center">
-        <Heart className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-4 font-medium text-primary">Aucun match pour le moment</p>
-        <p className="mt-2 text-sm text-muted-foreground">
+      <div className="mm-card flex flex-col items-center px-6 py-12 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent">
+          <Heart className="h-8 w-8 text-secondary/70" />
+        </div>
+        <p className="mt-5 font-serif text-xl font-bold text-primary">
+          Aucun match pour le moment
+        </p>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
           Likez des profils dans Découvrir. Lorsqu&apos;un administrateur vous
           proposera une mise en relation, elle apparaîtra ici.
         </p>

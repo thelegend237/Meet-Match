@@ -5,16 +5,15 @@ import Link from "next/link";
 import { Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const RING_SIZE = 88;
+const DEFAULT_RING_SIZE = 88;
 const STROKE = 4;
-const RADIUS = (RING_SIZE - STROKE) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 interface ProfileAvatarRingProps {
   photoUrl: string | null;
   displayName: string;
   completion: number;
   className?: string;
+  size?: number;
 }
 
 export function ProfileAvatarRing({
@@ -22,9 +21,12 @@ export function ProfileAvatarRing({
   displayName,
   completion,
   className,
+  size = DEFAULT_RING_SIZE,
 }: ProfileAvatarRingProps) {
   const clamped = Math.min(100, Math.max(0, completion));
-  const offset = CIRCUMFERENCE - (clamped / 100) * CIRCUMFERENCE;
+  const radius = (size - STROKE) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (clamped / 100) * circumference;
   const ringColor =
     clamped >= 100
       ? "stroke-green-500"
@@ -39,28 +41,28 @@ export function ProfileAvatarRing({
       aria-label="Modifier mes photos"
     >
       <svg
-        width={RING_SIZE}
-        height={RING_SIZE}
+        width={size}
+        height={size}
         className="-rotate-90"
         aria-hidden
       >
         <circle
-          cx={RING_SIZE / 2}
-          cy={RING_SIZE / 2}
-          r={RADIUS}
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
           fill="none"
           strokeWidth={STROKE}
           className="stroke-muted/50"
         />
         <circle
-          cx={RING_SIZE / 2}
-          cy={RING_SIZE / 2}
-          r={RADIUS}
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
           fill="none"
           strokeWidth={STROKE}
           strokeLinecap="round"
           className={cn("transition-all duration-700", ringColor)}
-          strokeDasharray={CIRCUMFERENCE}
+          strokeDasharray={circumference}
           strokeDashoffset={offset}
         />
       </svg>
@@ -72,7 +74,7 @@ export function ProfileAvatarRing({
             alt={displayName}
             fill
             className="object-cover"
-            sizes="76px"
+            sizes={`${size - 12}px`}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted">

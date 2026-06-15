@@ -8,7 +8,7 @@ export function ProfileCompletionBanner({ profile }: { profile: Profile }) {
   if (profile.profile_completion >= 100) return null;
 
   return (
-    <div className="rounded-2xl border border-secondary/20 bg-gradient-to-r from-accent/80 to-accent/40 p-4 sm:p-5">
+    <div className="mm-alert-banner border-secondary/20 bg-gradient-to-r from-accent/80 to-accent/40">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/10">
@@ -38,7 +38,7 @@ export function PaymentRequiredBanner({ profile }: { profile: Profile }) {
   }
 
   return (
-    <div className="rounded-2xl border border-primary/15 bg-primary/[0.04] p-4 sm:p-5">
+    <div className="mm-alert-banner border-primary/15 bg-primary/[0.04]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">

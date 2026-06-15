@@ -10,10 +10,16 @@ function InscriptionFallback() {
   );
 }
 
-export default function InscriptionPage() {
+interface PageProps {
+  searchParams: Promise<{ step?: string }>;
+}
+
+export default async function InscriptionPage({ searchParams }: PageProps) {
+  const { step } = await searchParams;
+
   return (
     <Suspense fallback={<InscriptionFallback />}>
-      <OnboardingWizard mode="public" />
+      <OnboardingWizard mode="public" initialStepParam={step ?? null} />
     </Suspense>
   );
 }

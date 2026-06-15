@@ -2,25 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { AuthFormCard, AuthPageShell } from "@/components/auth/auth-page-shell";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ArrowLeft, KeyRound, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormData,
 } from "@/lib/validations/auth";
+import { IconInput, PrimaryFormButton } from "@/components/public/inscription/inscription-ui";
 
 export default function MotDePasseOubliePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,57 +56,88 @@ export default function MotDePasseOubliePage() {
 
   if (sent) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Email envoyé</CardTitle>
-          <CardDescription>
-            Si un compte existe avec cette adresse, vous recevrez un lien de
-            réinitialisation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" className="w-full" asChild>
-            <Link href="/connexion">
-              <ArrowLeft className="h-4 w-4" />
-              Retour à la connexion
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <AuthPageShell
+        title={
+          <>
+            Email <span className="text-[#e91e8c]">envoyé</span>
+          </>
+        }
+        subtitle="Si un compte existe avec cette adresse, vous recevrez un lien de réinitialisation."
+        footer={null}
+      >
+        <AuthFormCard
+          title="Vérifiez votre boîte mail"
+          subtitle="Le lien de réinitialisation est valable pendant une durée limitée."
+          icon={Mail}
+        >
+          <Link
+            href="/connexion"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#d8cfe8] bg-white text-sm font-semibold text-[#2e1a47] shadow-sm transition-colors hover:border-[#e91e8c]/40 hover:bg-[#fdfbff]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour à la connexion
+          </Link>
+        </AuthFormCard>
+      </AuthPageShell>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Mot de passe oublié</CardTitle>
-        <CardDescription>
-          Entrez votre email pour recevoir un lien de réinitialisation.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <AuthPageShell
+      title={
+        <>
+          Mot de passe <span className="text-[#e91e8c]">oublié</span>
+        </>
+      }
+      subtitle="Entrez votre email pour recevoir un lien de réinitialisation sécurisé."
+      footer={null}
+    >
+      <AuthFormCard
+        title="Réinitialiser le mot de passe"
+        subtitle="Nous vous enverrons un lien par email si un compte est associé à cette adresse."
+        icon={KeyRound}
+        footer={
+          <p className="text-center text-sm text-[#6b5f7a]">
+            Vous vous souvenez ?{" "}
+            <Link
+              href="/connexion"
+              className="font-semibold text-[#e91e8c] hover:underline"
+            >
+              Se connecter
+            </Link>
+          </p>
+        }
+      >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register("email")} />
+          <div>
+            <IconInput
+              icon={Mail}
+              label="Email"
+              type="email"
+              autoComplete="email"
+              placeholder="vous@exemple.com"
+              {...register("email")}
+            />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="mt-1.5 text-sm text-destructive">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
-          <Button type="submit" variant="secondary" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          <PrimaryFormButton type="submit" pending={isSubmitting}>
             Envoyer le lien
-          </Button>
+          </PrimaryFormButton>
 
-          <Button variant="ghost" className="w-full" asChild>
-            <Link href="/connexion">
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Link>
-          </Button>
+          <Link
+            href="/connexion"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-medium text-[#6b5f7a] transition-colors hover:text-[#2e1a47]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Link>
         </form>
-      </CardContent>
-    </Card>
+      </AuthFormCard>
+    </AuthPageShell>
   );
 }

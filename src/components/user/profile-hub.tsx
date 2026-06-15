@@ -90,7 +90,7 @@ function ComparisonRow({
   matching: boolean;
 }) {
   return (
-    <li className="grid grid-cols-[1fr_3.25rem_3.25rem] items-center gap-2 border-b border-border/40 py-3.5 last:border-0">
+    <li className="grid grid-cols-[1fr_4.5rem_4.5rem] items-center gap-3 border-b border-border/40 py-4 last:border-0 sm:grid-cols-[1fr_5rem_5rem]">
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/60">
           <Icon className="h-4 w-4 text-muted-foreground" />
@@ -145,11 +145,11 @@ export function ProfileHub({
     : null;
 
   return (
-    <div className="-mx-4 -mt-4 min-h-[calc(100dvh-4.75rem)] bg-gradient-to-b from-accent/50 via-accent/20 to-background pb-6 sm:-mx-6 sm:-mt-6 md:min-h-0 md:rounded-2xl">
-      <div className="mx-auto max-w-lg bg-card shadow-sm md:rounded-2xl md:border md:border-border/60">
+    <div className="flex min-h-[calc(100dvh-8rem)] justify-center pb-6 md:min-h-0">
+      <div className="mm-card-elevated w-full max-w-2xl overflow-hidden p-0 sm:max-w-3xl lg:max-w-4xl">
         {/* En-tête */}
-        <header className="flex items-center justify-between px-4 pb-2 pt-4">
-          <h1 className="text-xl font-bold tracking-tight text-primary">
+        <header className="flex items-center justify-between px-5 pb-2 pt-5 sm:px-8 sm:pt-6">
+          <h1 className="text-xl font-bold tracking-tight text-primary sm:text-2xl">
             Profil
           </h1>
           <div className="flex items-center gap-1">
@@ -177,36 +177,40 @@ export function ProfileHub({
         </header>
 
         {/* Identité */}
-        <section className="flex items-start gap-4 px-4 pb-4">
+        <section className="flex items-start gap-5 px-5 pb-5 sm:gap-6 sm:px-8 sm:pb-6">
           <ProfileAvatarRing
             photoUrl={profile.primary_photo_url}
             displayName={profile.display_name}
             completion={profile.profile_completion}
+            size={104}
+            className="sm:scale-105"
           />
-          <div className="min-w-0 flex-1 pt-1">
-            <h2 className="truncate text-xl font-bold text-primary">
+          <div className="min-w-0 flex-1 pt-2 sm:pt-3">
+            <h2 className="text-xl font-bold text-primary sm:text-2xl lg:text-[1.65rem]">
               {profile.display_name || "Mon profil"}
               {age !== null && (
                 <span className="font-semibold text-primary/90">, {age}</span>
               )}
             </h2>
-            {relationshipLabel && (
-              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-3 py-1 text-xs font-medium text-muted-foreground">
-                <Heart className="h-3.5 w-3.5 text-secondary" />
-                {relationshipLabel}
-              </span>
-            )}
-            {profile.is_verified && (
-              <span className="mt-2 flex items-center gap-1 text-xs font-medium text-blue-600">
-                <BadgeCheck className="h-4 w-4" />
-                Profil vérifié
-              </span>
-            )}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {relationshipLabel && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground sm:text-sm">
+                  <Heart className="h-3.5 w-3.5 text-secondary" />
+                  {relationshipLabel}
+                </span>
+              )}
+              {profile.is_verified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-600 sm:text-sm">
+                  <BadgeCheck className="h-4 w-4" />
+                  Profil vérifié
+                </span>
+              )}
+            </div>
           </div>
         </section>
 
         {/* Bannières */}
-        <div className="space-y-2 px-4 pb-4">
+        <div className="space-y-3 px-5 pb-5 sm:px-8 sm:pb-6">
           {!profile.is_verified && (
             <Link
               href={
@@ -214,7 +218,7 @@ export function ProfileHub({
                   ? "/onboarding"
                   : "/contact"
               }
-              className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3.5 shadow-sm transition-colors hover:bg-muted/30"
+              className="flex items-center gap-4 rounded-2xl border border-border/50 bg-card px-5 py-4 shadow-sm transition-colors hover:bg-muted/30 sm:px-6"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/10">
                 <BadgeCheck className="h-5 w-5 text-blue-600" />
@@ -229,7 +233,7 @@ export function ProfileHub({
           {profile.profile_completion < 100 && (
             <Link
               href="/onboarding"
-              className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-secondary/5 px-4 py-3.5 transition-colors hover:bg-secondary/10"
+              className="flex items-center gap-4 rounded-2xl border border-secondary/20 bg-secondary/5 px-5 py-4 transition-colors hover:bg-secondary/10 sm:px-6"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/15">
                 <Sparkles className="h-5 w-5 text-secondary" />
@@ -250,7 +254,7 @@ export function ProfileHub({
         {/* Onglets */}
         <div
           role="tablist"
-          className="flex border-b border-border/60 px-4"
+          className="flex border-b border-border/60 px-5 sm:px-8"
           aria-label="Sections du profil"
         >
           {(
@@ -268,7 +272,7 @@ export function ProfileHub({
               id={`profile-tab-btn-${t.id}`}
               onClick={() => setTab(t.id)}
               className={cn(
-                "relative flex-1 py-3 text-sm font-semibold transition-colors",
+                "relative flex-1 py-3.5 text-sm font-semibold transition-colors sm:py-4 sm:text-base",
                 tab === t.id
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary/80"
@@ -283,32 +287,35 @@ export function ProfileHub({
         </div>
 
         {/* Stats rapides */}
-        <div className="grid grid-cols-2 gap-3 px-4 py-4">
-          <div className="rounded-2xl border border-border/50 bg-muted/20 p-4 text-center">
-            <Gauge className="mx-auto h-6 w-6 text-muted-foreground" />
-            <p className="mt-2 text-xs font-medium text-muted-foreground">
+        <div className="grid grid-cols-2 gap-4 px-5 py-5 sm:gap-5 sm:px-8 sm:py-6">
+          <Link
+            href="/profil/modifier"
+            className="rounded-2xl border border-border/50 bg-muted/20 p-5 text-center transition-colors hover:bg-muted/40 sm:p-6"
+          >
+            <Gauge className="mx-auto h-7 w-7 text-muted-foreground" />
+            <p className="mt-3 text-xs font-medium text-muted-foreground sm:text-sm">
               Activité
             </p>
             <p
               className={cn(
-                "mt-0.5 text-sm font-bold",
+                "mt-1 text-base font-bold sm:text-lg",
                 activityToneClass(activity.tone)
               )}
             >
               {activity.label}
             </p>
-          </div>
+          </Link>
           <Link
             href="/paiements"
-            className="rounded-2xl border border-border/50 bg-muted/20 p-4 text-center transition-colors hover:bg-muted/40"
+            className="rounded-2xl border border-border/50 bg-muted/20 p-5 text-center transition-colors hover:bg-muted/40 sm:p-6"
           >
-            <Zap className="mx-auto h-6 w-6 text-secondary" />
-            <p className="mt-2 text-xs font-medium text-muted-foreground">
+            <Zap className="mx-auto h-7 w-7 text-secondary" />
+            <p className="mt-3 text-xs font-medium text-muted-foreground sm:text-sm">
               Compte
             </p>
             <p
               className={cn(
-                "mt-0.5 text-sm font-bold",
+                "mt-1 text-base font-bold sm:text-lg",
                 registrationPaid ? "text-green-600" : "text-red-500"
               )}
             >
@@ -328,32 +335,34 @@ export function ProfileHub({
 
         {/* Contenu onglets */}
         <div
-          className="px-4 pb-6"
+          className="px-5 pb-7 sm:px-8 sm:pb-8"
           role="tabpanel"
           id={`profile-tab-${tab}`}
           aria-labelledby={`profile-tab-btn-${tab}`}
         >
           {tab === "subscriptions" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               {/* Carte upsell */}
-              <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-accent via-accent/80 to-secondary/10 p-5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
-                  Meet & Match
-                </p>
-                <h3 className="mt-1 font-serif text-xl font-bold text-primary">
-                  {registrationPaid
-                    ? "Rencontres accompagnées"
-                    : "Activez votre accès"}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-primary/80">
-                  {registrationPaid
-                    ? "Likes illimités et découverte. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre compatible."
-                    : "Rejoignez la communauté, explorez les profils et envoyez des likes — un seul paiement d'inscription."}
-                </p>
-                <div className="mt-4">
+              <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-accent via-accent/80 to-secondary/10 p-5 sm:p-7 lg:flex lg:items-center lg:justify-between lg:gap-8">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
+                    Meet & Match
+                  </p>
+                  <h3 className="mt-1 font-serif text-xl font-bold text-primary sm:text-2xl">
+                    {registrationPaid
+                      ? "Rencontres accompagnées"
+                      : "Activez votre accès"}
+                  </h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-primary/80 sm:text-[15px]">
+                    {registrationPaid
+                      ? "Likes illimités et découverte. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre compatible."
+                      : "Rejoignez la communauté, explorez les profils et envoyez des likes — un seul paiement d'inscription."}
+                  </p>
+                </div>
+                <div className="mt-5 shrink-0 lg:mt-0 lg:w-[min(100%,320px)]">
                   {registrationPaid ? (
                     <Button
-                      className="h-11 w-full rounded-full bg-primary font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
+                      className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
                       asChild
                     >
                       <Link href="/paiements">
@@ -366,33 +375,37 @@ export function ProfileHub({
                     <RegistrationPaymentButton
                       amount={regFee.amount}
                       currency={regFee.currency}
-                      className="h-11 w-full rounded-full font-semibold shadow-md"
+                      className="h-12 w-full rounded-full text-base font-semibold shadow-md"
                     />
                   )}
+                  <p className="mt-3 text-center text-[10px] text-muted-foreground sm:text-xs">
+                    Paiement unique · tarif selon votre pays
+                  </p>
                 </div>
-                <p className="mt-3 text-center text-[10px] text-muted-foreground">
-                  Paiement unique · tarif selon votre pays
-                </p>
               </div>
 
               {/* Mini résumé parcours */}
-              <div className="flex gap-3 rounded-xl border border-border/40 bg-muted/15 p-3 text-xs">
-                <div className="flex-1 text-center">
-                  <p className="font-semibold text-primary">{matchCount}</p>
+              <div className="grid grid-cols-3 gap-2 rounded-xl border border-border/40 bg-muted/15 p-4 text-xs sm:gap-4 sm:p-5 sm:text-sm">
+                <Link
+                  href="/matchs"
+                  className="text-center transition-colors hover:text-secondary"
+                >
+                  <p className="text-base font-semibold text-primary sm:text-lg">{matchCount}</p>
                   <p className="text-muted-foreground">Matchs</p>
-                </div>
-                <div className="w-px bg-border/60" />
-                <div className="flex-1 text-center">
-                  <p className="font-semibold text-primary">
+                </Link>
+                <Link
+                  href="/paiements"
+                  className="text-center transition-colors hover:text-secondary"
+                >
+                  <p className="text-base font-semibold text-primary sm:text-lg">
                     {payments.length}
                   </p>
                   <p className="text-muted-foreground">Paiements</p>
-                </div>
-                <div className="w-px bg-border/60" />
-                <div className="flex-1 text-center">
+                </Link>
+                <div className="text-center">
                   <p
                     className={cn(
-                      "font-semibold",
+                      "text-base font-semibold sm:text-lg",
                       hasPaidMatching ? "text-green-600" : "text-muted-foreground"
                     )}
                   >
@@ -404,12 +417,12 @@ export function ProfileHub({
 
               {/* Tableau avantages */}
               <div>
-                <div className="grid grid-cols-[1fr_3.25rem_3.25rem] gap-2 px-1 pb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="grid grid-cols-[1fr_4.5rem_4.5rem] gap-3 px-1 pb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:grid-cols-[1fr_5rem_5rem] sm:text-xs">
                   <span className="text-left">Les avantages</span>
                   <span>Inscription</span>
                   <span>Matching</span>
                 </div>
-                <ul className="rounded-2xl border border-border/50 bg-card px-3">
+                <ul className="rounded-2xl border border-border/50 bg-card px-4 sm:px-5">
                   {PLAN_COMPARISON_ROWS.map((row, i) => (
                     <ComparisonRow
                       key={row.label}
@@ -432,10 +445,10 @@ export function ProfileHub({
           )}
 
           {tab === "security" && (
-            <div className="space-y-3">
+            <div className="space-y-3 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
               <Link
                 href="/profil/parametres"
-                className="flex items-center gap-3 rounded-2xl border border-border/50 px-4 py-3.5 transition-colors hover:bg-muted/30"
+                className="flex items-center gap-4 rounded-2xl border border-border/50 px-5 py-4 transition-colors hover:bg-muted/30 sm:col-span-2"
               >
                 <Lock className="h-5 w-5 text-secondary" />
                 <div className="min-w-0 flex-1">
@@ -449,7 +462,7 @@ export function ProfileHub({
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </Link>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-border/50 px-4 py-3.5">
+              <div className="flex items-center gap-4 rounded-2xl border border-border/50 px-5 py-4">
                 <Mail className="h-5 w-5 text-secondary" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-primary">Email</p>
@@ -461,7 +474,7 @@ export function ProfileHub({
 
               <Link
                 href="/profil/modifier"
-                className="flex items-center gap-3 rounded-2xl border border-border/50 px-4 py-3.5 transition-colors hover:bg-muted/30"
+                className="flex items-center gap-4 rounded-2xl border border-border/50 px-5 py-4 transition-colors hover:bg-muted/30 sm:col-span-2"
               >
                 <Pencil className="h-5 w-5 text-secondary" />
                 <div className="min-w-0 flex-1">
@@ -475,7 +488,7 @@ export function ProfileHub({
                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </Link>
 
-              <div className="rounded-2xl bg-muted/25 p-4 text-sm leading-relaxed text-muted-foreground">
+              <div className="rounded-2xl bg-muted/25 p-5 text-sm leading-relaxed text-muted-foreground sm:col-span-2">
                 <Shield className="mb-2 h-5 w-5 text-secondary" />
                 <p>
                   Vos informations ne sont visibles que par les membres actifs
@@ -485,11 +498,11 @@ export function ProfileHub({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <Button variant="outline" className="h-11" asChild>
+              <div className="grid grid-cols-2 gap-3 pt-2 sm:col-span-2">
+                <Button variant="outline" className="h-12" asChild>
                   <Link href="/profil/photos">Mes photos</Link>
                 </Button>
-                <Button variant="secondary" className="h-11" asChild>
+                <Button variant="secondary" className="h-12" asChild>
                   <Link href="/profil/modifier">Modifier</Link>
                 </Button>
               </div>
@@ -498,22 +511,22 @@ export function ProfileHub({
         </div>
 
         {tab === "subscriptions" && (
-          <div className="border-t border-border/40 px-4 py-4">
+          <div className="border-t border-border/40 px-5 py-5 sm:px-8 sm:py-6">
             {profile.bio && (
               <>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">
                   À propos
                 </h3>
-                <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-foreground/90">
+                <p className="mt-3 text-sm leading-relaxed text-foreground/90 sm:text-base">
                   {profile.bio}
                 </p>
               </>
             )}
-            <div className={cn("grid grid-cols-2 gap-2", profile.bio && "mt-4")}>
-              <Button variant="outline" className="h-11" asChild>
+            <div className={cn("grid grid-cols-2 gap-3", profile.bio && "mt-5")}>
+              <Button variant="outline" className="h-12" asChild>
                 <Link href="/profil/photos">Mes photos</Link>
               </Button>
-              <Button variant="secondary" className="h-11" asChild>
+              <Button variant="secondary" className="h-12" asChild>
                 <Link href="/profil/modifier">
                   <Pencil className="h-4 w-4" />
                   Modifier

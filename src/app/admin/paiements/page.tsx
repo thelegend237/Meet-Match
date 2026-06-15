@@ -1,24 +1,62 @@
-import Link from "next/link";
 import {
-  AdminKpiCard,
-  AdminKpiGrid,
-  AdminPageHeader,
-  AdminTableBody,
-  AdminTableHead,
-  AdminTableRow,
-  AdminTableShell,
-  AdminTableTd,
-  AdminTableTh,
-  AdminEmptyState,
-} from "@/components/admin/admin-page";
-import { StatusBadge } from "@/components/admin/status-badge";
+  CheckCircle2,
+  CreditCard,
+  Euro,
+  AlertCircle,
+} from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page";
+import {
+  PaymentsTable,
+  type PaymentUserInfo,
+} from "@/components/admin/payments-table";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import type { Payment } from "@/lib/types/database";
+import { PageStack } from "@/components/layout/page-header";
 
 export const metadata = {
   title: "Paiements — Admin",
 };
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  iconClassName,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+  hint: string;
+  iconClassName: string;
+}) {
+  return (
+    <article className="mm-admin-stat-card">
+      <div className="flex items-start gap-3.5">
+        <div
+          className={cn(
+            "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11",
+            iconClassName
+          )}
+        >
+          <Icon className="h-[18px] w-[18px] stroke-[1.75] sm:h-5 sm:w-5" />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <p className="text-[13px] font-medium leading-[1.2] text-muted-foreground">
+            {label}
+          </p>
+          <p className="mt-2 text-[1.65rem] font-bold leading-none tracking-tight text-primary sm:mt-2.5 sm:text-[1.75rem]">
+            {value}
+          </p>
+          <p className="mt-2 text-[11px] font-semibold leading-none text-emerald-600 sm:mt-2.5">
+            {hint}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export default async function AdminPaymentsPage() {
   const supabase = await createClient();
@@ -28,94 +66,71 @@ export default async function AdminPaymentsPage() {
       .from("payments")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100),
-    supabase.from("profiles").select("id, display_name, email"),
+      .limit(500),
+    supabase
+      .from("profiles")
+      .select("id, display_name, email, primary_photo_url"),
   ]);
 
-  const nameById = new Map(
-    (profiles ?? []).map((p) => [
-      p.id,
-      p.display_name || p.email || "Utilisateur",
-    ])
-  );
+  const usersById = (profiles ?? []).reduce<
+    Record<string, PaymentUserInfo>
+  >((acc, profile) => {
+    acc[profile.id] = {
+      name: profile.display_name || profile.email || "Utilisateur",
+      email: profile.email,
+      photo: profile.primary_photo_url ?? null,
+    };
+    return acc;
+  }, {});
 
   const rows = (payments as Payment[]) ?? [];
-  const paid = rows.filter((p) => p.status === "paid" || p.status === "free").length;
+  const paidOrFree = rows.filter(
+    (p) => p.status === "paid" || p.status === "free"
+  ).length;
+  const unpaid = rows.filter((p) => p.status === "unpaid").length;
   const revenue = rows
     .filter((p) => p.status === "paid")
     .reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
-    <div className="space-y-6">
+    <PageStack>
       <AdminPageHeader
         title="Paiements"
-        description="Historique des paiements inscription et matching."
+        description="Suivi des transactions d'inscription et de matching, avec export CSV."
       />
 
-      <AdminKpiGrid cols={3}>
-        <AdminKpiCard
-          icon="creditCard"
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          icon={CreditCard}
           label="Transactions"
           value={rows.length}
-          accent="primary"
+          hint="Historique complet"
+          iconClassName="bg-[#ede9fe] text-[#5b3d8f]"
         />
-        <AdminKpiCard
-          icon="checkCircle"
+        <StatTile
+          icon={CheckCircle2}
           label="Payées / gratuites"
-          value={paid}
-          accent="success"
+          value={paidOrFree}
+          hint={`${rows.length ? Math.round((paidOrFree / rows.length) * 100) : 0} % du total`}
+          iconClassName="bg-[#dcfce7] text-[#15803d]"
         />
-        <AdminKpiCard
-          icon="euro"
+        <StatTile
+          icon={AlertCircle}
+          label="Impayées"
+          value={unpaid}
+          hint={unpaid > 0 ? "À relancer" : "Aucune en attente"}
+          iconClassName="bg-[#ffedd5] text-[#c2410c]"
+        />
+        <StatTile
+          icon={Euro}
           label="Revenus encaissés"
           value={formatCurrency(revenue, "EUR")}
-          accent="secondary"
+          hint="Paiements confirmés"
+          iconClassName="bg-[#fce7f3] text-[#e91e8c]"
         />
-      </AdminKpiGrid>
+      </div>
 
-      {rows.length === 0 ? (
-        <AdminEmptyState
-          icon="creditCard"
-          title="Aucun paiement"
-          message="Les transactions apparaîtront ici dès qu'un membre paiera son inscription ou un match."
-        />
-      ) : (
-        <AdminTableShell minWidth="720px">
-          <AdminTableHead>
-            <AdminTableTh>Utilisateur</AdminTableTh>
-            <AdminTableTh>Type</AdminTableTh>
-            <AdminTableTh>Montant</AdminTableTh>
-            <AdminTableTh>Statut</AdminTableTh>
-            <AdminTableTh>Date</AdminTableTh>
-          </AdminTableHead>
-          <AdminTableBody>
-            {rows.map((payment) => (
-              <AdminTableRow key={payment.id}>
-                <AdminTableTd>
-                  <Link
-                    href={`/admin/utilisateurs/${payment.user_id}`}
-                    className="font-medium text-primary hover:text-secondary hover:underline"
-                  >
-                    {nameById.get(payment.user_id) ?? "—"}
-                  </Link>
-                </AdminTableTd>
-                <AdminTableTd className="capitalize">
-                  {payment.type === "registration" ? "Inscription" : "Matching"}
-                </AdminTableTd>
-                <AdminTableTd className="font-semibold tabular-nums">
-                  {formatCurrency(Number(payment.amount), payment.currency)}
-                </AdminTableTd>
-                <AdminTableTd>
-                  <StatusBadge kind="payment" status={payment.status} />
-                </AdminTableTd>
-                <AdminTableTd className="text-muted-foreground">
-                  {new Date(payment.created_at).toLocaleDateString("fr-FR")}
-                </AdminTableTd>
-              </AdminTableRow>
-            ))}
-          </AdminTableBody>
-        </AdminTableShell>
-      )}
-    </div>
+      <PaymentsTable payments={rows} usersById={usersById} />
+    </PageStack>
   );
 }

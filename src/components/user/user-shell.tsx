@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,17 +13,21 @@ import {
   MessageSquare,
   LogOut,
   Heart,
+  HeartHandshake,
   Settings,
   MoreHorizontal,
   X,
   Layers,
+  Headphones,
+  ChevronDown,
+  Gem,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/public/logo";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Badge } from "@/components/ui/badge";
 import { PUBLIC_HOME } from "@/lib/auth/routes";
 
 type NavLink = {
@@ -32,22 +37,27 @@ type NavLink = {
   exact: boolean;
 };
 
-const navLinks: NavLink[] = [
-  { href: "/decouvrir", label: "Découvrir", icon: Compass, exact: true },
+const sidebarLinks: NavLink[] = [
+  { href: "/profil", label: "Profil", icon: User, exact: true },
+  { href: "/decouvrir", label: "Profils", icon: Compass, exact: true },
   { href: "/rencontres", label: "Rencontres", icon: Layers, exact: true },
-  { href: "/matchs", label: "Mes matchs", icon: Heart, exact: true },
-  { href: "/messages", label: "Discussions", icon: MessageSquare, exact: false },
+  { href: "/decouvrir/likes", label: "Mes likes", icon: Heart, exact: false },
+  { href: "/matchs", label: "Mon match", icon: HeartHandshake, exact: true },
+  { href: "/messages", label: "Messages", icon: MessageSquare, exact: false },
+  { href: "/paiements", label: "Paiements", icon: CreditCard, exact: true },
+  { href: "/contact", label: "Contact admin", icon: Headphones, exact: true },
+];
+
+const moreLinks: NavLink[] = [
   {
     href: "/tableau-de-bord",
     label: "Tableau de bord",
     icon: LayoutDashboard,
     exact: true,
   },
-  { href: "/profil", label: "Mon profil", icon: User, exact: true },
   { href: "/profil/photos", label: "Mes photos", icon: Camera, exact: false },
   { href: "/profil/parametres", label: "Paramètres", icon: Settings, exact: true },
   { href: "/notifications", label: "Notifications", icon: Bell, exact: true },
-  { href: "/paiements", label: "Paiements", icon: CreditCard, exact: true },
 ];
 
 const mobilePrimary: NavLink[] = [
@@ -58,32 +68,26 @@ const mobilePrimary: NavLink[] = [
   { href: "/profil", label: "Profil", icon: User, exact: true },
 ];
 
-const mobileMoreLinks: NavLink[] = navLinks.filter(
-  (l) => !mobilePrimary.some((p) => p.href === l.href)
-);
+const mobileMoreLinks: NavLink[] = [
+  ...moreLinks,
+  ...sidebarLinks.filter((l) => !mobilePrimary.some((p) => p.href === l.href)),
+];
 
 function isActive(pathname: string, href: string, exact: boolean) {
+  if (href === "/decouvrir/likes") {
+    return pathname.startsWith("/decouvrir/likes");
+  }
   if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function navItemClass(active: boolean, compact?: boolean) {
-  return cn(
-    "group relative flex items-center rounded-xl font-medium transition-all",
-    compact
-      ? "justify-center p-2.5 xl:justify-start xl:gap-3 xl:px-3 xl:py-2.5"
-      : "gap-3 px-3 py-2.5 text-sm",
-    active
-      ? "bg-secondary text-secondary-foreground shadow-sm shadow-secondary/20"
-      : "text-muted-foreground hover:bg-muted/80 hover:text-primary"
-  );
 }
 
 interface UserShellProps {
   unreadCount?: number;
   unreadMessageCount?: number;
   pendingMatchCount?: number;
+  likedCount?: number;
   displayName?: string;
+  avatarUrl?: string | null;
   children: React.ReactNode;
 }
 
@@ -91,7 +95,9 @@ export function UserShell({
   unreadCount = 0,
   unreadMessageCount = 0,
   pendingMatchCount = 0,
+  likedCount = 0,
   displayName,
+  avatarUrl,
   children,
 }: UserShellProps) {
   const pathname = usePathname();
@@ -118,102 +124,174 @@ export function UserShell({
     router.refresh();
   }
 
-  const isMoreActive = mobileMoreLinks.some((l) =>
-    isActive(pathname, l.href, l.exact)
-  );
-
   function badgeFor(href: string) {
     if (href === "/notifications" && unreadCount > 0) {
-      return unreadCount > 9 ? "9+" : unreadCount;
+      return unreadCount > 9 ? "9+" : String(unreadCount);
     }
     if (href === "/messages" && unreadMessageCount > 0) {
-      return unreadMessageCount > 9 ? "9+" : unreadMessageCount;
+      return unreadMessageCount > 9 ? "9+" : String(unreadMessageCount);
     }
     if (href === "/matchs" && pendingMatchCount > 0) {
-      return pendingMatchCount > 9 ? "9+" : pendingMatchCount;
+      return pendingMatchCount > 9 ? "9+" : String(pendingMatchCount);
+    }
+    if (href === "/decouvrir/likes" && likedCount > 0) {
+      return likedCount > 9 ? "9+" : String(likedCount);
     }
     return null;
   }
 
-  const hideMobileNav =
-    pathname.startsWith("/messages/") && pathname !== "/messages";
+  const isMessagesRoute = pathname.startsWith("/messages");
+  const hideMobileNav = isMessagesRoute;
+
+  function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+    return (
+      <>
+        {sidebarLinks.map((link) => {
+          const active = isActive(pathname, link.href, link.exact);
+          const badge = badgeFor(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onNavigate}
+              className={cn(
+                "mm-sidebar-link",
+                active && "mm-sidebar-link-active"
+              )}
+            >
+              <link.icon className="h-5 w-5 shrink-0 opacity-90" />
+              <span className="flex-1">{link.label}</span>
+              {badge && <span className="mm-badge-count">{badge}</span>}
+            </Link>
+          );
+        })}
+        <div className="my-2 border-t border-white/15" />
+        {moreLinks.map((link) => {
+          const active = isActive(pathname, link.href, link.exact);
+          const badge = badgeFor(link.href);
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onNavigate}
+              className={cn(
+                "mm-sidebar-link text-sm",
+                active && "mm-sidebar-link-active"
+              )}
+            >
+              <link.icon className="h-4 w-4 shrink-0 opacity-80" />
+              <span className="flex-1">{link.label}</span>
+              {badge && <span className="mm-badge-count">{badge}</span>}
+            </Link>
+          );
+        })}
+      </>
+    );
+  }
 
   return (
     <div className="flex min-h-[100dvh] w-full bg-background">
-      <aside className="sticky top-0 z-30 hidden h-[100dvh] w-[4.75rem] shrink-0 flex-col border-r border-border/80 bg-card/95 backdrop-blur-md md:flex xl:w-72">
-        <div className="border-b border-border/60 p-3 xl:p-5">
-          <div className="flex justify-center xl:justify-start">
-            <Logo size="sm" showText={false} className="xl:hidden" />
-            <Logo size="sm" className="hidden xl:inline-flex" />
-          </div>
-          {displayName && (
-            <p className="mt-3 hidden truncate text-sm text-muted-foreground xl:block">
-              Bonjour,{" "}
-              <span className="font-medium text-primary">{displayName}</span>
-            </p>
-          )}
+      <aside className="mm-gradient-sidebar sticky top-0 z-30 hidden h-[100dvh] w-64 shrink-0 flex-col md:flex lg:w-72">
+        <div className="border-b border-white/10 p-5">
+          <Logo size="md" variant="light" />
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-2 xl:p-4">
-          {navLinks.map((link) => {
-            const active = isActive(pathname, link.href, link.exact);
-            const badge = badgeFor(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                title={link.label}
-                aria-current={active ? "page" : undefined}
-                className={navItemClass(active, true)}
-              >
-                <link.icon className="h-5 w-5 shrink-0" />
-                <span className="sr-only xl:not-sr-only xl:inline">
-                  {link.label}
-                </span>
-                {badge && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute -right-0.5 -top-0.5 h-4 min-w-4 px-1 text-[9px] xl:static xl:ml-auto"
-                  >
-                    {badge}
-                  </Badge>
-                )}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+          <SidebarNav />
         </nav>
 
-        <div className="border-t border-border/60 p-2 xl:p-4">
+        <div className="space-y-3 p-4">
+          <div className="rounded-2xl bg-black/20 p-4 backdrop-blur-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                <Gem className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  Accès prioritaire
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-white/75">
+                  Découvrez nos formules pour optimiser vos rencontres.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-3 w-full rounded-full bg-white text-secondary hover:bg-white/90"
+              asChild
+            >
+              <Link href="/paiements">Voir les formules</Link>
+            </Button>
+          </div>
+
           <button
             type="button"
             onClick={handleLogout}
-            title="Déconnexion"
-            className={cn(navItemClass(false, true), "w-full")}
+            className="mm-sidebar-link w-full text-left"
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            <span className="sr-only xl:not-sr-only xl:inline">Déconnexion</span>
+            Déconnexion
           </button>
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/95 px-4 backdrop-blur-md md:hidden">
-          <Logo size="sm" />
-          {pathname === "/decouvrir" && (
-            <span className="text-xs font-medium text-muted-foreground">
-              Tous les profils
-            </span>
-          )}
-          {pathname === "/rencontres" && (
-            <span className="text-xs font-medium text-muted-foreground">
-              Suggestions du jour
-            </span>
-          )}
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center justify-between border-b border-border/60 bg-white px-4 shadow-sm md:h-16 md:px-6">
+          <div className={cn("flex items-center", !isMessagesRoute && "md:hidden")}>
+            <Logo size="sm" />
+          </div>
+          <div className={cn("flex-1", isMessagesRoute && "hidden")} />
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link
+              href="/notifications"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3d6e] px-1 text-[9px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
+
+            <Link
+              href="/profil"
+              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-muted md:pr-3"
+            >
+              <div className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-secondary/30 ring-2 ring-border/50">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="36px"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-xs font-bold text-primary">
+                    {(displayName?.[0] ?? "M").toUpperCase()}
+                  </div>
+                )}
+              </div>
+              {displayName && (
+                <span className="hidden max-w-[120px] truncate text-sm font-medium text-primary sm:inline">
+                  {displayName}
+                </span>
+              )}
+              <ChevronDown className="hidden h-4 w-4 text-muted-foreground sm:block" />
+            </Link>
+          </div>
         </header>
 
         <main
           className={cn(
-            "min-h-0 flex-1 overflow-auto md:pb-0",
+            "min-h-0 flex-1 md:pb-0",
+            isMessagesRoute
+              ? "overflow-hidden bg-[#f8f6fc]"
+              : "overflow-auto bg-[#f8f6fc]",
             hideMobileNav
               ? "pb-0"
               : "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
@@ -225,7 +303,7 @@ export function UserShell({
         <nav
           aria-label="Navigation principale"
           className={cn(
-            "fixed bottom-0 left-0 right-0 z-50 border-t border-border/80 bg-card/95 backdrop-blur-md safe-area-pb md:hidden",
+            "fixed bottom-0 left-0 right-0 z-50 border-t border-border/80 bg-card shadow-[0_-4px_20px_rgba(46,26,71,0.06)] safe-area-pb md:hidden",
             hideMobileNav && "hidden"
           )}
         >
@@ -234,9 +312,7 @@ export function UserShell({
               const active =
                 isActive(pathname, tab.href, tab.exact) ||
                 (tab.href === "/profil" &&
-                  (pathname === "/profil" || pathname.startsWith("/profil/"))) ||
-                (tab.href === "/decouvrir/likes" &&
-                  pathname.startsWith("/decouvrir/likes"));
+                  (pathname === "/profil" || pathname.startsWith("/profil/")));
               const badge = badgeFor(tab.href);
               return (
                 <Link
@@ -247,17 +323,12 @@ export function UserShell({
                     active ? "text-secondary" : "text-muted-foreground"
                   )}
                 >
-                  <tab.icon
-                    className={cn("h-5 w-5", active && "stroke-[2.5]")}
-                  />
+                  <tab.icon className={cn("h-5 w-5", active && "stroke-[2.5]")} />
                   <span className="max-w-full truncate">{tab.label}</span>
                   {badge && (
-                    <Badge
-                      variant="secondary"
-                      className="absolute right-1 top-0.5 h-4 min-w-4 px-1 text-[9px]"
-                    >
+                    <span className="absolute right-2 top-0.5 mm-badge-count">
                       {badge}
-                    </Badge>
+                    </span>
                   )}
                 </Link>
               );
@@ -265,10 +336,7 @@ export function UserShell({
             <button
               type="button"
               onClick={() => setMoreOpen(true)}
-              className={cn(
-                "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium transition-colors",
-                isMoreActive ? "text-secondary" : "text-muted-foreground"
-              )}
+              className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium text-muted-foreground"
             >
               <MoreHorizontal className="h-5 w-5" />
               Plus
@@ -284,11 +352,9 @@ export function UserShell({
             onClick={() => setMoreOpen(false)}
             aria-hidden
           />
-          <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-card p-5 pb-8 shadow-2xl">
+          <div className="absolute bottom-0 left-0 right-0 max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-card p-5 pb-8 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold text-primary">
-                Menu
-              </h3>
+              <h3 className="font-serif text-lg font-semibold text-primary">Menu</h3>
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
@@ -298,8 +364,8 @@ export function UserShell({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="max-h-[50dvh] space-y-1 overflow-y-auto">
-              {mobileMoreLinks.map((link) => {
+            <div className="space-y-1">
+              {[...sidebarLinks, ...moreLinks].map((link) => {
                 const active = isActive(pathname, link.href, link.exact);
                 const badge = badgeFor(link.href);
                 return (
@@ -307,14 +373,17 @@ export function UserShell({
                     key={link.href}
                     href={link.href}
                     onClick={() => setMoreOpen(false)}
-                    className={navItemClass(active)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
+                      active
+                        ? "bg-secondary/10 text-secondary"
+                        : "text-foreground hover:bg-muted"
+                    )}
                   >
-                    <link.icon className="h-5 w-5 shrink-0 text-secondary" />
+                    <link.icon className="h-5 w-5 shrink-0" />
                     {link.label}
                     {badge && (
-                      <Badge variant="secondary" className="ml-auto">
-                        {badge}
-                      </Badge>
+                      <span className="ml-auto mm-badge-count">{badge}</span>
                     )}
                   </Link>
                 );
@@ -322,9 +391,9 @@ export function UserShell({
               <button
                 type="button"
                 onClick={handleLogout}
-                className={cn(navItemClass(false), "w-full")}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted"
               >
-                <LogOut className="h-5 w-5 shrink-0" />
+                <LogOut className="h-5 w-5" />
                 Déconnexion
               </button>
             </div>

@@ -42,17 +42,6 @@ export async function requireAdmin(): Promise<Profile> {
   return profile;
 }
 
-export async function requireActiveUser(): Promise<Profile> {
-  const profile = await requireUser();
-  if (
-    profile.registration_payment_status !== "paid" &&
-    profile.registration_payment_status !== "free"
-  ) {
-    return profile;
-  }
-  return profile;
-}
-
 export function hasPlatformAccess(profile: Profile): boolean {
   return (
     profile.registration_payment_status === "paid" ||

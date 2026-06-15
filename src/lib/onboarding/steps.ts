@@ -36,9 +36,7 @@ export const PROFILE_STEPS: OnboardingStepMeta[] = [
 
 /** Parcours complet visiteur (inscription). */
 export const PUBLIC_STEPS: OnboardingStepMeta[] = [
-  { id: "welcome", optional: false },
   { id: "account", optional: false },
-  { id: "location", optional: false },
   ...PROFILE_STEPS,
 ];
 

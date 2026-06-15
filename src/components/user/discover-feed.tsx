@@ -1,107 +1,101 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
-import { Heart, Layers, SlidersHorizontal } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import {
+  Heart,
+  Layers,
+  SlidersHorizontal,
+} from "lucide-react";
 import Link from "next/link";
 import { ProfileDetailModal } from "@/components/user/profile-detail-modal";
-import { ProfileCardBadges } from "@/components/user/profile-card-badges";
+import { DiscoverCardStack } from "@/components/user/discover-card-stack";
+import { DiscoverBrowseToolbar } from "@/components/user/discover-browse-toolbar";
+import { DiscoverProfileGridCard } from "@/components/user/discover-profile-grid-card";
 import {
   type GenderPreference,
   filterProfilesByGender,
 } from "@/lib/discover/profile-status";
-import { getAge } from "@/lib/utils";
-import { cn } from "@/lib/utils";
-import { formatProfileDistance } from "@/lib/discover/geo";
+import { likeProfile } from "@/lib/actions/likes";
+import { passProfile } from "@/lib/actions/passes";
+import { toast } from "@/hooks/use-toast";
 import type { DiscoveryProfile } from "@/lib/types/database";
 
 type ViewerLocation = Pick<DiscoveryProfile, "city" | "country_code">;
+type ViewMode = "swipe" | "grid";
 
 interface DiscoverFeedProps {
   profiles: DiscoveryProfile[];
   likedIds: string[];
+  passedIds: string[];
   genderPreference: GenderPreference;
   viewerLocation: ViewerLocation;
-}
-
-const GENDER_FILTERS: { value: GenderPreference; label: string }[] = [
-  { value: "both", label: "Tous" },
-  { value: "female", label: "Femmes" },
-  { value: "male", label: "Hommes" },
-];
-
-function ProfileGridCard({
-  profile,
-  viewerLocation,
-  liked,
-  onSelect,
-}: {
-  profile: DiscoveryProfile;
-  viewerLocation: ViewerLocation;
-  liked: boolean;
-  onSelect: () => void;
-}) {
-  const age = getAge(profile.date_of_birth);
-  const distanceLabel = formatProfileDistance(viewerLocation, profile);
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted text-left shadow-sm transition-transform active:scale-[0.98]"
-    >
-      {profile.primary_photo_url ? (
-        <Image
-          src={profile.primary_photo_url}
-          alt={profile.display_name}
-          fill
-          className="object-cover transition-transform group-hover:scale-105"
-          sizes="(max-width: 640px) 50vw, 25vw"
-        />
-      ) : (
-        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-          Sans photo
-        </div>
-      )}
-
-      <ProfileCardBadges profile={profile} />
-
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 pt-10">
-        <p className="truncate text-sm font-semibold text-white">
-          {profile.display_name}
-          {age !== null && `, ${age}`}
-        </p>
-        {profile.city && (
-          <p className="truncate text-xs text-white/80">
-            {profile.city}
-            {distanceLabel && (
-              <span className="text-white/60"> · {distanceLabel}</span>
-            )}
-          </p>
-        )}
-      </div>
-      {liked && (
-        <span className="absolute right-2 top-2 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-white">
-          Liké
-        </span>
-      )}
-    </button>
-  );
 }
 
 export function DiscoverFeed({
   profiles,
   likedIds,
+  passedIds,
   genderPreference: initialPreference,
   viewerLocation,
 }: DiscoverFeedProps) {
   const [selected, setSelected] = useState<DiscoveryProfile | null>(null);
   const [likedSet, setLikedSet] = useState(() => new Set(likedIds));
+  const [passedSet, setPassedSet] = useState(() => new Set(passedIds));
   const [browseGender, setBrowseGender] =
     useState<GenderPreference>(initialPreference);
+  const [viewMode, setViewMode] = useState<ViewMode>("swipe");
+  const [likePendingId, setLikePendingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   function handleLiked(id: string) {
     setLikedSet((prev) => new Set(prev).add(id));
+  }
+
+  function handleQuickLike(profile: DiscoveryProfile) {
+    if (likedSet.has(profile.id) || isPending) return;
+    setLikedSet((prev) => new Set(prev).add(profile.id));
+    setLikePendingId(profile.id);
+    startTransition(async () => {
+      const result = await likeProfile(profile.id);
+      setLikePendingId(null);
+      if (result.error) {
+        setLikedSet((prev) => {
+          const next = new Set(prev);
+          next.delete(profile.id);
+          return next;
+        });
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: result.error,
+        });
+        return;
+      }
+      toast({
+        title: "Like envoyé",
+        description: result.message ?? "Votre intérêt a été enregistré.",
+      });
+    });
+  }
+
+  function handlePass(profile: DiscoveryProfile) {
+    if (passedSet.has(profile.id) || isPending) return;
+    setPassedSet((prev) => new Set(prev).add(profile.id));
+    startTransition(async () => {
+      const result = await passProfile(profile.id);
+      if (result.error) {
+        setPassedSet((prev) => {
+          const next = new Set(prev);
+          next.delete(profile.id);
+          return next;
+        });
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: result.error,
+        });
+      }
+    });
   }
 
   const filteredProfiles = useMemo(
@@ -109,68 +103,75 @@ export function DiscoverFeed({
     [profiles, browseGender]
   );
 
+  const swipeDeck = useMemo(
+    () =>
+      filteredProfiles.filter(
+        (profile) => !likedSet.has(profile.id) && !passedSet.has(profile.id)
+      ),
+    [filteredProfiles, likedSet, passedSet]
+  );
+
   return (
     <>
-      <header className="space-y-3 px-4 pb-2 pt-1 sm:px-0">
-        <div className="flex items-center justify-between">
+      <header className="space-y-4">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-serif text-2xl font-bold text-primary sm:text-3xl">
-              Découvrir
+            <h1 className="font-serif text-2xl font-bold text-primary sm:text-4xl">
+              Découvrez{" "}
+              <span className="text-secondary">les profils</span>
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Parcourez tous les profils, du plus proche au plus éloigné
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
+              Des célibataires sérieux en quête d&apos;une relation sincère et
+              durable.
             </p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Link
               href="/rencontres"
-              className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
-              aria-label="Suggestions du jour — Rencontres"
+              className="rounded-full p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
+              aria-label="Rencontres"
             >
               <Layers className="h-5 w-5" />
             </Link>
             <Link
               href="/decouvrir/likes"
-              className="relative rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
-              aria-label="Mes likes envoyés"
+              className="relative rounded-full p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
+              aria-label="Mes likes"
             >
               <Heart className="h-5 w-5" />
               {likedSet.size > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary px-1 text-[9px] font-bold text-white">
+                <span className="mm-badge-count absolute -right-0.5 -top-0.5">
                   {likedSet.size > 9 ? "9+" : likedSet.size}
                 </span>
               )}
             </Link>
             <Link
               href="/profil/modifier"
-              className="rounded-full p-2 text-muted-foreground hover:bg-muted"
-              aria-label="Préférences de recherche"
+              className="rounded-full p-2.5 text-muted-foreground hover:bg-muted"
+              aria-label="Préférences"
             >
               <SlidersHorizontal className="h-5 w-5" />
             </Link>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {GENDER_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setBrowseGender(filter.value)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                browseGender === filter.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              )}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        <DiscoverBrowseToolbar
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          browseGender={browseGender}
+          onBrowseGenderChange={setBrowseGender}
+          profileCount={filteredProfiles.length}
+        />
+
         <p className="text-xs text-muted-foreground">
-          Les suggestions du jour sont dans{" "}
-          <Link href="/rencontres" className="text-secondary hover:underline">
+          {viewMode === "swipe" ? (
+            <>
+              Glissez à droite pour liker, à gauche pour passer · suggestions du jour dans{" "}
+            </>
+          ) : (
+            <>Suggestions du jour dans </>
+          )}
+          <Link href="/rencontres" className="font-medium text-secondary hover:underline">
             Rencontres
           </Link>
           {" · "}
@@ -180,22 +181,48 @@ export function DiscoverFeed({
         </p>
       </header>
 
-      {filteredProfiles.length > 0 ? (
-        <section className="mt-2 px-4 sm:px-0">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+      {viewMode === "swipe" ? (
+        swipeDeck.length > 0 ? (
+          <DiscoverCardStack
+            profiles={swipeDeck}
+            viewerLocation={viewerLocation}
+            pending={isPending}
+            onPass={handlePass}
+            onLike={handleQuickLike}
+            onOpen={setSelected}
+          />
+        ) : (
+          <div className="mm-card p-10 text-center">
+            <p className="text-muted-foreground">
+              Vous avez parcouru tous les profils en mode carte.
+            </p>
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className="mt-4 text-sm font-medium text-secondary hover:underline"
+            >
+              Voir la grille complète
+            </button>
+          </div>
+        )
+      ) : filteredProfiles.length > 0 ? (
+        <section className="mt-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
             {filteredProfiles.map((profile) => (
-              <ProfileGridCard
+              <DiscoverProfileGridCard
                 key={profile.id}
                 profile={profile}
                 viewerLocation={viewerLocation}
                 liked={likedSet.has(profile.id)}
-                onSelect={() => setSelected(profile)}
+                likePending={likePendingId === profile.id}
+                onOpen={() => setSelected(profile)}
+                onLike={() => handleQuickLike(profile)}
               />
             ))}
           </div>
         </section>
       ) : (
-        <div className="mx-4 mt-6 rounded-2xl border border-border bg-card p-8 text-center sm:mx-0">
+        <div className="mm-card mt-6 p-10 text-center">
           <p className="text-muted-foreground">
             Aucun profil ne correspond à votre filtre pour le moment.
           </p>

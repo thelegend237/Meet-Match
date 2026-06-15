@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   },
   description:
     "Rencontrez des personnes sérieuses grâce à une mise en relation humaine. Créez votre profil, likez des profils, notre équipe vous met en relation.",
+  icons: {
+    icon: "/logo-icon.png",
+    apple: "/logo-icon.png",
+  },
 };
 
 export default function RootLayout({

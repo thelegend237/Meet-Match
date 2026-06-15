@@ -1,14 +1,127 @@
 -- ============================================================================
 -- MEET & MATCH — Migration 009 : Géolocalisation scalable (PostGIS)
 -- Cache géocode partagé + coordonnées profil + découverte triée par distance
+--
+-- PRÉREQUIS (appliquer dans l'ordre) :
+--   001_initial_schema   → profiles (city, country_code, enums), tables de base
+--   002_functions_triggers → is_active_user(), triggers profil
+--   005_profile_discovery → is_verified, last_seen_at sur profiles
+--   006–008, 011         → paiements, inscription, handle_new_user
 -- ============================================================================
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- ---------------------------------------------------------------------------
+-- Pont 001 : enums Meet & Match (si migration 001 non appliquée sur ce projet)
+-- Requis pour la signature de discover_profiles()
+-- ---------------------------------------------------------------------------
+DO $$ BEGIN
+  CREATE TYPE public.gender_type AS ENUM (
+    'male', 'female', 'other', 'prefer_not_say'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE public.relationship_type AS ENUM (
+    'serious', 'friendship', 'marriage', 'other'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE public.profile_status AS ENUM (
+    'pending', 'inactive', 'active', 'suspended', 'deleted'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE public.payment_status AS ENUM (
+    'unpaid', 'paid', 'failed', 'refunded', 'free'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ---------------------------------------------------------------------------
+-- Pont 001 / 005 : colonnes profiles requises par cette migration
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS country_code CHAR(2),
+  ADD COLUMN IF NOT EXISTS city TEXT,
+  ADD COLUMN IF NOT EXISTS is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS last_seen_at TIMESTAMPTZ;
+
+-- Colonnes discover_profiles (001) — types ajoutés seulement si absentes
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'gender'
+  ) THEN
+    ALTER TABLE public.profiles ADD COLUMN gender public.gender_type;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'relationship_type'
+  ) THEN
+    ALTER TABLE public.profiles ADD COLUMN relationship_type public.relationship_type;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'status'
+  ) THEN
+    ALTER TABLE public.profiles
+      ADD COLUMN status public.profile_status NOT NULL DEFAULT 'pending';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'registration_payment_status'
+  ) THEN
+    BEGIN
+      ALTER TABLE public.profiles
+        ADD COLUMN registration_payment_status public.payment_status NOT NULL DEFAULT 'unpaid';
+    EXCEPTION
+      WHEN invalid_text_representation OR datatype_mismatch THEN
+        ALTER TABLE public.profiles
+          ADD COLUMN registration_payment_status TEXT NOT NULL DEFAULT 'unpaid';
+    END;
+  END IF;
+
+  ALTER TABLE public.profiles
+    ADD COLUMN IF NOT EXISTS bio TEXT,
+    ADD COLUMN IF NOT EXISTS expectations TEXT,
+    ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'fr',
+    ADD COLUMN IF NOT EXISTS primary_photo_url TEXT,
+    ADD COLUMN IF NOT EXISTS date_of_birth DATE,
+    ADD COLUMN IF NOT EXISTS display_name TEXT NOT NULL DEFAULT '',
+    ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_profiles_country ON public.profiles (country_code);
+CREATE INDEX IF NOT EXISTS idx_profiles_city ON public.profiles (city);
+
+-- Pont 002 : is_active_user() (appelé par discover_profiles)
+CREATE OR REPLACE FUNCTION public.is_active_user()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid()
+      AND is_deleted = FALSE
+      AND status::text = 'active'
+      AND registration_payment_status::text IN ('paid', 'free')
+  );
+$$;
+
+-- ---------------------------------------------------------------------------
 -- Cache géocode (ville + pays → coordonnées), partagé entre tous les profils
 -- ---------------------------------------------------------------------------
-CREATE TABLE public.geocode_cache (
+CREATE TABLE IF NOT EXISTS public.geocode_cache (
   city_key TEXT NOT NULL,
   country_code CHAR(2) NOT NULL,
   latitude DOUBLE PRECISION NOT NULL,
@@ -20,17 +133,18 @@ CREATE TABLE public.geocode_cache (
   CONSTRAINT geocode_cache_lng_valid CHECK (longitude BETWEEN -180 AND 180)
 );
 
-CREATE INDEX idx_geocode_cache_country ON public.geocode_cache (country_code);
+CREATE INDEX IF NOT EXISTS idx_geocode_cache_country ON public.geocode_cache (country_code);
 
 ALTER TABLE public.geocode_cache ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "geocode_cache_select_authenticated" ON public.geocode_cache;
 CREATE POLICY "geocode_cache_select_authenticated"
   ON public.geocode_cache FOR SELECT
   TO authenticated
   USING (TRUE);
 
 -- ---------------------------------------------------------------------------
--- Colonnes profil
+-- Colonnes géo sur profiles (001 fournit city / country_code — pont ci-dessus)
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
@@ -38,13 +152,26 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS location geography(POINT, 4326),
   ADD COLUMN IF NOT EXISTS geocoded_at TIMESTAMPTZ;
 
-ALTER TABLE public.profiles
-  ADD CONSTRAINT profiles_latitude_valid
-    CHECK (latitude IS NULL OR latitude BETWEEN -90 AND 90),
-  ADD CONSTRAINT profiles_longitude_valid
-    CHECK (longitude IS NULL OR longitude BETWEEN -180 AND 180);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'profiles_latitude_valid'
+  ) THEN
+    ALTER TABLE public.profiles
+      ADD CONSTRAINT profiles_latitude_valid
+        CHECK (latitude IS NULL OR latitude BETWEEN -90 AND 90);
+  END IF;
 
-CREATE INDEX idx_profiles_location_gist
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'profiles_longitude_valid'
+  ) THEN
+    ALTER TABLE public.profiles
+      ADD CONSTRAINT profiles_longitude_valid
+        CHECK (longitude IS NULL OR longitude BETWEEN -180 AND 180);
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_profiles_location_gist
   ON public.profiles
   USING GIST (location)
   WHERE location IS NOT NULL;
@@ -193,7 +320,9 @@ SET
   longitude = gc.longitude
 FROM public.geocode_cache gc
 WHERE public.normalize_city_key(p.city) = gc.city_key
-  AND p.country_code = gc.country_code;
+  AND p.country_code = gc.country_code
+  AND p.city IS NOT NULL
+  AND p.country_code IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- RPC : lecture cache
@@ -276,6 +405,7 @@ $$;
 
 -- ---------------------------------------------------------------------------
 -- RPC : découverte triée par proximité (PostGIS KNN + index GIST)
+-- Colonnes lues : profiles (001) + is_verified, last_seen_at (005)
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.discover_profiles(
   p_excluded_ids UUID[] DEFAULT ARRAY[]::UUID[],
@@ -348,9 +478,9 @@ BEGIN
   WHERE p.id <> v_viewer_id
     AND NOT (p.id = ANY (coalesce(p_excluded_ids, ARRAY[]::UUID[])))
     AND p.is_deleted = FALSE
-    AND p.status = 'active'
+    AND p.status::text = 'active'
     AND p.primary_photo_url IS NOT NULL
-    AND p.registration_payment_status IN ('paid', 'free')
+    AND p.registration_payment_status::text IN ('paid', 'free')
   ORDER BY
     CASE
       WHEN v_viewer_loc IS NOT NULL AND p.location IS NOT NULL THEN

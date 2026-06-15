@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GEO_COUNTRIES } from "@/lib/geo/countries-data";
 
 export const registerSchema = z.object({
   display_name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -40,14 +41,19 @@ export const newPasswordSchema = z
 
 export type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
 
-export const COUNTRIES = [
-  { code: "FR", name: "France", currency: "EUR" },
-  { code: "BE", name: "Belgique", currency: "EUR" },
-  { code: "CH", name: "Suisse", currency: "EUR" },
-  { code: "LU", name: "Luxembourg", currency: "EUR" },
-  { code: "CA", name: "Canada", currency: "CAD" },
-  { code: "US", name: "États-Unis", currency: "USD" },
-  { code: "CM", name: "Cameroun", currency: "EUR" },
-  { code: "CI", name: "Côte d'Ivoire", currency: "EUR" },
-  { code: "SN", name: "Sénégal", currency: "EUR" },
-] as const;
+function currencyForCountry(code: string): string {
+  if (code === "CA") return "CAD";
+  if (code === "US") return "USD";
+  return "EUR";
+}
+
+/** Liste pays ISO — préférer GEO_COUNTRIES / getCountryName pour l'affichage. */
+export const COUNTRIES = GEO_COUNTRIES.map((c) => ({
+  code: c.code,
+  name: c.name,
+  currency: currencyForCountry(c.code),
+})) as ReadonlyArray<{
+  code: string;
+  name: string;
+  currency: string;
+}>;

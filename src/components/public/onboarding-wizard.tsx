@@ -1,23 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Cake,
+  Camera,
   Compass,
   Globe,
   Heart,
   HeartHandshake,
   Loader2,
+  Mail,
   MapPin,
-  MessageCircle,
   Sparkles,
   Target,
   User,
   UserCircle,
-  Camera,
-  Shield,
   Users,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -25,6 +23,32 @@ import { createClient } from "@/lib/supabase/client";
 import { cn, formatCurrency } from "@/lib/utils";
 import { getRegistrationFee } from "@/lib/pricing";
 import { calculateProfileCompletion } from "@/lib/profile/completion";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  getInscriptionPhase,
+  getPublicStepSubtitle,
+  getPublicStepTitle,
+  phaseProgressPercent,
+} from "@/lib/onboarding/step-groups";
+import {
+  InscriptionFormCard,
+  InscriptionPageLayout,
+  IconInput,
+  LoginHint,
+  PasswordField,
+  PrimaryFormButton,
+  RegisterAgeRange,
+  RegisterChoiceGrid,
+  RegisterChoiceRow,
+  RegisterCompletion,
+  RegisterHint,
+  RegisterPhotoUpload,
+  RegisterSkipButton,
+  RegisterStep,
+  RegisterStepFooter,
+  RegisterTextarea,
+} from "@/components/public/inscription/inscription-ui";
+import { LocationPicker } from "@/components/geo/location-picker";
 import {
   getStepsForMode,
   parseStepParam,
@@ -46,7 +70,6 @@ import {
   syncOnboardingGeolocation,
 } from "@/lib/actions/onboarding";
 import { uploadProfilePhoto } from "@/lib/actions/photos";
-import { COUNTRIES } from "@/lib/validations/auth";
 import {
   GENDER_LABELS,
   RELATIONSHIP_LABELS,
@@ -69,12 +92,16 @@ import {
 } from "@/components/public/onboarding/onboarding-ui";
 import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
+import { SocialAuthButtons, AuthDivider } from "@/components/auth/social-auth-buttons";
+import { StepTransition } from "@/components/motion/motion";
 
 type WizardMode = "public" | "continue";
 
 interface OnboardingWizardProps {
   mode?: WizardMode;
+  embedded?: boolean;
   initialProfile?: Profile | null;
+  initialStepParam?: string | null;
   className?: string;
 }
 
@@ -136,9 +163,24 @@ const SEEK_GENDER_OPTIONS = Object.entries(GENDER_PREFERENCE_LABELS).map(
   ([value, label]) => ({ value, label })
 );
 
+const RELATIONSHIP_DESCRIPTIONS: Record<string, string> = {
+  serious: "Construire une relation durable et sincère",
+  friendship: "Rencontrer des personnes bienveillantes",
+  marriage: "Projet de vie et engagement à long terme",
+  other: "Autre intention — à préciser plus tard",
+};
+
+const SCOPE_DESCRIPTIONS: Record<string, string> = {
+  local: "Profils près de chez vous",
+  national: "Dans l'ensemble du pays",
+  international: "Sans limite géographique",
+};
+
 export function OnboardingWizard({
   mode = "public",
+  embedded = false,
   initialProfile = null,
+  initialStepParam = null,
   className,
 }: OnboardingWizardProps) {
   const router = useRouter();
@@ -177,16 +219,17 @@ export function OnboardingWizard({
     ...profileToData(initialProfile),
   }));
 
-  const initialStep =
-    mode === "continue"
-      ? parseStepParam(searchParams.get("step"), steps)
-      : "welcome";
-
-  const [currentStep, setCurrentStep] = useState<OnboardingStepId>(
-    mode === "continue" && initialStep === "welcome" ? "gender" : initialStep
+  const initialStep = parseStepParam(
+    initialStepParam ?? searchParams.get("step"),
+    steps
   );
 
-  const progress = progressPercent(steps, currentStep);
+  const [currentStep, setCurrentStep] = useState<OnboardingStepId>(initialStep);
+
+  const progress =
+    mode === "public"
+      ? phaseProgressPercent(currentStep)
+      : progressPercent(steps, currentStep);
   const regFee = getRegistrationFee(data.country_code);
 
   const liveCompletion = useMemo(
@@ -215,7 +258,9 @@ export function OnboardingWizard({
   const goTo = useCallback(
     (step: OnboardingStepId) => {
       setCurrentStep(step);
-      if (mode === "continue" || accountCreated) {
+      if (mode === "public") {
+        router.replace(`/inscription?step=${step}`, { scroll: false });
+      } else if (mode === "continue" || accountCreated) {
         router.replace(`/onboarding?step=${step}`, { scroll: false });
       }
     },
@@ -441,10 +486,43 @@ export function OnboardingWizard({
     startTransition(async () => {
       try {
         switch (currentStep) {
-          case "welcome":
-            goNext();
-            break;
           case "account": {
+            if (mode === "public") {
+              const creds = onboardingCredentialsSchema.safeParse({
+                display_name: data.display_name,
+                email: data.email,
+                password: data.password,
+              });
+              const loc = onboardingLocationSchema.safeParse({
+                country_code: data.country_code,
+                city: data.city,
+                phone: data.phone,
+              });
+              if (!creds.success) {
+                toast({
+                  variant: "destructive",
+                  title: "Vérifiez les champs",
+                  description: creds.error.errors[0]?.message,
+                });
+                return;
+              }
+              if (!loc.success) {
+                toast({
+                  variant: "destructive",
+                  title: "Vérifiez les champs",
+                  description: loc.error.errors[0]?.message,
+                });
+                return;
+              }
+              if (!accountCreated) {
+                const ok = await createAccount();
+                if (!ok) return;
+              }
+              await syncOnboardingGeolocation();
+              goTo("gender");
+              return;
+            }
+
             const parsed = onboardingCredentialsSchema.safeParse({
               display_name: data.display_name,
               email: data.email,
@@ -461,29 +539,9 @@ export function OnboardingWizard({
             goNext();
             break;
           }
-          case "location": {
-            const parsed = onboardingLocationSchema.safeParse({
-              country_code: data.country_code,
-              city: data.city,
-              phone: data.phone,
-            });
-            if (!parsed.success) {
-              toast({
-                variant: "destructive",
-                title: "Vérifiez les champs",
-                description: parsed.error.errors[0]?.message,
-              });
-              return;
-            }
-            if (!accountCreated) {
-              const ok = await createAccount();
-              if (!ok) return;
-            }
-            await syncOnboardingGeolocation();
-            router.push("/onboarding?step=gender");
-            setCurrentStep("gender");
+          case "location":
             break;
-          }
+
           case "language":
             await persistIdentity();
             goNext();
@@ -589,46 +647,110 @@ export function OnboardingWizard({
 
   const renderStep = () => {
     switch (currentStep) {
-      case "welcome":
-        return (
-          <>
-            <StepIllustration icon={HeartHandshake} gradient="from-accent via-secondary/15 to-primary/5" />
-            <StepHeader
-              title="Des rencontres sérieuses, accompagnées par des humains"
-              subtitle="Meet & Match n'est pas un swipe anonyme : notre équipe valide chaque mise en relation."
-            />
-            <StepBody className="space-y-4">
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                {[
-                  { icon: Shield, text: "Pas de messagerie libre entre inconnus" },
-                  { icon: Users, text: "Matchs proposés après analyse de compatibilité" },
-                  { icon: MessageCircle, text: "Contact admin gratuit à tout moment" },
-                ].map((item) => (
-                  <li key={item.text} className="flex gap-3 rounded-2xl bg-muted/30 p-3">
-                    <item.icon className="h-5 w-5 shrink-0 text-secondary" />
-                    <span>{item.text}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-center text-xs text-muted-foreground">
-                Profil complété : <strong className="text-primary">{displayCompletion}%</strong>
-              </p>
-            </StepBody>
-            <div className="shrink-0 p-5 pt-0">
-              <Button
-                type="button"
-                variant="secondary"
-                size="lg"
-                className="h-14 w-full rounded-full text-base shadow-lg shadow-secondary/25"
-                onClick={handleNext}
-              >
-                Commencer
-              </Button>
-            </div>
-          </>
-        );
-
       case "account":
+        if (mode === "public") {
+          const landingForm = embedded;
+
+          if (landingForm) {
+            return (
+              <div className="space-y-4">
+                <IconInput
+                  icon={User}
+                  label="Nom affiché"
+                  value={data.display_name}
+                  onChange={(e) => patch({ display_name: e.target.value })}
+                  autoComplete="name"
+                  placeholder="Ex : Sophie"
+                />
+                <IconInput
+                  icon={Mail}
+                  label="Email"
+                  type="email"
+                  value={data.email}
+                  onChange={(e) => patch({ email: e.target.value })}
+                  autoComplete="email"
+                  placeholder="Ex : sophie@email.com"
+                />
+                <PasswordField
+                  value={data.password}
+                  onChange={(password) => patch({ password })}
+                  compactStrength
+                />
+                <LocationPicker
+                  countryCode={data.country_code}
+                  city={data.city}
+                  onCountryChange={(country_code) => patch({ country_code })}
+                  onCityChange={(city) => patch({ city })}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <RegisterStep icon={UserCircle} className="space-y-5">
+              <div className="space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Identité
+                </p>
+                <IconInput
+                  icon={User}
+                  label="Nom affiché"
+                  value={data.display_name}
+                  onChange={(e) => patch({ display_name: e.target.value })}
+                  autoComplete="name"
+                  placeholder="Ex : Sophie"
+                />
+                <IconInput
+                  icon={Mail}
+                  label="Email"
+                  type="email"
+                  value={data.email}
+                  onChange={(e) => patch({ email: e.target.value })}
+                  autoComplete="email"
+                  placeholder="Ex : sophie@email.com"
+                />
+                <PasswordField
+                  value={data.password}
+                  onChange={(password) => patch({ password })}
+                />
+              </div>
+
+              <div className="space-y-4 border-t border-border/40 pt-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Localisation
+                </p>
+                <LocationPicker
+                  countryCode={data.country_code}
+                  city={data.city}
+                  onCountryChange={(country_code) => patch({ country_code })}
+                  onCityChange={(city) => patch({ city })}
+                />
+                <IconInput
+                  icon={MapPin}
+                  label="Téléphone (optionnel)"
+                  type="tel"
+                  value={data.phone}
+                  onChange={(e) => patch({ phone: e.target.value })}
+                  placeholder="+33 6 12 34 56 78"
+                />
+              </div>
+
+              <RegisterHint tone="accent">
+                Inscription :{" "}
+                <strong className="text-primary">
+                  {formatCurrency(regFee.amount, regFee.currency)}
+                </strong>{" "}
+                après création — les étapes suivantes sont facultatives.
+              </RegisterHint>
+
+              <div className="space-y-4 border-t border-border/40 pt-5">
+                <SocialAuthButtons />
+                <AuthDivider />
+              </div>
+            </RegisterStep>
+          );
+        }
+
         return (
           <>
             <StepIllustration icon={UserCircle} />
@@ -657,23 +779,12 @@ export function OnboardingWizard({
                   disabled={mode === "continue"}
                 />
               </div>
-              {mode === "public" && (
-                <div>
-                  <FieldLabel>Mot de passe</FieldLabel>
-                  <LargeInput
-                    type="password"
-                    value={data.password}
-                    onChange={(e) => patch({ password: e.target.value })}
-                    autoComplete="new-password"
-                    placeholder="8 caractères minimum"
-                  />
-                </div>
-              )}
             </StepBody>
           </>
         );
 
       case "location":
+        if (mode === "public") return null;
         return (
           <>
             <StepIllustration icon={MapPin} gradient="from-primary/10 via-accent to-secondary/10" />
@@ -682,34 +793,12 @@ export function OnboardingWizard({
               subtitle="Pour vous proposer des profils pertinents près de chez vous."
             />
             <StepBody className="space-y-4">
-              <div>
-                <FieldLabel>Pays</FieldLabel>
-                <div className="grid max-h-48 grid-cols-2 gap-2 overflow-y-auto pr-1">
-                  {COUNTRIES.map((c) => (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => patch({ country_code: c.code })}
-                      className={cn(
-                        "rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition-all",
-                        data.country_code === c.code
-                          ? "border-secondary bg-secondary/10 text-primary"
-                          : "border-border/50 bg-muted/20 text-muted-foreground hover:bg-muted/40"
-                      )}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <FieldLabel>Ville</FieldLabel>
-                <LargeInput
-                  value={data.city}
-                  onChange={(e) => patch({ city: e.target.value })}
-                  placeholder="Ex. Douala, Paris…"
-                />
-              </div>
+              <LocationPicker
+                countryCode={data.country_code}
+                city={data.city}
+                onCountryChange={(country_code) => patch({ country_code })}
+                onCityChange={(city) => patch({ city })}
+              />
               <div>
                 <FieldLabel>Téléphone (optionnel)</FieldLabel>
                 <LargeInput
@@ -719,13 +808,6 @@ export function OnboardingWizard({
                   placeholder="+33 6 12 34 56 78"
                 />
               </div>
-              {mode === "public" && (
-                <p className="rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  Inscription :{" "}
-                  <strong>{formatCurrency(regFee.amount, regFee.currency)}</strong>{" "}
-                  après création — étapes suivantes facultatives.
-                </p>
-              )}
               <p className="text-center text-xs text-muted-foreground">
                 Déjà un compte ?{" "}
                 <Link
@@ -740,6 +822,23 @@ export function OnboardingWizard({
         );
 
       case "gender":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={User} optional>
+              <div className="space-y-2.5">
+                {GENDER_OPTIONS.map((opt) => (
+                  <RegisterChoiceRow
+                    key={opt.value}
+                    label={opt.label}
+                    selected={data.gender === opt.value}
+                    onSelect={() => patch({ gender: opt.value })}
+                  />
+                ))}
+                <RegisterSkipButton onClick={skipWithoutSave} />
+              </div>
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={User} />
@@ -759,6 +858,20 @@ export function OnboardingWizard({
         );
 
       case "birthdate":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Cake} optional>
+              <LargeInput
+                type="date"
+                value={data.date_of_birth}
+                onChange={(e) => patch({ date_of_birth: e.target.value })}
+                max={new Date().toISOString().slice(0, 10)}
+                className="rounded-xl border-border/60 bg-[#faf8fc] px-4 py-3.5 focus:border-secondary/40 focus:bg-white focus:ring-2 focus:ring-secondary/15"
+              />
+              <RegisterSkipButton onClick={skipWithoutSave} />
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Cake} />
@@ -780,6 +893,21 @@ export function OnboardingWizard({
         );
 
       case "language":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Globe} optional>
+              <RegisterChoiceGrid
+                value={data.language}
+                onChange={(v) => patch({ language: v })}
+                options={[
+                  { value: "fr", label: "Français", icon: Globe },
+                  { value: "en", label: "English", icon: Globe },
+                ]}
+              />
+              <RegisterSkipButton onClick={handleSkip} />
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Globe} />
@@ -799,6 +927,19 @@ export function OnboardingWizard({
         );
 
       case "bio":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Sparkles} optional>
+              <RegisterTextarea
+                value={data.bio}
+                onChange={(bio) => patch({ bio })}
+                placeholder="Qui êtes-vous, vos passions, votre personnalité…"
+                minHint={20}
+              />
+              <RegisterSkipButton onClick={skipWithoutSave} />
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Sparkles} />
@@ -822,6 +963,18 @@ export function OnboardingWizard({
         );
 
       case "expectations":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Target} optional>
+              <RegisterTextarea
+                value={data.expectations}
+                onChange={(expectations) => patch({ expectations })}
+                placeholder="Type de relation, valeurs importantes, ce que vous attendez…"
+              />
+              <RegisterSkipButton onClick={skipWithoutSave} />
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Target} />
@@ -842,6 +995,24 @@ export function OnboardingWizard({
         );
 
       case "relationship":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Heart} optional>
+              <div className="space-y-2.5">
+                {RELATIONSHIP_OPTIONS.map((opt) => (
+                  <RegisterChoiceRow
+                    key={opt.value}
+                    label={opt.label}
+                    description={RELATIONSHIP_DESCRIPTIONS[opt.value]}
+                    selected={data.relationship_type === opt.value}
+                    onSelect={() => patch({ relationship_type: opt.value })}
+                  />
+                ))}
+                <RegisterSkipButton onClick={handleSkip} />
+              </div>
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Heart} />
@@ -861,6 +1032,23 @@ export function OnboardingWizard({
         );
 
       case "seek_gender":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Users} optional>
+              <div className="space-y-2.5">
+                {SEEK_GENDER_OPTIONS.map((opt) => (
+                  <RegisterChoiceRow
+                    key={opt.value}
+                    label={opt.label}
+                    selected={data.preferred_gender === opt.value}
+                    onSelect={() => patch({ preferred_gender: opt.value })}
+                  />
+                ))}
+                <RegisterSkipButton onClick={skipWithoutSave} />
+              </div>
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Users} />
@@ -880,6 +1068,23 @@ export function OnboardingWizard({
         );
 
       case "age_range":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Cake} optional>
+              <RegisterAgeRange
+                min={data.preferred_age_min}
+                max={data.preferred_age_max}
+                onMinChange={(preferred_age_min) =>
+                  patch({ preferred_age_min })
+                }
+                onMaxChange={(preferred_age_max) =>
+                  patch({ preferred_age_max })
+                }
+              />
+              <RegisterSkipButton onClick={skipWithoutSave} />
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Cake} gradient="from-secondary/15 to-accent" />
@@ -893,46 +1098,72 @@ export function OnboardingWizard({
                   {data.preferred_age_min} – {data.preferred_age_max} ans
                 </p>
               </div>
-              <div>
-                <FieldLabel>Âge minimum</FieldLabel>
-                <input
-                  type="range"
-                  min={18}
-                  max={80}
-                  value={data.preferred_age_min}
-                  onChange={(e) => {
-                    const min = Number(e.target.value);
-                    patch({
-                      preferred_age_min: min,
-                      preferred_age_max: Math.max(min, data.preferred_age_max),
-                    });
-                  }}
-                  className="h-2 w-full cursor-pointer accent-secondary"
-                />
-              </div>
-              <div>
-                <FieldLabel>Âge maximum</FieldLabel>
-                <input
-                  type="range"
-                  min={18}
-                  max={80}
-                  value={data.preferred_age_max}
-                  onChange={(e) => {
-                    const max = Number(e.target.value);
-                    patch({
-                      preferred_age_max: max,
-                      preferred_age_min: Math.min(max, data.preferred_age_min),
-                    });
-                  }}
-                  className="h-2 w-full cursor-pointer accent-secondary"
-                />
-              </div>
+              <FieldLabel
+                control={
+                  <input
+                    type="range"
+                    min={18}
+                    max={80}
+                    value={data.preferred_age_min}
+                    aria-label="Âge minimum"
+                    onChange={(e) => {
+                      const min = Number(e.target.value);
+                      patch({
+                        preferred_age_min: min,
+                        preferred_age_max: Math.max(min, data.preferred_age_max),
+                      });
+                    }}
+                    className="mt-2 h-2 w-full cursor-pointer accent-secondary"
+                  />
+                }
+              >
+                Âge minimum
+              </FieldLabel>
+              <FieldLabel
+                control={
+                  <input
+                    type="range"
+                    min={18}
+                    max={80}
+                    value={data.preferred_age_max}
+                    aria-label="Âge maximum"
+                    onChange={(e) => {
+                      const max = Number(e.target.value);
+                      patch({
+                        preferred_age_max: max,
+                        preferred_age_min: Math.min(max, data.preferred_age_min),
+                      });
+                    }}
+                    className="mt-2 h-2 w-full cursor-pointer accent-secondary"
+                  />
+                }
+              >
+                Âge maximum
+              </FieldLabel>
               <SkipOption onClick={skipWithoutSave} />
             </StepBody>
           </>
         );
 
       case "scope":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Compass} optional>
+              <div className="space-y-2.5">
+                {SCOPE_OPTIONS.map((opt) => (
+                  <RegisterChoiceRow
+                    key={opt.value}
+                    label={opt.label}
+                    description={SCOPE_DESCRIPTIONS[opt.value]}
+                    selected={data.preferred_relation_scope === opt.value}
+                    onSelect={() => patch({ preferred_relation_scope: opt.value })}
+                  />
+                ))}
+                <RegisterSkipButton onClick={handleSkip} />
+              </div>
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Compass} />
@@ -952,6 +1183,19 @@ export function OnboardingWizard({
         );
 
       case "photo":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={Camera} optional>
+              <RegisterPhotoUpload
+                preview={photoPreview}
+                onFileSelect={(file) => {
+                  setPhotoFile(file);
+                  setPhotoPreview(URL.createObjectURL(file));
+                }}
+              />
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={Camera} />
@@ -963,9 +1207,11 @@ export function OnboardingWizard({
             <StepBody>
               <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-border/70 bg-muted/15 py-10">
                 {photoPreview ? (
-                  <div
-                    className="h-36 w-36 rounded-full bg-cover bg-center ring-4 ring-secondary/20"
-                    style={{ backgroundImage: `url(${photoPreview})` }}
+                  // eslint-disable-next-line @next/next/no-img-element -- blob URL preview
+                  <img
+                    src={photoPreview}
+                    alt="Aperçu de votre photo de profil"
+                    className="h-36 w-36 rounded-full object-cover ring-4 ring-secondary/20"
                   />
                 ) : (
                   <div className="flex h-36 w-36 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-secondary/15">
@@ -992,6 +1238,16 @@ export function OnboardingWizard({
         );
 
       case "done":
+        if (mode === "public") {
+          return (
+            <RegisterStep icon={HeartHandshake}>
+              <RegisterCompletion percent={displayCompletion} />
+              <Button variant="outline" className="w-full rounded-xl" asChild>
+                <Link href="/profil/modifier">Compléter plus tard</Link>
+              </Button>
+            </RegisterStep>
+          );
+        }
         return (
           <>
             <StepIllustration icon={HeartHandshake} gradient="from-secondary/25 to-accent" />
@@ -1005,12 +1261,12 @@ export function OnboardingWizard({
             />
             <StepBody className="flex flex-col items-center gap-4 py-4">
               <div className="w-full rounded-2xl bg-muted/30 p-4">
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-secondary transition-all"
-                    style={{ width: `${displayCompletion}%` }}
-                  />
-                </div>
+                <progress
+                  value={displayCompletion}
+                  max={100}
+                  aria-label="Complétion du profil"
+                  className="h-2 w-full appearance-none overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-secondary [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-secondary"
+                />
                 <p className="mt-2 text-center text-sm text-muted-foreground">
                   Complétion du profil
                 </p>
@@ -1027,12 +1283,68 @@ export function OnboardingWizard({
     }
   };
 
-  const usesCustomFooter = currentStep === "welcome";
+  const usesCustomFooter = false;
+  const isPublicAccountStep = mode === "public" && currentStep === "account";
+
+  const stepContent = renderStep();
+
+  if (mode === "public") {
+    const formCard = (
+      <>
+        <InscriptionFormCard
+          title={getPublicStepTitle(currentStep)}
+          subtitle={getPublicStepSubtitle(currentStep)}
+          step={currentStep}
+          phase={getInscriptionPhase(currentStep)}
+          variant={embedded ? "landing" : "default"}
+          footer={
+            isPublicAccountStep ? (
+              <div className="space-y-4">
+                <PrimaryFormButton pending={pending} onClick={handleNext}>
+                  {pending ? "Création du compte…" : "Créer mon compte"}
+                </PrimaryFormButton>
+                <LoginHint />
+              </div>
+            ) : (
+              <RegisterStepFooter
+                onBack={prevStepId(steps, currentStep) ? goBack : undefined}
+                onNext={handleNext}
+                onSkip={showFooterSkip ? handleSkip : undefined}
+                progress={progress}
+                pending={pending}
+                showBack={currentStep !== "account"}
+                nextLabel={
+                  currentStep === "done" ? "Terminer" : "Continuer"
+                }
+                skipLabel={
+                  currentStep === "photo"
+                    ? "Passer pour l'instant"
+                    : "Je préfère ne pas le dire"
+                }
+              />
+            )
+          }
+        >
+          <StepTransition stepKey={currentStep}>{stepContent}</StepTransition>
+        </InscriptionFormCard>
+      </>
+    );
+
+    return (
+      <div className={cn("w-full", className)}>
+        {embedded ? (
+          formCard
+        ) : (
+          <InscriptionPageLayout>{formCard}</InscriptionPageLayout>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("w-full", className)}>
       <OnboardingShell>
-        {renderStep()}
+        {stepContent}
         {!usesCustomFooter && (
           <StepFooter
             onBack={prevStepId(steps, currentStep) ? goBack : undefined}
@@ -1049,15 +1361,6 @@ export function OnboardingWizard({
           />
         )}
       </OnboardingShell>
-
-      {mode === "public" && currentStep === "account" && (
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Déjà inscrit ?{" "}
-          <Link href="/connexion" className="font-medium text-secondary hover:underline">
-            Se connecter
-          </Link>
-        </p>
-      )}
     </div>
   );
 }

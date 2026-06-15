@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   USER_HOME,
   ADMIN_HOME,
-  PUBLIC_HOME,
+  LOGIN_PATH,
   getHomeForRole,
+  safeRedirectPath,
 } from "@/lib/auth/routes";
 import {
   getSupabaseEnv,
@@ -26,6 +27,15 @@ const USER_PREFIXES = [
 const ADMIN_PREFIXES = ["/admin"];
 const AUTH_PATHS = ["/connexion", "/inscription", "/mot-de-passe-oublie"];
 
+function redirectToLogin(request: NextRequest, returnPath?: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = LOGIN_PATH;
+  url.search = "";
+  const safe = safeRedirectPath(returnPath ?? null);
+  if (safe) url.searchParams.set("redirect", safe);
+  return NextResponse.redirect(url);
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
@@ -35,15 +45,11 @@ export async function updateSession(request: NextRequest) {
   const isUserRoute = USER_PREFIXES.some((p) => pathname.startsWith(p));
   const isAdminRoute = ADMIN_PREFIXES.some((p) => pathname.startsWith(p));
   const isAuthPath = AUTH_PATHS.includes(pathname);
-  const isPublicLanding = pathname === PUBLIC_HOME;
+  const isLoginPage = pathname === LOGIN_PATH;
 
-  // Pas de cookie de session → pas d'appel réseau Supabase
   if (!hasSessionCookie) {
     if (isUserRoute || isAdminRoute) {
-      const url = request.nextUrl.clone();
-      url.pathname = PUBLIC_HOME;
-      if (isUserRoute) url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
+      return redirectToLogin(request, pathname);
     }
     return supabaseResponse;
   }
@@ -98,11 +104,8 @@ export async function updateSession(request: NextRequest) {
     authUnavailable = true;
   }
 
-  if (authUnavailable) {
-    // Cookie présent mais Supabase injoignable : laisser passer (évite de bloquer après login)
-    if (isAuthPath || isPublicLanding || isUserRoute || isAdminRoute) {
-      return supabaseResponse;
-    }
+  if (authUnavailable && (isUserRoute || isAdminRoute)) {
+    return redirectToLogin(request, pathname);
   }
 
   async function getProfileRole() {
@@ -116,10 +119,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if ((isUserRoute || isAdminRoute) && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = PUBLIC_HOME;
-    if (isUserRoute) url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+    return redirectToLogin(request, pathname);
   }
 
   if (user) {
@@ -128,11 +128,15 @@ export async function updateSession(request: NextRequest) {
     if (profile?.is_deleted || profile?.status === "deleted") {
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
-      url.pathname = PUBLIC_HOME;
+      url.pathname = LOGIN_PATH;
+      url.searchParams.set("error", "auth");
       return NextResponse.redirect(url);
     }
 
     const home = getHomeForRole(profile?.role);
+    const postLogin = safeRedirectPath(
+      request.nextUrl.searchParams.get("redirect")
+    );
 
     if (pathname === "/inscription") {
       const url = request.nextUrl.clone();
@@ -141,15 +145,16 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    if (pathname.startsWith("/onboarding") && !user) {
+    if (isLoginPage || (isAuthPath && pathname !== "/inscription")) {
       const url = request.nextUrl.clone();
-      url.pathname = "/inscription";
+      url.pathname = postLogin ?? home;
+      url.search = "";
       return NextResponse.redirect(url);
     }
 
-    if (isPublicLanding || isAuthPath) {
+    if (pathname === "/") {
       const url = request.nextUrl.clone();
-      url.pathname = home;
+      url.pathname = postLogin ?? home;
       url.search = "";
       return NextResponse.redirect(url);
     }

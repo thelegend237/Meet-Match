@@ -1,100 +1,300 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
-import { MessageCircle, ChevronRight } from "lucide-react";
-import { formatChatListTime, getInitials } from "@/lib/chat/format";
-import { matchStatusLabels } from "@/lib/admin/labels";
+import { useMemo, useState } from "react";
+import { MessageCircle, Search, SquarePen } from "lucide-react";
+import { ChatListAvatar } from "@/components/user/chat-list-avatar";
+import { formatChatListTime } from "@/lib/chat/format";
+import { isProfileOnline } from "@/lib/discover/profile-status";
 import type { ChatSummary } from "@/lib/types/database";
+import { cn } from "@/lib/utils";
 
 interface ChatsListProps {
   chats: ChatSummary[];
   getHref?: (chat: ChatSummary) => string;
+  activeChatId?: string;
+  variant?: "user" | "admin";
+  showFooter?: boolean;
 }
 
-export function ChatsList({ chats, getHref }: ChatsListProps) {
-  const hrefFor = getHref ?? ((chat: ChatSummary) => `/messages/${chat.id}`);
+type FilterId = "all" | "unread" | "contact" | "match";
 
-  if (chats.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-2xl bg-muted/30 px-6 py-16 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
-          <MessageCircle className="h-9 w-9 text-secondary/50" />
-        </div>
-        <p className="mt-5 text-lg font-semibold text-primary">Aucune discussion</p>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-          Une discussion s&apos;ouvre automatiquement lorsqu&apos;un match est activé.
-        </p>
-        <Link
-          href="/matchs"
-          className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-secondary hover:underline"
-        >
-          Voir mes matchs
-          <ChevronRight className="h-4 w-4" />
-        </Link>
-      </div>
-    );
+const FILTERS_USER: { id: FilterId; label: string }[] = [
+  { id: "all", label: "Toutes" },
+  { id: "unread", label: "Non lues" },
+];
+
+const FILTERS_ADMIN: { id: FilterId; label: string }[] = [
+  { id: "all", label: "Toutes" },
+  { id: "unread", label: "Non lues" },
+  { id: "contact", label: "Contact" },
+  { id: "match", label: "Matchs" },
+];
+
+function matchesFilter(chat: ChatSummary, filter: FilterId) {
+  if (filter === "all") return true;
+  if (filter === "unread") return (chat.unread_count ?? 0) > 0;
+  if (filter === "contact") return chat.type === "admin_contact";
+  if (filter === "match") return chat.type === "match_group";
+  return true;
+}
+
+function displayTitle(chat: ChatSummary, isAdmin: boolean) {
+  if (chat.type === "admin_contact" && !isAdmin) {
+    return "Équipe Meet & Match";
   }
+  return chat.title;
+}
+
+function previewText(chat: ChatSummary, isAdmin: boolean): string {
+  const content = chat.last_message?.content ?? "Aucun message";
+  if (chat.status === "closed") {
+    return `Discussion fermée · ${content}`;
+  }
+  if (isAdmin) {
+    const prefix = chat.type === "match_group" ? "Match · " : "Contact · ";
+    return `${prefix}${content}`;
+  }
+  return content;
+}
+
+function isOnline(chat: ChatSummary) {
+  if (chat.status !== "open") return false;
+  const timestamps = chat.participant_last_seen_at;
+  if (!timestamps?.length) return false;
+  return timestamps.some((ts) => isProfileOnline(ts));
+}
+
+export function ChatsList({
+  chats,
+  getHref,
+  activeChatId,
+  variant = "user",
+  showFooter,
+}: ChatsListProps) {
+  const isAdmin = variant === "admin";
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<FilterId>("all");
+
+  const hrefFor =
+    getHref ??
+    ((chat: ChatSummary) =>
+      isAdmin ? `/admin/conversations/${chat.id}` : `/messages/${chat.id}`);
+  const newChatHref = isAdmin ? "/admin/conversations" : "/contact";
+  const emptyCtaHref = isAdmin ? "/admin/utilisateurs" : "/contact";
+  const emptyCtaLabel = isAdmin ? "Voir les membres" : "Contacter l'admin";
+  const footerVisible = showFooter ?? !isAdmin;
+  const allHref = isAdmin ? "/admin/conversations" : "/messages";
+  const filters = isAdmin ? FILTERS_ADMIN : FILTERS_USER;
+
+  const totalUnread = useMemo(
+    () => chats.reduce((sum, c) => sum + (c.unread_count ?? 0), 0),
+    [chats]
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return chats.filter((chat) => {
+      if (!matchesFilter(chat, filter)) return false;
+      if (!q) return true;
+      const haystack = [
+        displayTitle(chat, isAdmin),
+        chat.last_message?.content ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [chats, query, filter, isAdmin]);
+
+  const filterCounts = useMemo(() => {
+    const counts: Record<FilterId, number> = {
+      all: chats.length,
+      unread: chats.filter((c) => (c.unread_count ?? 0) > 0).length,
+      contact: chats.filter((c) => c.type === "admin_contact").length,
+      match: chats.filter((c) => c.type === "match_group").length,
+    };
+    return counts;
+  }, [chats]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-      <ul className="divide-y divide-border/50">
-        {chats.map((chat) => (
-          <li key={chat.id}>
+    <div className="flex h-full min-h-0 flex-col bg-[#f8f6fc]">
+      <div className="mm-chat-list-header">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-[#2e1a47]">Conversations</h2>
+            {totalUnread > 0 && (
+              <span className="rounded-full bg-[#e91e8c] px-2 py-0.5 text-[10px] font-bold text-white">
+                {totalUnread}
+              </span>
+            )}
+          </div>
+          {!isAdmin && (
             <Link
-              href={hrefFor(chat)}
-              className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/40 active:bg-muted/60"
+              href={newChatHref}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7b3d8f] transition-colors hover:bg-[#f3eef8]"
+              aria-label="Nouvelle conversation"
             >
-              <div className="relative h-[52px] w-[52px] shrink-0">
-                <div className="relative h-full w-full overflow-hidden rounded-full bg-gradient-to-br from-primary/15 to-secondary/15 ring-1 ring-border/40">
-                  {chat.photo ? (
-                    <Image
-                      src={chat.photo}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="52px"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm font-semibold text-primary">
-                      {getInitials(chat.title)}
-                    </div>
-                  )}
-                </div>
-                {chat.status === "open" && (
-                  <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-card bg-green-500" />
-                )}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="truncate font-semibold text-primary">{chat.title}</p>
-                  {chat.last_message && (
-                    <span className="shrink-0 text-[11px] text-muted-foreground">
-                      {formatChatListTime(chat.last_message.created_at)}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-0.5 flex items-center justify-between gap-2">
-                  <p className="truncate text-sm text-muted-foreground">
-                    {chat.last_message?.content ?? "Aucun message"}
-                  </p>
-                  {chat.status === "closed" && (
-                    <span className="shrink-0 text-[10px] uppercase text-muted-foreground">
-                      Fermé
-                    </span>
-                  )}
-                </div>
-                {chat.match_status && (
-                  <p className="mt-0.5 text-[11px] font-medium text-secondary/80">
-                    {matchStatusLabels[chat.match_status] ?? chat.match_status}
-                  </p>
-                )}
-              </div>
-
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+              <SquarePen className="h-[1.15rem] w-[1.15rem] stroke-[1.75]" />
             </Link>
-          </li>
-        ))}
-      </ul>
+          )}
+        </div>
+
+        {isAdmin && (
+          <>
+            <div className="relative mt-3">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9b8fa8]" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Rechercher..."
+                aria-label="Rechercher une conversation"
+                className="mm-chat-list-search w-full"
+              />
+            </div>
+
+            <div className="mm-chat-list-filters mt-3">
+              {filters.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setFilter(item.id)}
+                  className={cn(
+                    "mm-chat-list-filter-btn",
+                    filter === item.id && "mm-chat-list-filter-btn-active"
+                  )}
+                >
+                  {item.label}
+                  <span className="tabular-nums">{filterCounts[item.id]}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {chats.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+          <MessageCircle className="h-12 w-12 text-[#e91e8c]/30" />
+          <p className="mt-4 font-semibold text-primary">Aucune discussion</p>
+          <Link
+            href={emptyCtaHref}
+            className="mt-4 text-sm font-semibold text-[#e91e8c] hover:underline"
+          >
+            {emptyCtaLabel}
+          </Link>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
+          <p className="text-sm font-medium text-[#2e1a47]">Aucun résultat</p>
+          <p className="mt-1 text-xs text-[#6b5f7a]">
+            Essayez un autre filtre ou une autre recherche.
+          </p>
+        </div>
+      ) : (
+        <>
+          <ul className="mm-chat-list-scroll">
+            {filtered.map((chat) => {
+              const isActive = activeChatId === chat.id;
+              const title = displayTitle(chat, isAdmin);
+              const unread = chat.unread_count ?? 0;
+              const hasUnread = unread > 0;
+              const preview = previewText(chat, isAdmin);
+              const online = isOnline(chat);
+
+              return (
+                <li key={chat.id}>
+                  <Link
+                    href={hrefFor(chat)}
+                    className={cn(
+                      "mm-chat-list-card",
+                      isActive && "mm-chat-list-card-active"
+                    )}
+                  >
+                    <div className="mm-chat-list-avatar-slot">
+                      <ChatListAvatar
+                        type={chat.type}
+                        title={title}
+                        photo={chat.photo}
+                        avatarUrls={chat.avatar_urls}
+                        showOnline={online}
+                        size="md"
+                      />
+                    </div>
+
+                    <div className="mm-chat-list-body">
+                      <div className="flex items-start gap-2">
+                        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                          <p
+                            className={cn(
+                              "mm-chat-list-name min-w-0",
+                              (hasUnread || isActive) &&
+                                "mm-chat-list-name-unread"
+                            )}
+                          >
+                            {title}
+                          </p>
+                          {online && (
+                            <span
+                              className="mm-chat-list-online-dot"
+                              aria-label="En ligne"
+                            />
+                          )}
+                        </div>
+
+                        <div className="mm-chat-list-meta">
+                          {chat.last_message ? (
+                            <span
+                              className={cn(
+                                "mm-chat-list-time",
+                                hasUnread && "mm-chat-list-time-unread"
+                              )}
+                            >
+                              {formatChatListTime(
+                                chat.last_message.created_at
+                              )}
+                            </span>
+                          ) : (
+                            <span className="mm-chat-list-meta-spacer" />
+                          )}
+                          {hasUnread ? (
+                            <span className="mm-chat-list-unread-badge">
+                              {unread > 99 ? "99+" : unread}
+                            </span>
+                          ) : (
+                            <span className="mm-chat-list-meta-spacer" />
+                          )}
+                        </div>
+                      </div>
+
+                      <p
+                        className={cn(
+                          "mm-chat-list-preview",
+                          hasUnread && "mm-chat-list-preview-unread"
+                        )}
+                      >
+                        {preview}
+                      </p>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          {footerVisible && (
+            <div className="mm-chat-list-footer">
+              <Link
+                href={allHref}
+                className="flex w-full items-center justify-center rounded-xl border border-[#d8cfe6] bg-white py-3 text-sm font-semibold text-[#5b3d8f] shadow-sm transition-colors hover:border-[#7b3d8f]/40 hover:bg-[#faf8fc]"
+              >
+                Voir toutes les conversations
+              </Link>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

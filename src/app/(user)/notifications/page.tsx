@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { NotificationsList } from "@/components/user/notifications-list";
+import { PageHeader, PageStack } from "@/components/layout/page-header";
 import type { Notification } from "@/lib/types/database";
 
 export const metadata = {
@@ -22,14 +23,12 @@ export default async function NotificationsPage() {
     .limit(50);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-3xl font-bold text-primary">Notifications</h1>
-        <p className="mt-2 text-muted-foreground">
-          Restez informé de l&apos;activité sur votre compte.
-        </p>
-      </div>
+    <PageStack>
+      <PageHeader
+        title="Notifications"
+        description="Restez informé de l'activité sur votre compte."
+      />
       <NotificationsList notifications={(notifications as Notification[]) ?? []} />
-    </div>
+    </PageStack>
   );
 }

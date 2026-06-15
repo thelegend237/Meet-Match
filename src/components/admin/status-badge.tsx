@@ -25,9 +25,11 @@ const variantMap: Record<string, "default" | "secondary" | "success" | "warning"
 export function StatusBadge({
   kind,
   status,
+  className,
 }: {
   kind: StatusKind;
   status: string;
+  className?: string;
 }) {
   const labels =
     kind === "profile"
@@ -37,7 +39,7 @@ export function StatusBadge({
         : matchStatusLabels;
 
   return (
-    <Badge variant={variantMap[status] ?? "outline"}>
+    <Badge variant={variantMap[status] ?? "outline"} className={className}>
       {labels[status] ?? status}
     </Badge>
   );

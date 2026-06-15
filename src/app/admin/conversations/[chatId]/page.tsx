@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { AdminBackLink } from "@/components/admin/admin-page";
 import { AdminChatControls } from "@/components/admin/admin-chat-controls";
 import { ChatThread } from "@/components/user/chat-thread";
+import { markChatMessagesAsRead } from "@/lib/chat/mark-read";
 import { requireAdmin } from "@/lib/auth/session";
 import { getChatThread } from "@/lib/user/chats";
 
@@ -16,48 +16,59 @@ export default async function AdminConversationPage({ params }: PageProps) {
 
   if (!supabaseChat) notFound();
 
-  const { chat, messages, senderById, partnerName, canSend } = supabaseChat;
-  const senderMap = Object.fromEntries(senderById);
+  await markChatMessagesAsRead(chatId, admin.id);
 
-  const backHref =
-    chat.type === "match_group"
-      ? "/admin/conversations/matchs"
-      : "/admin/conversations";
+  const { chat, messages, senderById, partnerName, canSend, matchId } =
+    supabaseChat;
+
+  const participants = [...supabaseChat.participants].sort((a, b) => {
+    if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const memberParticipant = participants.find((p) => !p.isAdmin);
+  const memberName = memberParticipant?.name ?? null;
+  const memberPhoto = memberParticipant?.photo ?? null;
 
   const title =
     chat.type === "match_group" && partnerName
       ? partnerName
       : chat.type === "match_group"
         ? "Discussion match"
-        : "Contact visiteur";
+        : memberName ?? "Contact visiteur";
 
   const subtitle =
     chat.type === "admin_contact"
-      ? "Message du formulaire contact"
+      ? memberName
+        ? "Échange avec un membre inscrit"
+        : "Message du formulaire contact"
       : "Match accompagné";
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] flex-col gap-4">
-      <div className="flex shrink-0 items-center justify-between gap-3">
-        <AdminBackLink href={backHref} label="Retour aux conversations" />
-        <AdminChatControls chatId={chatId} status={chat.status} />
-      </div>
-
-      <ChatThread
-        chatId={chatId}
-        initialMessages={messages}
-        senderById={senderMap}
-        currentUserId={admin.id}
-        canSend={canSend}
-        className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-border/60 shadow-sm"
-        header={{
-          title,
-          subtitle,
-          backHref,
-          isOpen: chat.status === "open",
-          isAdmin: true,
-        }}
-      />
-    </div>
+    <ChatThread
+      chatId={chatId}
+      initialMessages={messages}
+      senderById={senderById}
+      currentUserId={admin.id}
+      canSend={canSend}
+      className="h-full min-h-0"
+      header={{
+        title,
+        subtitle,
+        avatarUrl:
+          chat.type === "admin_contact"
+            ? memberPhoto
+            : memberPhoto ?? supabaseChat.partnerPhoto,
+        backHref: "/admin/conversations",
+        isOpen: chat.status === "open",
+        isStaffView: true,
+        isMatchGroup: chat.type === "match_group",
+        matchId,
+        participants,
+        headerActions: (
+          <AdminChatControls chatId={chatId} status={chat.status} />
+        ),
+      }}
+    />
   );
 }

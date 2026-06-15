@@ -1,42 +1,13 @@
-import {
-  AdminKpiCard,
-  AdminKpiGrid,
-  AdminPageHeader,
-} from "@/components/admin/admin-page";
-import { MatchingPanel } from "@/components/admin/matching-panel";
-import { getMutualLikes } from "@/lib/admin/matching";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Matching — Admin",
-};
+interface PageProps {
+  searchParams: Promise<{ user?: string }>;
+}
 
-export default async function AdminMatchingPage() {
-  const pairs = await getMutualLikes();
-
-  return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="Matching"
-        description="Couples avec likes réciproques — cliquez sur un couple pour comparer les profils avant de proposer une mise en relation."
-      />
-
-      <AdminKpiGrid cols={2}>
-        <AdminKpiCard
-          icon="heart"
-          label="Couples en attente"
-          value={pairs.length}
-          accent="secondary"
-        />
-        <AdminKpiCard
-          icon="users"
-          label="Profils impliqués"
-          value={pairs.length * 2}
-          hint="Likes réciproques détectés"
-          accent="primary"
-        />
-      </AdminKpiGrid>
-
-      <MatchingPanel pairs={pairs} />
-    </div>
-  );
+export default async function AdminMatchingRedirect({ searchParams }: PageProps) {
+  const { user } = await searchParams;
+  const query = user
+    ? `?tab=proposer&queue=manual&user=${encodeURIComponent(user)}`
+    : "?tab=proposer";
+  redirect(`/admin/matchs${query}`);
 }

@@ -5,19 +5,23 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { newPasswordSchema, type NewPasswordFormData } from "@/lib/validations/auth";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const inputClass =
+  "h-12 w-full rounded-xl border border-[#e8e0f0] bg-[#faf8fc] px-4 text-sm text-[#2e1a47] shadow-sm transition-colors placeholder:text-[#9b8fa8]/80 focus:border-[#e91e8c] focus:outline-none focus:ring-2 focus:ring-[#e91e8c]/20";
 
 interface ChangePasswordFormProps {
   fromReset?: boolean;
+  className?: string;
 }
 
-export function ChangePasswordForm({ fromReset = false }: ChangePasswordFormProps) {
+export function ChangePasswordForm({
+  fromReset = false,
+  className,
+}: ChangePasswordFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,54 +65,82 @@ export function ChangePasswordForm({ fromReset = false }: ChangePasswordFormProp
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Lock className="h-5 w-5 text-secondary" />
-          {fromReset ? "Nouveau mot de passe" : "Modifier le mot de passe"}
-        </CardTitle>
-        <CardDescription>
-          {fromReset
-            ? "Choisissez un nouveau mot de passe pour votre compte."
-            : "Utilisez au moins 8 caractères."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Nouveau mot de passe</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              {...register("password")}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
-          </div>
+    <section className={cn("mm-landing-panel overflow-hidden", className)}>
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#7b3d8f] via-[#e91e8c] to-[#f9a8d4]" />
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              {...register("confirmPassword")}
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
-                {errors.confirmPassword.message}
-              </p>
-            )}
+      <div className="border-b border-[#ebe6f0]/80 bg-gradient-to-br from-white via-white to-[#fce7f3]/20 px-6 py-5 sm:px-8">
+        <div className="flex items-start gap-4">
+          <div className="mm-landing-icon-pink h-12 w-12 shrink-0">
+            <Lock className="h-5 w-5 stroke-[1.75]" />
           </div>
+          <div>
+            <h2 className="font-serif text-xl font-bold text-[#2e1a47]">
+              {fromReset ? "Nouveau mot de passe" : "Modifier le mot de passe"}
+            </h2>
+            <p className="mt-1 text-sm text-[#6b5f7a]">
+              {fromReset
+                ? "Choisissez un nouveau mot de passe pour sécuriser votre compte."
+                : "Utilisez au moins 8 caractères, avec lettres et chiffres."}
+            </p>
+          </div>
+        </div>
+      </div>
 
-          <Button type="submit" variant="secondary" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Enregistrer
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4 bg-white px-6 py-6 sm:px-8"
+      >
+        <div>
+          <label
+            htmlFor="password"
+            className="mb-2 block text-sm font-semibold text-[#2e1a47]"
+          >
+            Nouveau mot de passe
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            className={inputClass}
+            {...register("password")}
+          />
+          {errors.password && (
+            <p className="mt-1.5 text-sm text-destructive">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="confirmPassword"
+            className="mb-2 block text-sm font-semibold text-[#2e1a47]"
+          >
+            Confirmer le mot de passe
+          </label>
+          <input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            className={inputClass}
+            {...register("confirmPassword")}
+          />
+          {errors.confirmPassword && (
+            <p className="mt-1.5 text-sm text-destructive">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7b3d8f] to-[#e91e8c] text-sm font-semibold text-white shadow-lg shadow-[#e91e8c]/25 transition-all hover:brightness-105 disabled:opacity-60 sm:w-auto sm:px-8"
+        >
+          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          Enregistrer
+        </button>
+      </form>
+    </section>
   );
 }

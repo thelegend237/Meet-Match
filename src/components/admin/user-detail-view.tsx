@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
   Calendar,
   Clock,
   Heart,
+  Loader2,
   Mail,
   MapPin,
+  MessageSquare,
   Phone,
   Shield,
 } from "lucide-react";
@@ -50,9 +53,13 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
   const { profile, stats, photos, payments, matchHistory, recentLikesSent, recentLikesReceived } =
     detail;
   const { pending, run } = useAdminAction();
+  const [pendingAccessType, setPendingAccessType] = useState<
+    "registration" | "matching" | "full" | null
+  >(null);
   const age = getAge(profile.date_of_birth);
 
   function grantAccess(type: "registration" | "matching" | "full") {
+    setPendingAccessType(type);
     void run(
       () => grantFreeAccessAction(profile.id, type),
       { success: "Accès accordé." }
@@ -139,6 +146,12 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 sm:flex-col">
+              <Button size="sm" variant="secondary" className="rounded-full" asChild>
+                <Link href={`/admin/conversations/open?user=${profile.id}`}>
+                  <MessageSquare className="h-4 w-4" />
+                  Envoyer un message
+                </Link>
+              </Button>
               {ACCESS_OPTIONS.map((opt) => (
                 <Button
                   key={opt.type}
@@ -148,6 +161,9 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
                   className="bg-white/80"
                   onClick={() => grantAccess(opt.type)}
                 >
+                  {pending && pendingAccessType === opt.type && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   {opt.label}
                 </Button>
               ))}

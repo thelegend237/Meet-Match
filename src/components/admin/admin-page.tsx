@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { PageBackLink, PageHeader } from "@/components/layout/page-header";
 import {
-  ArrowLeft,
   Bell,
   CheckCircle,
   Clock,
@@ -50,52 +50,72 @@ function AdminIcon({
 
 /* ── Page header ── */
 
-export function AdminPageHeader({
-  title,
-  description,
-  backHref,
-  backLabel = "Retour",
-  action,
-}: {
-  title: string;
-  description?: string;
-  backHref?: string;
-  backLabel?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      {backHref && <AdminBackLink href={backHref} label={backLabel} />}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-2xl font-bold text-primary sm:text-3xl">
-            {title}
-          </h1>
-          {description && (
-            <p className="mt-2 max-w-2xl text-muted-foreground">{description}</p>
-          )}
-        </div>
-        {action}
-      </div>
-    </div>
-  );
+export function AdminPageHeader(
+  props: React.ComponentProps<typeof PageHeader>
+) {
+  return <PageHeader {...props} />;
 }
 
-export function AdminBackLink({
-  href,
-  label = "Retour",
-}: {
+export function AdminBackLink(
+  props: React.ComponentProps<typeof PageBackLink>
+) {
+  return <PageBackLink {...props} />;
+}
+
+/* ── Section tabs ── */
+
+export type AdminSectionTab = {
+  id: string;
+  label: string;
   href: string;
-  label?: string;
+  count?: number;
+};
+
+export function AdminSectionTabs({
+  tabs,
+  activeId,
+  className,
+}: {
+  tabs: AdminSectionTab[];
+  activeId: string;
+  className?: string;
 }) {
   return (
-    <Link
-      href={href}
-      className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-secondary"
+    <nav
+      aria-label="Sections"
+      className={cn(
+        "flex gap-1 overflow-x-auto rounded-xl border border-border/60 bg-card p-1 shadow-sm",
+        className
+      )}
     >
-      <ArrowLeft className="h-4 w-4" />
-      {label}
-    </Link>
+      {tabs.map((tab) => {
+        const active = tab.id === activeId;
+        return (
+          <Link
+            key={tab.id}
+            href={tab.href}
+            className={cn(
+              "inline-flex min-w-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
+              active
+                ? "bg-secondary text-white shadow-sm"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-primary"
+            )}
+          >
+            <span className="truncate">{tab.label}</span>
+            {tab.count !== undefined && (
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+                  active ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                )}
+              >
+                {tab.count}
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -127,12 +147,7 @@ export function AdminKpiCard({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-border/60 bg-card p-4 shadow-sm",
-        className
-      )}
-    >
+    <div className={cn("mm-card p-4", className)}>
       <div className="flex items-start gap-3">
         {icon && (
           <div
@@ -189,14 +204,9 @@ export function AdminSectionCard({
   headerAction?: React.ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm",
-        className
-      )}
-    >
+    <div className={cn("mm-card overflow-hidden", className)}>
       {(title || headerAction) && (
-        <div className="flex items-start justify-between gap-4 border-b border-border/40 px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-border/40 px-4 py-3">
           <div>
             {title && (
               <h2 className="text-base font-semibold text-primary">{title}</h2>
@@ -208,7 +218,7 @@ export function AdminSectionCard({
           {headerAction}
         </div>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-4">{children}</div>
     </div>
   );
 }
@@ -231,7 +241,7 @@ export function AdminTableShell({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+    <div className="mm-card overflow-hidden">
       <div className="overflow-x-auto">
         <table
           className="w-full text-left text-sm"

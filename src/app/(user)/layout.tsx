@@ -1,9 +1,12 @@
 import { requireUser } from "@/lib/auth/session";
 import { getUnreadCount } from "@/lib/actions/notifications";
+import { getMyLikedIds } from "@/lib/actions/likes";
 import { getUnreadMessageCount } from "@/lib/user/messages";
 import { getUserMatches, countPendingMatchActions } from "@/lib/user/matches";
 import { touchLastSeen } from "@/lib/actions/discover";
+import { LastSeenHeartbeat } from "@/components/user/last-seen-heartbeat";
 import { UserShell } from "@/components/user/user-shell";
+import { UserContentArea } from "@/components/user/user-content-area";
 
 export default async function UserLayout({
   children,
@@ -11,22 +14,28 @@ export default async function UserLayout({
   children: React.ReactNode;
 }) {
   const profile = await requireUser();
-  const unreadCount = await getUnreadCount();
+  const [unreadCount, likedIds] = await Promise.all([
+    getUnreadCount(),
+    getMyLikedIds(),
+  ]);
   const unreadMessageCount = await getUnreadMessageCount(profile.id);
   const matches = await getUserMatches(profile.id);
   const pendingMatchCount = countPendingMatchActions(matches);
   await touchLastSeen();
 
   return (
-    <UserShell
-      unreadCount={unreadCount}
-      unreadMessageCount={unreadMessageCount}
-      pendingMatchCount={pendingMatchCount}
-      displayName={profile.display_name || undefined}
-    >
-      <div className="w-full px-4 py-4 sm:px-6 sm:py-6 xl:max-w-5xl xl:px-8 xl:py-8">
-        {children}
-      </div>
-    </UserShell>
+    <>
+      <LastSeenHeartbeat />
+      <UserShell
+        unreadCount={unreadCount}
+        unreadMessageCount={unreadMessageCount}
+        pendingMatchCount={pendingMatchCount}
+        likedCount={likedIds.length}
+        displayName={profile.display_name || undefined}
+        avatarUrl={profile.primary_photo_url}
+      >
+        <UserContentArea>{children}</UserContentArea>
+      </UserShell>
+    </>
   );
 }

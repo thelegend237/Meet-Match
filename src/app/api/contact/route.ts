@@ -68,7 +68,11 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, chatId: data });
+    return NextResponse.json({
+      success: true,
+      chatId: data,
+      canOpenInApp: Boolean(user?.id),
+    });
   } catch {
     return NextResponse.json(
       { error: "Une erreur est survenue." },

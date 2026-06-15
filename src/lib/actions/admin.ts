@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth/session";
+import {
+  buildMatchProposalPair,
+  getMatchingCandidateById,
+  searchMatchingCandidates,
+} from "@/lib/admin/matching";
 
 async function getAdminProfile() {
   const profile = await getCurrentProfile();
@@ -13,6 +18,47 @@ async function getAdminProfile() {
     };
   }
   return { error: null, profile };
+}
+
+export async function getMatchingCandidateAction(userId: string) {
+  const { error: authError } = await getAdminProfile();
+  if (authError) return { error: authError, candidate: null };
+
+  const candidate = await getMatchingCandidateById(userId);
+  if (!candidate) {
+    return { error: "Membre introuvable.", candidate: null };
+  }
+
+  return { candidate, error: null };
+}
+
+export async function searchMatchingCandidatesAction(
+  query: string,
+  excludeUserId?: string
+) {
+  const { error: authError } = await getAdminProfile();
+  if (authError) return { error: authError, candidates: [] };
+
+  const candidates = await searchMatchingCandidates(query, excludeUserId);
+  return { candidates, error: null };
+}
+
+export async function loadMatchProposalPairAction(
+  userAId: string,
+  userBId: string
+) {
+  const { error: authError } = await getAdminProfile();
+  if (authError) return { error: authError, pair: null };
+
+  const pair = await buildMatchProposalPair(userAId, userBId, "manual");
+  if (!pair) {
+    return {
+      error: "Impossible de charger ce couple (profil manquant ou match déjà existant).",
+      pair: null,
+    };
+  }
+
+  return { pair, error: null };
 }
 
 export async function proposeMatchAction(userAId: string, userBId: string) {
@@ -31,7 +77,6 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/admin/matching");
   revalidatePath("/admin/matchs");
   revalidatePath("/admin");
   revalidatePath("/decouvrir");
@@ -56,7 +101,6 @@ export async function updateMatchStatusAction(
   if (error) return { error: error.message };
 
   revalidatePath("/admin/matchs");
-  revalidatePath("/admin/matching");
   revalidatePath("/admin");
   revalidatePath("/decouvrir");
   return { success: true };
@@ -105,24 +149,6 @@ export async function updateChatStatusAction(
 
   revalidatePath(`/admin/conversations/${chatId}`);
   revalidatePath("/admin/conversations");
-  revalidatePath("/admin/conversations/matchs");
   return { success: true };
 }
 
-export async function sendAdminMessage(chatId: string, content: string) {
-  const { error: authError, profile: admin } = await getAdminProfile();
-  if (authError || !admin) return { error: authError! };
-
-  const supabase = await createClient();
-
-  const { error } = await supabase.from("messages").insert({
-    chat_id: chatId,
-    sender_id: admin.id,
-    content,
-  });
-
-  if (error) return { error: error.message };
-
-  revalidatePath(`/admin/conversations/${chatId}`);
-  return { success: true };
-}

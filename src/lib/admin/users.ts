@@ -1,3 +1,4 @@
+import { getCountryName } from "@/lib/geo/countries-data";
 import { createClient } from "@/lib/supabase/server";
 import type {
   AdminUserDetail,
@@ -15,6 +16,34 @@ function daysSince(dateStr: string): number {
   );
 }
 
+export async function getDistinctUserCountries(): Promise<
+  { code: string; name: string }[]
+> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("country_code")
+    .eq("role", "user")
+    .eq("is_deleted", false)
+    .not("country_code", "is", null)
+    .limit(10000);
+
+  const codes = [
+    ...new Set(
+      (data ?? [])
+        .map((row) => row.country_code?.trim().toUpperCase())
+        .filter((code): code is string => Boolean(code))
+    ),
+  ];
+
+  return codes
+    .map((code) => ({
+      code,
+      name: getCountryName(code),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+}
+
 export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
   const supabase = await createClient();
 
@@ -23,7 +52,7 @@ export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
       supabase
         .from("profiles")
         .select(
-          "id, display_name, email, primary_photo_url, status, profile_completion, registration_payment_status, city, country_code, is_verified, last_seen_at, created_at"
+          "id, display_name, email, date_of_birth, primary_photo_url, status, profile_completion, registration_payment_status, city, country_code, is_verified, last_seen_at, created_at"
         )
         .eq("role", "user")
         .eq("is_deleted", false)

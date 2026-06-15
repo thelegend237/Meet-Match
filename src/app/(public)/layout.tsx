@@ -1,16 +1,21 @@
-import { Header } from "@/components/public/header";
-import { Footer } from "@/components/public/footer";
+import { PublicShell } from "@/components/public/public-shell";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { getHomeForRole } from "@/lib/auth/routes";
 
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const profile = await getCurrentProfile();
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    <PublicShell
+      isAuthenticated={Boolean(profile)}
+      homeHref={profile ? getHomeForRole(profile.role) : undefined}
+      displayName={profile?.display_name}
+    >
+      {children}
+    </PublicShell>
   );
 }

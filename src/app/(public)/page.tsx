@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
+import { LandingHeroSection } from "@/components/public/landing-hero";
 import {
-  HeroSection,
-  SocialProofSection,
   WhySection,
   StepsSection,
   PricingTeaserSection,
@@ -18,15 +17,14 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="pb-24 sm:pb-0">
-      <HeroSection />
-      <SocialProofSection />
-      <WhySection />
-      <StepsSection />
-      <PricingTeaserSection />
-      <TrustSection />
-      <RegisterSection />
-      <LandingStickyCta />
+    <div className="mm-landing-page pb-24 sm:pb-0">
+      <LandingHeroSection />
+      <WhySection variant="landing" />
+      <StepsSection variant="landing" />
+      <PricingTeaserSection variant="landing" />
+      <TrustSection variant="landing" />
+      <RegisterSection variant="landing" />
+      <LandingStickyCta variant="landing" />
     </div>
   );
 }

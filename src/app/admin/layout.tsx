@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { AdminShell } from "@/components/admin/admin-shell";
+import { getAdminNotificationCount } from "@/lib/admin/notifications";
 
 export const metadata = {
   title: "Administration",
@@ -11,15 +12,16 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const profile = await requireAdmin();
+  const notificationCount = await getAdminNotificationCount();
 
   return (
     <AdminShell
       displayName={profile.display_name || profile.email}
       role={profile.role}
+      photoUrl={profile.primary_photo_url}
+      notificationCount={notificationCount}
     >
-      <div className="w-full px-4 py-4 sm:px-6 sm:py-6 xl:px-8 xl:py-8">
-        {children}
-      </div>
+      <div className="mm-admin-page-container">{children}</div>
     </AdminShell>
   );
 }

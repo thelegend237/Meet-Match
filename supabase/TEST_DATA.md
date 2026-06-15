@@ -2,7 +2,7 @@
 
 ## Installation
 
-1. Appliquer les migrations (`001` → `004`) si ce n'est pas déjà fait
+1. Appliquer **toutes** les migrations **`001` → `013`** dans l'ordre — voir [`MIGRATIONS.md`](./MIGRATIONS.md)
 2. Exécuter `seed.sql` (paramètres tarifaires)
 3. Exécuter **`seed_test_data.sql`** dans le **SQL Editor** Supabase
 
@@ -85,3 +85,22 @@ URL      : http://localhost:3000/connexion
 ```
 
 Après connexion → `/decouvrir` avec **100+ profils** recommandés et en grille.
+
+## Référentiel géographique (pays / villes)
+
+**Prérequis :** migrations `001` → `009` → `013` (voir [`MIGRATIONS.md`](./MIGRATIONS.md)).
+
+1. Appliquer **`013_geo_cities.sql`** (après 009)
+2. (Recommandé) Importer toutes les villes GeoNames (> 5 000 hab.) :
+
+```bash
+npm run seed:geo
+```
+
+Variables requises dans `.env.local` :
+- `NEXT_PUBLIC_SUPABASE_URL` (ou `SUPABASE_URL`)
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Sans seed complet, ~30 villes principales sont déjà disponibles (Paris, Douala, Abidjan, etc.).
+
+L'inscription utilise un autocomplete : sélectionnez un pays, puis tapez au moins 2 lettres pour chercher une ville.

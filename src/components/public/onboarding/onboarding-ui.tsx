@@ -56,7 +56,7 @@ export function StepHeader({
   optional?: boolean;
 }) {
   return (
-    <div className="px-5 pt-5 pb-2">
+    <div className="px-4 pt-4 pb-1.5">
       {optional && (
         <span className="mb-2 inline-block rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           Optionnel
@@ -82,7 +82,7 @@ export function StepBody({
   className?: string;
 }) {
   return (
-    <div className={cn("flex-1 overflow-y-auto px-5 pb-4", className)}>
+    <div className={cn("flex-1 overflow-y-auto px-4 pb-3", className)}>
       {children}
     </div>
   );
@@ -104,7 +104,7 @@ export function ChoiceRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        "flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-left transition-all active:scale-[0.99]",
+        "flex w-full items-center justify-between gap-3 rounded-2xl border px-3.5 py-3 text-left transition-all active:scale-[0.99]",
         selected
           ? "border-secondary/40 bg-secondary/10 shadow-sm"
           : "border-border/60 bg-muted/30 hover:border-secondary/20 hover:bg-muted/50"
@@ -216,6 +216,7 @@ export function StepFooter({
   pending,
   showBack = true,
   skipLabel,
+  embedded = false,
 }: {
   onBack?: () => void;
   onNext: () => void;
@@ -225,9 +226,15 @@ export function StepFooter({
   pending?: boolean;
   showBack?: boolean;
   skipLabel?: string;
+  embedded?: boolean;
 }) {
   return (
-    <div className="shrink-0 border-t border-border/50 bg-card px-4 py-3">
+    <div
+      className={cn(
+        "shrink-0",
+        embedded ? "px-0 py-0" : "border-t border-border/50 bg-card px-3 py-2.5"
+      )}
+    >
       {onSkip && (
         <button
           type="button"
@@ -251,12 +258,12 @@ export function StepFooter({
         ) : (
           <span className="w-11 shrink-0" />
         )}
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
-            style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-          />
-        </div>
+        <progress
+          value={Math.min(100, Math.max(0, progress))}
+          max={100}
+          aria-hidden
+          className="h-1 flex-1 appearance-none overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
+        />
         <button
           type="button"
           onClick={onNext}
@@ -282,7 +289,7 @@ export function LargeInput({
   return (
     <input
       className={cn(
-        "w-full rounded-2xl border border-border/60 bg-muted/20 px-4 py-4 text-base text-primary placeholder:text-muted-foreground/70 focus:border-secondary/50 focus:bg-card focus:outline-none focus:ring-2 focus:ring-secondary/20",
+        "w-full rounded-2xl border border-border/60 bg-muted/20 px-3.5 py-3 text-base text-primary placeholder:text-muted-foreground/70 focus:border-secondary/50 focus:bg-card focus:outline-none focus:ring-2 focus:ring-secondary/20",
         className
       )}
       {...props}
@@ -297,7 +304,7 @@ export function LargeTextarea({
   return (
     <textarea
       className={cn(
-        "min-h-[140px] w-full resize-none rounded-2xl border border-border/60 bg-muted/20 px-4 py-4 text-base text-primary placeholder:text-muted-foreground/70 focus:border-secondary/50 focus:bg-card focus:outline-none focus:ring-2 focus:ring-secondary/20",
+        "min-h-[140px] w-full resize-none rounded-2xl border border-border/60 bg-muted/20 px-3.5 py-3 text-base text-primary placeholder:text-muted-foreground/70 focus:border-secondary/50 focus:bg-card focus:outline-none focus:ring-2 focus:ring-secondary/20",
         className
       )}
       {...props}
@@ -305,10 +312,25 @@ export function LargeTextarea({
   );
 }
 
-export function FieldLabel({ children }: { children: React.ReactNode }) {
+export function FieldLabel({
+  children,
+  htmlFor,
+  control,
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+  control?: React.ReactNode;
+}) {
   return (
-    <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <label
+      htmlFor={control ? undefined : htmlFor}
+      className={cn(
+        "mb-2 block text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+        control && "cursor-default"
+      )}
+    >
       {children}
+      {control}
     </label>
   );
 }
