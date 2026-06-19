@@ -76,9 +76,10 @@ export function PaymentRequiredBanner({ profile }: { profile: Profile }) {
             <AlertCircle className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="font-medium text-primary">Activez votre compte</p>
+            <p className="font-medium text-primary">Activez votre abonnement</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Réglez les frais d&apos;inscription pour découvrir les profils.
+              Parcourez les profils gratuitement. Activez votre compte pour
+              envoyer des likes et interagir avec les membres.
             </p>
           </div>
         </div>

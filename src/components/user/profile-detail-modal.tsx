@@ -15,6 +15,7 @@ import {
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { showDiscoverActionError, showSubscriptionRequiredToast } from "@/lib/discover/interaction-toast";
 import { likeProfile } from "@/lib/actions/likes";
 import { ProfileCardBadges } from "@/components/user/profile-card-badges";
 import { getAge } from "@/lib/utils";
@@ -32,6 +33,7 @@ interface ProfileDetailModalProps {
   alreadyLiked: boolean;
   onClose: () => void;
   onLiked?: (profileId: string) => void;
+  canInteract?: boolean;
 }
 
 function countryName(code: string | null) {
@@ -44,6 +46,7 @@ export function ProfileDetailModal({
   alreadyLiked,
   onClose,
   onLiked,
+  canInteract = true,
 }: ProfileDetailModalProps) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [liked, setLiked] = useState(alreadyLiked);
@@ -81,12 +84,16 @@ export function ProfileDetailModal({
   const currentPhoto = photos[photoIndex] ?? photos[0];
 
   function handleLike() {
+    if (!canInteract) {
+      showSubscriptionRequiredToast();
+      return;
+    }
     if (liked || !profile) return;
     const profileId = profile.id;
     startTransition(async () => {
       const result = await likeProfile(profileId);
       if (result.error) {
-        toast({ variant: "destructive", title: "Erreur", description: result.error });
+        showDiscoverActionError(result.error);
       } else {
         setLiked(true);
         onLiked?.(profileId);

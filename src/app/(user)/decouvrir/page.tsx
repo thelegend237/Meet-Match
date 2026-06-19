@@ -20,7 +20,6 @@ import { getViewerLocation } from "@/lib/discover/geo";
 import { touchLastSeen } from "@/lib/actions/discover";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
 import { viewerHasDiscoveryPhoto } from "@/lib/discover/eligibility";
-import { PROFILE_PHOTO_ANTI_FAKE_DISCOVERY } from "@/lib/photos/copy";
 import type { GenderPreference } from "@/lib/types/database";
 
 export const metadata = {
@@ -29,22 +28,7 @@ export const metadata = {
 
 export default async function DecouvrirPage() {
   const profile = await requireUser();
-
-  if (!hasPlatformAccess(profile)) {
-    return (
-      <PageStack>
-        <PaymentRequiredBanner profile={profile} />
-        <ProfileCompletionBanner profile={profile} />
-        <EmptyState
-          icon={Compass}
-          title="Activez votre compte"
-          description="Réglez les frais d'inscription pour parcourir les profils et envoyer des likes."
-          actionHref="/paiements"
-          actionLabel="Activer mon compte"
-        />
-      </PageStack>
-    );
-  }
+  const canInteract = hasPlatformAccess(profile);
 
   await touchLastSeen();
 
@@ -72,20 +56,13 @@ export default async function DecouvrirPage() {
 
   return (
     <PageStack className="gap-4">
-      {!hasPhoto && <PhotoRequiredBanner />}
+      {!canInteract && <PaymentRequiredBanner profile={profile} />}
+      {canInteract && !hasPhoto && <PhotoRequiredBanner />}
       {profile.profile_completion < 100 && (
         <ProfileCompletionBanner profile={profile} />
       )}
 
-      {!hasPhoto ? (
-        <EmptyState
-          icon={Compass}
-          title="Ajoutez une photo pour commencer"
-          description={PROFILE_PHOTO_ANTI_FAKE_DISCOVERY}
-          actionHref="/profil/photos"
-          actionLabel="Ajouter ma photo"
-        />
-      ) : others.length === 0 ? (
+      {others.length === 0 ? (
         <EmptyState
           icon={Compass}
           title="Aucun profil pour le moment"
@@ -98,11 +75,13 @@ export default async function DecouvrirPage() {
                   Rencontres
                 </Link>
               </Button>
-              <Button variant="outline" className="rounded-full" asChild>
-                <Link href="/decouvrir/likes">
-                  Mes likes ({likedIds.length})
-                </Link>
-              </Button>
+              {canInteract && (
+                <Button variant="outline" className="rounded-full" asChild>
+                  <Link href="/decouvrir/likes">
+                    Mes likes ({likedIds.length})
+                  </Link>
+                </Button>
+              )}
             </div>
           }
         />
@@ -113,6 +92,7 @@ export default async function DecouvrirPage() {
           passedIds={passedIds}
           genderPreference={genderPreference}
           viewerLocation={viewerLocation}
+          canInteract={canInteract}
         />
       )}
     </PageStack>

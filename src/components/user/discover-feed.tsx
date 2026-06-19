@@ -18,6 +18,7 @@ import {
 import { likeProfile } from "@/lib/actions/likes";
 import { passProfile } from "@/lib/actions/passes";
 import { toast } from "@/hooks/use-toast";
+import { showDiscoverActionError, showSubscriptionRequiredToast } from "@/lib/discover/interaction-toast";
 import { Reveal } from "@/components/motion/motion";
 import type { DiscoveryProfile } from "@/lib/types/database";
 
@@ -30,6 +31,7 @@ interface DiscoverFeedProps {
   passedIds: string[];
   genderPreference: GenderPreference;
   viewerLocation: ViewerLocation;
+  canInteract?: boolean;
 }
 
 export function DiscoverFeed({
@@ -38,6 +40,7 @@ export function DiscoverFeed({
   passedIds,
   genderPreference: initialPreference,
   viewerLocation,
+  canInteract = true,
 }: DiscoverFeedProps) {
   const [selected, setSelected] = useState<DiscoveryProfile | null>(null);
   const [likedSet, setLikedSet] = useState(() => new Set(likedIds));
@@ -53,6 +56,10 @@ export function DiscoverFeed({
   }
 
   function handleQuickLike(profile: DiscoveryProfile) {
+    if (!canInteract) {
+      showSubscriptionRequiredToast();
+      return;
+    }
     if (likedSet.has(profile.id) || isPending) return;
     setLikedSet((prev) => new Set(prev).add(profile.id));
     setLikePendingId(profile.id);
@@ -65,11 +72,7 @@ export function DiscoverFeed({
           next.delete(profile.id);
           return next;
         });
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: result.error,
-        });
+        showDiscoverActionError(result.error);
         return;
       }
       toast({
@@ -80,6 +83,10 @@ export function DiscoverFeed({
   }
 
   function handlePass(profile: DiscoveryProfile) {
+    if (!canInteract) {
+      showSubscriptionRequiredToast();
+      return;
+    }
     if (passedSet.has(profile.id) || isPending) return;
     setPassedSet((prev) => new Set(prev).add(profile.id));
     startTransition(async () => {
@@ -90,11 +97,7 @@ export function DiscoverFeed({
           next.delete(profile.id);
           return next;
         });
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: result.error,
-        });
+        showDiscoverActionError(result.error);
       }
     });
   }
@@ -244,6 +247,7 @@ export function DiscoverFeed({
         alreadyLiked={selected ? likedSet.has(selected.id) : false}
         onClose={() => setSelected(null)}
         onLiked={handleLiked}
+        canInteract={canInteract}
       />
     </>
   );

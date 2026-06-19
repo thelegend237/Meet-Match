@@ -22,8 +22,8 @@ export default async function MesLikesPage() {
         />
         <EmptyState
           icon={Heart}
-          title="Compte à activer"
-          description="Activez votre compte pour voir les profils que vous avez likés."
+          title="Abonnement requis pour liker"
+          description="Parcourez les profils gratuitement dans Découvrir. Activez votre compte pour envoyer des likes."
           actionHref="/paiements"
           actionLabel="Activer mon compte"
         />

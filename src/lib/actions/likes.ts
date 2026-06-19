@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile, hasPlatformAccess } from "@/lib/auth/session";
+import { SUBSCRIPTION_REQUIRED_ERROR } from "@/lib/discover/subscription";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
 import type { DiscoveryProfile } from "@/lib/types/database";
 
@@ -15,9 +16,7 @@ export async function likeProfile(toUserId: string) {
 
   const profile = await getCurrentProfile();
   if (!profile || !hasPlatformAccess(profile)) {
-    return {
-      error: "Activez votre compte pour liker des profils.",
-    };
+    return { error: SUBSCRIPTION_REQUIRED_ERROR };
   }
 
   if (user.id === toUserId) {

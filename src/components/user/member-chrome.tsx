@@ -1,4 +1,4 @@
-import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
+import { requireUser, hasPlatformAccess, canBrowseDiscovery } from "@/lib/auth/session";
 import { isStaffProfile } from "@/lib/auth/staff";
 import { getUnreadCount } from "@/lib/actions/notifications";
 import { getMyLikedIds } from "@/lib/actions/likes";
@@ -16,7 +16,7 @@ export async function MemberChrome({
 }) {
   const profile = await requireUser();
   const welcomeTourEligible =
-    profile.role === "user" && hasPlatformAccess(profile);
+    profile.role === "user" && canBrowseDiscovery(profile);
 
   let unreadCount = 0;
   let likedCount = 0;

@@ -15,6 +15,10 @@ import {
 } from "@/lib/discover/profile-status";
 import type { DiscoveryProfile } from "@/lib/types/database";
 import { toast } from "@/hooks/use-toast";
+import {
+  showDiscoverActionError,
+  showSubscriptionRequiredToast,
+} from "@/lib/discover/interaction-toast";
 
 type ViewerLocation = Pick<DiscoveryProfile, "city" | "country_code">;
 type ViewMode = "swipe" | "grid";
@@ -25,6 +29,7 @@ interface RencontresFeedProps {
   passedIds: string[];
   genderPreference: GenderPreference;
   viewerLocation: ViewerLocation;
+  canInteract?: boolean;
 }
 
 export function RencontresFeed({
@@ -33,6 +38,7 @@ export function RencontresFeed({
   passedIds,
   genderPreference: initialPreference,
   viewerLocation,
+  canInteract = true,
 }: RencontresFeedProps) {
   const [selected, setSelected] = useState<DiscoveryProfile | null>(null);
   const [likedSet, setLikedSet] = useState(() => new Set(likedIds));
@@ -48,6 +54,10 @@ export function RencontresFeed({
   }
 
   function handleQuickLike(profile: DiscoveryProfile) {
+    if (!canInteract) {
+      showSubscriptionRequiredToast();
+      return;
+    }
     if (likedSet.has(profile.id) || pending) return;
     setLikedSet((prev) => new Set(prev).add(profile.id));
     setLikePendingId(profile.id);
@@ -60,11 +70,7 @@ export function RencontresFeed({
           next.delete(profile.id);
           return next;
         });
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: result.error,
-        });
+        showDiscoverActionError(result.error);
         return;
       }
       toast({
@@ -75,6 +81,10 @@ export function RencontresFeed({
   }
 
   function handlePass(profile: DiscoveryProfile) {
+    if (!canInteract) {
+      showSubscriptionRequiredToast();
+      return;
+    }
     if (passedSet.has(profile.id) || pending) return;
     setPassedSet((prev) => new Set(prev).add(profile.id));
     startTransition(async () => {
@@ -85,11 +95,7 @@ export function RencontresFeed({
           next.delete(profile.id);
           return next;
         });
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: result.error,
-        });
+        showDiscoverActionError(result.error);
       }
     });
   }
@@ -235,6 +241,7 @@ export function RencontresFeed({
         alreadyLiked={selected ? likedSet.has(selected.id) : false}
         onClose={() => setSelected(null)}
         onLiked={handleLiked}
+        canInteract={canInteract}
       />
     </>
   );

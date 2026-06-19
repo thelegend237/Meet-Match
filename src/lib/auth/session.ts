@@ -88,6 +88,17 @@ export function hasPlatformAccess(profile: Profile): boolean {
   );
 }
 
+/** Parcourir les profils (sans liker) — compte membre actif, même non payé. */
+export function canBrowseDiscovery(profile: Profile): boolean {
+  if (profile.is_deleted || profile.status === "deleted") return false;
+  if (profile.status === "suspended") return false;
+  if (isStaffProfile(profile)) return true;
+  return (
+    profile.role === "user" &&
+    (profile.status === "active" || profile.status === "pending")
+  );
+}
+
 export function isAdmin(profile: Profile): boolean {
   return isStaffProfile(profile);
 }

@@ -590,11 +590,7 @@ export function OnboardingWizard({
             const pay =
               refreshed.profile?.registration_payment_status ??
               initialProfile?.registration_payment_status;
-            router.push(
-              pay === "paid" || pay === "free"
-                ? "/decouvrir?welcome=1"
-                : "/paiements"
-            );
+            router.push("/decouvrir?welcome=1");
             router.refresh();
             break;
           }
