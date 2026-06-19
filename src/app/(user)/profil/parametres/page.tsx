@@ -1,4 +1,6 @@
 import { requireUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
+import { viewerHasDiscoveryPhoto } from "@/lib/discover/eligibility";
 import { ProfileSettings } from "@/components/user/profile-settings";
 import { PageHeader, PageStack } from "@/components/layout/page-header";
 
@@ -15,15 +17,22 @@ export default async function ParametresPage({ searchParams }: PageProps) {
   const { reset } = await searchParams;
   const fromReset = reset === "1";
 
+  const supabase = await createClient();
+  const hasPhoto = await viewerHasDiscoveryPhoto(supabase, profile.id, profile);
+
   return (
     <PageStack>
       <PageHeader
         title="Paramètres"
-        description="Gérez votre compte, votre sécurité et vos préférences."
+        description="Compte, sécurité, confidentialité et préférences."
         backHref="/profil"
         backLabel="Profil"
       />
-      <ProfileSettings profile={profile} fromReset={fromReset} />
+      <ProfileSettings
+        profile={profile}
+        fromReset={fromReset}
+        hasPhoto={hasPhoto}
+      />
     </PageStack>
   );
 }
