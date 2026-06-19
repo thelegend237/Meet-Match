@@ -15,6 +15,7 @@ import {
 import { ChangePasswordForm } from "@/components/user/change-password-form";
 import { ReplayWelcomeTourButton } from "@/components/user/replay-welcome-tour-button";
 import { SignOutButton } from "@/components/user/sign-out-button";
+import { DeleteAccountButton } from "@/components/user/delete-account-button";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/types/database";
 import type { LucideIcon } from "lucide-react";
@@ -234,6 +235,18 @@ export function ProfileSettings({ profile, fromReset = false }: ProfileSettingsP
               </p>
             </div>
             <SignOutButton />
+          </div>
+
+          <div className="mm-card space-y-4 border-destructive/20 p-5 sm:p-6">
+            <div>
+              <p className="font-semibold text-[#2e1a47]">Supprimer mon compte</p>
+              <p className="mt-1 text-sm leading-relaxed text-[#6b5f7a]">
+                Désactive définitivement votre profil, clôture vos matchs en cours
+                et vous déconnecte. Vos données restent archivées conformément à
+                notre politique de confidentialité.
+              </p>
+            </div>
+            <DeleteAccountButton displayName={profile.display_name ?? ""} />
           </div>
         </section>
 

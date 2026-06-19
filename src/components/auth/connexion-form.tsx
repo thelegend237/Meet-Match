@@ -22,6 +22,7 @@ export function ConnexionForm() {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const authError = searchParams.get("error") === "auth";
+  const accountDeleted = searchParams.get("deleted") === "1";
 
   const {
     register,
@@ -41,6 +42,15 @@ export function ConnexionForm() {
       });
     }
   }, [authError]);
+
+  useEffect(() => {
+    if (accountDeleted) {
+      toast({
+        title: "Compte supprimé",
+        description: "Votre compte a été désactivé. Merci d'avoir utilisé Meet & Match.",
+      });
+    }
+  }, [accountDeleted]);
 
   async function onSubmit(data: LoginFormData) {
     setIsSubmitting(true);
