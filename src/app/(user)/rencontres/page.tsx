@@ -56,7 +56,11 @@ export default async function RencontresPage() {
     getMyPassedIds(),
   ]);
 
-  const discoveryProfiles = await loadDiscoveryProfiles(supabase, excludedUserIds);
+  const discoveryProfiles = await loadDiscoveryProfiles(
+    supabase,
+    excludedUserIds,
+    profile.id
+  );
   const rencontresProfiles = getRencontresProfiles(
     profile,
     discoveryProfiles,

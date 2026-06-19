@@ -82,8 +82,9 @@ export { isStaffProfile } from "@/lib/auth/staff";
 export function hasPlatformAccess(profile: Profile): boolean {
   if (isStaffProfile(profile)) return true;
   return (
-    profile.registration_payment_status === "paid" ||
-    profile.registration_payment_status === "free"
+    profile.status === "active" &&
+    (profile.registration_payment_status === "paid" ||
+      profile.registration_payment_status === "free")
   );
 }
 

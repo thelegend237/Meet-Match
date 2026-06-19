@@ -56,7 +56,11 @@ export default async function DecouvrirPage() {
     getMyPassedIds(),
   ]);
 
-  const discoveryProfiles = await loadDiscoveryProfiles(supabase, excludedUserIds);
+  const discoveryProfiles = await loadDiscoveryProfiles(
+    supabase,
+    excludedUserIds,
+    profile.id
+  );
   const { others } = splitRecommendedProfiles(profile, discoveryProfiles, likedIds);
 
   const genderPreference: GenderPreference = profile.preferred_gender ?? "both";
