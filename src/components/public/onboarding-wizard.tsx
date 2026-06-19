@@ -95,12 +95,9 @@ import { ToastAction } from "@/components/ui/toast";
 import { SocialAuthButtons, AuthDivider } from "@/components/auth/social-auth-buttons";
 import { LanguageMultiSelect } from "@/components/ui/language-multi-select";
 import { getProfileLanguages, type SpokenLanguageCode } from "@/lib/languages";
-import {
-  MAX_PROFILE_PHOTO_MB,
-  PROFILE_PHOTO_ACCEPT,
-  validateProfilePhotoFile,
-} from "@/lib/photos/limits";
+import { ProfilePhotoPicker } from "@/components/photos/profile-photo-picker";
 import { PROFILE_PHOTO_ANTI_FAKE_ONBOARDING } from "@/lib/photos/copy";
+import { MAX_PROFILE_PHOTO_MB, validateProfilePhotoFile } from "@/lib/photos/limits";
 import { StepTransition } from "@/components/motion/motion";
 
 type WizardMode = "public" | "continue";
@@ -1258,17 +1255,17 @@ export function OnboardingWizard({
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   JPG, PNG ou WebP — max {MAX_PROFILE_PHOTO_MB} Mo
                 </p>
-                <label className="mt-4 cursor-pointer rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground shadow-md">
-                  Choisir une photo
-                  <input
-                    type="file"
-                    accept={PROFILE_PHOTO_ACCEPT}
-                    className="sr-only"
-                    onChange={(e) => {
-                      handlePhotoFileInput(e.target.files?.[0], e.target);
-                    }}
-                  />
-                </label>
+                <ProfilePhotoPicker
+                  className="mt-4 max-w-sm"
+                  onFile={(file) => handlePhotoFileInput(file)}
+                  onError={(description) =>
+                    toast({
+                      variant: "destructive",
+                      title: "Photo refusée",
+                      description,
+                    })
+                  }
+                />
               </div>
             </StepBody>
           </>

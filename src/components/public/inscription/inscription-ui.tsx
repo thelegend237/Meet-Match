@@ -29,12 +29,9 @@ import {
   type InscriptionPhase,
 } from "@/lib/onboarding/step-groups";
 import type { OnboardingStepId } from "@/lib/onboarding/steps";
-import {
-  MAX_PROFILE_PHOTO_MB,
-  PROFILE_PHOTO_ACCEPT,
-  validateProfilePhotoFile,
-} from "@/lib/photos/limits";
+import { ProfilePhotoPicker } from "@/components/photos/profile-photo-picker";
 import { PROFILE_PHOTO_ANTI_FAKE_SHORT } from "@/lib/photos/copy";
+import { MAX_PROFILE_PHOTO_MB } from "@/lib/photos/limits";
 
 export function InscriptionPageLayout({
   children,
@@ -547,25 +544,11 @@ export function RegisterPhotoUpload({
         <p className="mt-2 text-center text-xs text-muted-foreground">
           JPG, PNG ou WebP — max {MAX_PROFILE_PHOTO_MB} Mo, visage bien visible
         </p>
-        <label className="mt-4 cursor-pointer rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-md shadow-secondary/25 transition-all hover:brightness-105 active:scale-[0.98]">
-          {preview ? "Changer la photo" : "Choisir une photo"}
-          <input
-            type="file"
-            accept={PROFILE_PHOTO_ACCEPT}
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              const validationError = validateProfilePhotoFile(file);
-              if (validationError) {
-                onError?.(validationError);
-                e.target.value = "";
-                return;
-              }
-              onFileSelect(file);
-            }}
-          />
-        </label>
+        <ProfilePhotoPicker
+          className="mt-4 max-w-sm"
+          onFile={onFileSelect}
+          onError={onError}
+        />
       </div>
     </div>
   );

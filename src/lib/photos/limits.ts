@@ -8,7 +8,10 @@ export const ALLOWED_PROFILE_PHOTO_TYPES = [
   "image/webp",
 ] as const;
 
-export const PROFILE_PHOTO_ACCEPT = ALLOWED_PROFILE_PHOTO_TYPES.join(",");
+export const PROFILE_PHOTO_ACCEPT = [
+  ...ALLOWED_PROFILE_PHOTO_TYPES,
+  "image/*",
+].join(",");
 
 export const PROFILE_PHOTO_SIZE_ERROR = `Fichier trop volumineux (max ${MAX_PROFILE_PHOTO_MB} Mo)`;
 
