@@ -32,6 +32,7 @@ Appliquer **dans l'ordre** via le SQL Editor Supabase (ou `supabase db push`).
 | 023 | `023_repair_discovery.sql` | Réparation `discover_profiles` + profils payés bloqués en pending |
 | 024 | `024_sync_primary_photo_url.sql` | Backfill `primary_photo_url`, RPC photo effective, RLS galerie |
 | 025 | `025_self_delete_account.sql` | Auto-suppression de compte (`soft_delete_user` renforcé) |
+| 026 | `026_match_partner_visibility.sql` | RLS partenaire de match, paiements co-participants, interdiction match staff |
 
 ## Dépendances clés
 
@@ -57,7 +58,7 @@ Variables `.env.local` : `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 
 **Ne pas** réutiliser un projet avec un autre schéma (ex. Control-Flow) : les enums et colonnes diffèrent et provoquent des erreurs en chaîne.
 
-Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 025 dans l'ordre.
+Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 026 dans l'ordre.
 
 **Base existante (Control-Flow)** : exécuter `000_schema_bridge.sql` puis `009` → `013`, ou mieux : nouveau projet dédié.
 

@@ -68,6 +68,22 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
 
   const supabase = await createClient();
 
+  const { data: participants } = await supabase
+    .from("profiles")
+    .select("id, role, display_name")
+    .in("id", [userAId, userBId]);
+
+  if (!participants || participants.length !== 2) {
+    return { error: "Profils introuvables." };
+  }
+
+  const nonMember = participants.find((p) => p.role !== "user");
+  if (nonMember) {
+    return {
+      error: `Impossible de proposer un match avec un compte équipe (${nonMember.display_name ?? "admin"}). Utilisez deux comptes membres.`,
+    };
+  }
+
   const { data: userA } = await supabase
     .from("profiles")
     .select("country_code")
@@ -89,6 +105,8 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
   revalidatePath("/admin/matchs");
   revalidatePath("/admin");
   revalidatePath("/decouvrir");
+  revalidatePath("/matchs");
+  revalidatePath("/notifications");
   return { success: true, matchId: data };
 }
 
