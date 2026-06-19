@@ -104,7 +104,7 @@ export default function TarifsPage() {
             <CreditCard className="h-6 w-6 stroke-[1.75]" />
           </div>
           <div>
-            <p className="font-serif text-lg font-bold text-[#2e1a47] sm:text-xl">
+            <p className="font-sans text-lg font-bold text-[#2e1a47] sm:text-xl">
               Pas de frais cachés
             </p>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a] sm:text-base">
@@ -146,7 +146,7 @@ export default function TarifsPage() {
 
             <div className="p-6 sm:p-8">
               <span className="mm-landing-eyebrow text-[10px]">{plan.badge}</span>
-              <h2 className="mt-2 font-serif text-xl font-bold text-[#2e1a47] sm:text-2xl">
+              <h2 className="mt-2 font-sans text-xl font-bold text-[#2e1a47] sm:text-2xl">
                 {plan.title}
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a]">
@@ -154,7 +154,7 @@ export default function TarifsPage() {
               </p>
 
               <div className="mt-6 flex items-baseline gap-2">
-                <p className="font-serif text-4xl font-bold text-[#2e1a47] sm:text-[2.75rem]">
+                <p className="font-sans text-4xl font-bold text-[#2e1a47] sm:text-[2.75rem]">
                   {formatCurrency(plan.amount, plan.currency)}
                 </p>
                 <span className="text-sm text-[#9b8fa8]">paiement unique</span>
@@ -212,7 +212,7 @@ export default function TarifsPage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {paymentSteps.map((item, index) => (
             <article key={item.step} className="mm-landing-card p-5">
-              <span className="font-serif text-2xl font-bold text-[#2e1a47]/15">
+              <span className="font-sans text-2xl font-bold text-[#2e1a47]/15">
                 {item.step}
               </span>
               <div
@@ -228,7 +228,7 @@ export default function TarifsPage() {
                 {index === 2 && <Sparkles className="h-5 w-5" />}
                 {index === 3 && <MessageCircle className="h-5 w-5" />}
               </div>
-              <h3 className="mt-3 font-serif text-base font-bold text-[#2e1a47]">
+              <h3 className="mt-3 font-sans text-base font-bold text-[#2e1a47]">
                 {item.title}
               </h3>
               <p className="mt-1.5 text-sm leading-relaxed text-[#6b5f7a]">
@@ -241,7 +241,7 @@ export default function TarifsPage() {
 
       <section className="mt-12 overflow-hidden rounded-2xl border border-[#ebe6f0]/80 bg-white shadow-[0_8px_32px_rgba(46,26,71,0.08)]">
         <div className="border-b border-[#ebe6f0]/80 bg-[#faf8fc] px-5 py-4 sm:px-6">
-          <h2 className="font-serif text-lg font-bold text-[#2e1a47] sm:text-xl">
+          <h2 className="font-sans text-lg font-bold text-[#2e1a47] sm:text-xl">
             Comparatif des formules
           </h2>
           <p className="mt-1 text-sm text-[#6b5f7a]">
@@ -302,7 +302,7 @@ export default function TarifsPage() {
             >
               <Check className="h-4 w-4 stroke-[2]" />
             </div>
-            <h3 className="mt-3 font-serif text-base font-bold text-[#2e1a47]">
+            <h3 className="mt-3 font-sans text-base font-bold text-[#2e1a47]">
               {benefit.title}
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-[#6b5f7a]">
@@ -318,7 +318,7 @@ export default function TarifsPage() {
             <MessageCircle className="h-5 w-5 stroke-[1.75]" />
           </div>
           <div>
-            <h3 className="font-serif text-lg font-semibold text-[#2e1a47]">
+            <h3 className="font-sans text-lg font-semibold text-[#2e1a47]">
               Contact administrateur gratuit
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a]">
@@ -340,7 +340,7 @@ export default function TarifsPage() {
             <Gift className="h-5 w-5 stroke-[1.75]" />
           </div>
           <div>
-            <h3 className="font-serif text-lg font-semibold text-[#2e1a47]">
+            <h3 className="font-sans text-lg font-semibold text-[#2e1a47]">
               Accès gratuit possible
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a]">
@@ -382,8 +382,9 @@ export default function TarifsPage() {
       </div>
 
       <p className="mt-8 text-center text-sm text-[#9b8fa8]">
-        Tarifs également disponibles en USD et CAD. Devises africaines (XAF)
-        prévues prochainement.
+        Tarifs affichés en dollars canadiens (CAD). Membres aux États-Unis : tarif
+        en USD ({formatCurrency(32, "USD")} inscription,{" "}
+        {formatCurrency(55, "USD")} matching).
       </p>
     </PublicPage>
   );

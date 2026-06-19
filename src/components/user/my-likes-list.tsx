@@ -147,7 +147,7 @@ export function MyLikesList({ profiles }: MyLikesListProps) {
         <div className="mm-landing-icon-pink h-16 w-16">
           <Heart className="h-8 w-8 stroke-[1.75]" />
         </div>
-        <p className="mt-5 font-serif text-xl font-bold text-[#2e1a47] sm:text-2xl">
+        <p className="mt-5 font-sans text-xl font-bold text-[#2e1a47] sm:text-2xl">
           Aucun like pour le moment
         </p>
         <p className="mt-2 max-w-md text-sm leading-relaxed text-[#6b5f7a]">

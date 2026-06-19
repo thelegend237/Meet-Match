@@ -21,6 +21,9 @@ Appliquer **dans l'ordre** via le SQL Editor Supabase (ou `supabase db push`).
 | 012 | `012_messages_mark_read.sql` | Marquer messages lus |
 | 013 | `013_geo_cities.sql` | Référentiel villes + autocomplete inscription |
 | 014 | `014_message_reactions.sql` | Réactions emoji sur les messages |
+| 015 | `015_pricing_cad_default.sql` | Tarifs par défaut en **CAD** (42 / 72) |
+| 016 | `016_fix_admin_contact_chat.sql` | Contact admin : réutilisation chat, admin sans `admin_profiles`, notification |
+| 017 | `017_notification_system.sql` | Notifications unifiées : types admin, like reçu, paiement confirmé, `notify_active_admins()` |
 
 ## Dépendances clés
 
@@ -46,7 +49,7 @@ Variables `.env.local` : `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 
 **Ne pas** réutiliser un projet avec un autre schéma (ex. Control-Flow) : les enums et colonnes diffèrent et provoquent des erreurs en chaîne.
 
-Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 013 dans l'ordre.
+Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 017 dans l'ordre.
 
 **Base existante (Control-Flow)** : exécuter `000_schema_bridge.sql` puis `009` → `013`, ou mieux : nouveau projet dédié.
 

@@ -3,6 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+const REVALIDATE_PATHS = [
+  "/notifications",
+  "/tableau-de-bord",
+  "/admin/notifications",
+  "/admin",
+  "/decouvrir",
+  "/matchs",
+  "/messages",
+] as const;
+
+function revalidateNotificationSurfaces() {
+  for (const path of REVALIDATE_PATHS) {
+    revalidatePath(path);
+  }
+}
+
 export async function markNotificationRead(id: string) {
   const supabase = await createClient();
   const {
@@ -18,8 +34,7 @@ export async function markNotificationRead(id: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/notifications");
-  revalidatePath("/tableau-de-bord");
+  revalidateNotificationSurfaces();
   return { success: true };
 }
 
@@ -38,8 +53,7 @@ export async function markAllNotificationsRead() {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/notifications");
-  revalidatePath("/tableau-de-bord");
+  revalidateNotificationSurfaces();
   return { success: true };
 }
 

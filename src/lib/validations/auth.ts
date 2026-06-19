@@ -42,9 +42,8 @@ export const newPasswordSchema = z
 export type NewPasswordFormData = z.infer<typeof newPasswordSchema>;
 
 function currencyForCountry(code: string): string {
-  if (code === "CA") return "CAD";
   if (code === "US") return "USD";
-  return "EUR";
+  return "CAD";
 }
 
 /** Liste pays ISO — préférer GEO_COUNTRIES / getCountryName pour l'affichage. */

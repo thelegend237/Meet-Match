@@ -110,7 +110,7 @@ export function InscriptionFormCard({
         />
         <h2
           className={cn(
-            "font-serif font-bold tracking-tight text-[#2e1a47]",
+            "font-sans font-bold tracking-tight text-[#2e1a47]",
             isLanding
               ? "mt-4 text-[1.65rem] sm:text-[1.75rem]"
               : "mt-5 text-2xl sm:text-[1.65rem]"
@@ -459,7 +459,7 @@ export function RegisterAgeRange({
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Tranche recherchée
         </p>
-        <p className="mt-2 font-serif text-4xl font-bold text-primary">
+        <p className="mt-2 font-sans text-4xl font-bold text-primary">
           {min}
           <span className="mx-2 text-secondary/60">–</span>
           {max}
@@ -582,7 +582,7 @@ export function RegisterCompletion({
             <Heart className="h-8 w-8 fill-secondary/20 stroke-[1.75]" />
           )}
         </div>
-        <p className="mt-4 font-serif text-xl font-bold text-primary">
+        <p className="mt-4 font-sans text-xl font-bold text-primary">
           {complete ? "Profil complet !" : `Profil à ${percent} %`}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">

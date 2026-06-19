@@ -61,7 +61,7 @@ export function PublicPage({
             className={cn(
               isLanding
                 ? cn("mm-landing-title", eyebrow && "mt-2")
-                : "font-serif text-3xl font-bold tracking-tight text-primary sm:text-4xl"
+                : "font-sans text-3xl font-bold tracking-tight text-primary sm:text-4xl"
             )}
           >
             {title}

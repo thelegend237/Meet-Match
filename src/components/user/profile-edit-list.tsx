@@ -300,7 +300,7 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
             onClick={() => setActiveField(null)}
           />
           <div className="relative w-full max-w-md rounded-t-2xl bg-white p-5 pb-8 shadow-xl sm:rounded-2xl">
-            <h3 className="font-serif text-lg font-semibold text-primary">
+            <h3 className="font-sans text-lg font-semibold text-primary">
               {ROWS.find((r) => r.id === activeField)?.label ??
                 (activeField === "preferred_age_min" ? "Âge recherché" : "Modifier")}
             </h3>

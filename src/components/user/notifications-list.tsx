@@ -7,43 +7,26 @@ import { Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "@/lib/utils/date";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { markNotificationRead, markAllNotificationsRead } from "@/lib/actions/notifications";
+import {
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "@/lib/actions/notifications";
+import {
+  getNotificationActionLabel,
+  getNotificationHref,
+  NOTIFICATION_TYPE_LABELS,
+} from "@/lib/notifications/display";
 import type { Notification } from "@/lib/types/database";
-
-const MATCH_NOTIFICATION_TYPES = new Set([
-  "match_proposed",
-  "matching_payment_required",
-  "chat_opened",
-  "match_success",
-  "match_failed",
-  "payment_confirmed",
-]);
-
-function getNotificationLink(notification: Notification): string | null {
-  if (notification.type === "chat_opened") {
-    const chatId = notification.metadata?.chat_id;
-    if (typeof chatId === "string") return `/messages/${chatId}`;
-  }
-
-  if (!MATCH_NOTIFICATION_TYPES.has(notification.type)) return null;
-  const matchId = notification.metadata?.match_id;
-  if (typeof matchId === "string") {
-    return `/matchs?match=${matchId}`;
-  }
-  if (
-    notification.type === "match_proposed" ||
-    notification.type === "matching_payment_required"
-  ) {
-    return "/matchs";
-  }
-  return null;
-}
 
 interface NotificationsListProps {
   notifications: Notification[];
+  isAdmin?: boolean;
 }
 
-export function NotificationsList({ notifications }: NotificationsListProps) {
+export function NotificationsList({
+  notifications,
+  isAdmin = false,
+}: NotificationsListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [items, setItems] = useState(notifications);
@@ -56,6 +39,7 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
       const prev = items;
       try {
         await markAllNotificationsRead();
+        router.refresh();
       } catch {
         setItems(prev);
         router.refresh();
@@ -72,6 +56,7 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
       const prev = items;
       try {
         await markNotificationRead(id);
+        router.refresh();
       } catch {
         setItems(prev);
         router.refresh();
@@ -105,22 +90,26 @@ export function NotificationsList({ notifications }: NotificationsListProps) {
       )}
       <div className="space-y-3">
         {items.map((n) => {
-          const link = getNotificationLink(n);
+          const link = getNotificationHref(n, { isAdmin });
+          const actionLabel = getNotificationActionLabel(n, { isAdmin });
+          const typeLabel = NOTIFICATION_TYPE_LABELS[n.type] ?? n.type;
+
           const content = (
             <>
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-primary">{n.title}</h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {typeLabel}
+                </span>
                 {!n.is_read && <Badge variant="secondary">Nouveau</Badge>}
               </div>
+              <h3 className="mt-2 font-medium text-primary">{n.title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{n.content}</p>
               <p className="mt-2 text-xs text-muted-foreground/70">
                 {formatDistanceToNow(n.created_at)}
               </p>
-              {link && (
+              {link && actionLabel && (
                 <p className="mt-2 text-sm font-medium text-secondary">
-                  {n.type === "chat_opened"
-                    ? "Ouvrir la discussion →"
-                    : "Voir le match →"}
+                  {actionLabel}
                 </p>
               )}
             </>

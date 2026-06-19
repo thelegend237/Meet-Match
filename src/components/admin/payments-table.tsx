@@ -368,7 +368,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
               {" · "}
               Revenus filtrés :{" "}
               <span className="font-semibold text-primary">
-                {formatCurrency(filteredRevenue, "EUR")}
+                {formatCurrency(filteredRevenue, "CAD")}
               </span>
             </p>
           </div>

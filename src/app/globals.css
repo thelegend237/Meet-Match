@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap");
 @import "tailwindcss";
 
 @theme inline {
@@ -18,8 +17,8 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -27,8 +26,6 @@
 }
 
 :root {
-  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-playfair: "Playfair Display", ui-serif, Georgia, serif;
   --radius: 0.75rem;
   --background: #f8f6fc;
   --foreground: #2e1a47;
@@ -64,10 +61,8 @@
     padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
   }
 
-  h1,
-  h2,
-  h3 {
-    @apply font-serif;
+  .font-brand {
+    font-family: var(--font-playfair), ui-serif, Georgia, serif;
   }
 
   .chat-wallpaper {
@@ -227,9 +222,10 @@
   .mm-gradient-sidebar {
     background: linear-gradient(
       180deg,
-      #4a2d7a 0%,
-      #7b3d8f 38%,
-      #c42d7a 72%,
+      #5c3489 0%,
+      #6d3d8f 22%,
+      #9b3288 55%,
+      #d42a82 78%,
       #e91e8c 100%
     );
   }
@@ -258,7 +254,7 @@
   }
 
   .mm-landing-title {
-    @apply font-serif text-2xl font-bold text-[#2e1a47] sm:text-3xl lg:text-4xl;
+    @apply text-2xl font-bold text-[#2e1a47] sm:text-3xl lg:text-4xl;
   }
 
   .mm-landing-subtitle {
@@ -314,7 +310,7 @@
   }
 
   .mm-admin-sidebar-link-active {
-    @apply bg-white/15 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14)];
+    @apply bg-white/20 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)] backdrop-blur-[2px];
   }
 
   .mm-badge-count {

@@ -141,7 +141,7 @@ export function ProfileSettings({ profile, fromReset = false }: ProfileSettingsP
               <User className="h-5 w-5 stroke-[1.75]" />
             </div>
             <div className="min-w-0">
-              <p className="font-serif text-lg font-bold text-[#2e1a47]">
+              <p className="font-sans text-lg font-bold text-[#2e1a47]">
                 {profile.display_name || "Mon compte"}
               </p>
               <p className="mt-1 flex items-center gap-2 text-sm text-[#6b5f7a]">

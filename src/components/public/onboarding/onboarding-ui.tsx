@@ -62,7 +62,7 @@ export function StepHeader({
           Optionnel
         </span>
       )}
-      <h2 className="font-serif text-2xl font-bold leading-tight text-primary">
+      <h2 className="font-sans text-2xl font-bold leading-tight text-primary">
         {title}
       </h2>
       {subtitle && (

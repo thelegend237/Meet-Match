@@ -36,12 +36,12 @@ export function AdminStatsGrid({ stats }: { stats: AdminStats }) {
       <AdminKpiCard label="Matchs échoués" value={stats.matchesFailed} accent="warning" />
       <AdminKpiCard
         label="Revenus inscription"
-        value={formatCurrency(stats.revenueRegistration, "EUR")}
+        value={formatCurrency(stats.revenueRegistration, "CAD")}
         accent="primary"
       />
       <AdminKpiCard
         label="Revenus matching"
-        value={formatCurrency(stats.revenueMatching, "EUR")}
+        value={formatCurrency(stats.revenueMatching, "CAD")}
         accent="primary"
       />
     </AdminKpiGrid>

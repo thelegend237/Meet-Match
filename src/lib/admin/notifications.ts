@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { getMutualLikes } from "@/lib/admin/matching";
 
 export type AdminNotificationCategory =
   | "contact"
@@ -44,21 +43,15 @@ function sortNotifications(items: AdminNotification[]) {
   });
 }
 
-export async function getAdminNotifications(): Promise<{
+export async function getAdminLiveQueue(): Promise<{
   notifications: AdminNotification[];
   summary: AdminNotificationSummary;
 }> {
   const supabase = await createClient();
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
 
   const [
     { data: contactChats },
     { data: matchChats },
-    { data: pendingMatches },
-    { data: unpaidUsers },
-    { data: newUsers },
-    mutualPairs,
     { data: recentMessages },
   ] = await Promise.all([
     supabase
@@ -75,29 +68,6 @@ export async function getAdminNotifications(): Promise<{
       .eq("status", "open")
       .order("created_at", { ascending: false })
       .limit(20),
-    supabase
-      .from("matches")
-      .select("id, user_a_id, user_b_id, status, proposed_at")
-      .eq("status", "pending_payment")
-      .order("proposed_at", { ascending: false })
-      .limit(15),
-    supabase
-      .from("profiles")
-      .select("id, display_name, email, created_at")
-      .eq("role", "user")
-      .eq("registration_payment_status", "unpaid")
-      .eq("status", "active")
-      .gte("created_at", weekAgo.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("profiles")
-      .select("id, display_name, email, created_at")
-      .eq("role", "user")
-      .gte("created_at", weekAgo.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(10),
-    getMutualLikes(),
     supabase
       .from("messages")
       .select("chat_id, content, created_at")
@@ -225,103 +195,71 @@ export async function getAdminNotifications(): Promise<{
     }
   }
 
-  for (const pair of mutualPairs.slice(0, 12)) {
-    notifications.push({
-      id: `matching-${pair.userAId}-${pair.userBId}`,
-      category: "matching",
-      priority: "medium",
-      title: `${pair.userAName} & ${pair.userBName}`,
-      description:
-        "Like réciproque détecté — comparez les profils avant de proposer une mise en relation.",
-      href: `/admin/matchs?tab=proposer&user=${pair.userAId}`,
-      createdAt: pair.signalAt ?? new Date().toISOString(),
-      actionLabel: "Comparer les profils",
-    });
-  }
-
-  if ((pendingMatches ?? []).length) {
-    const userIds = [
-      ...new Set(
-        (pendingMatches ?? []).flatMap((m) => [m.user_a_id, m.user_b_id])
-      ),
-    ];
-
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, display_name, email")
-      .in("id", userIds);
-
-    const nameById = new Map(
-      (profiles ?? []).map((p) => [p.id, p.display_name || p.email])
-    );
-
-    for (const match of pendingMatches ?? []) {
-      notifications.push({
-        id: `match-pending-${match.id}`,
-        category: "match_pending",
-        priority: "medium",
-        title: `${nameById.get(match.user_a_id) ?? "Membre"} & ${nameById.get(match.user_b_id) ?? "Membre"}`,
-        description:
-          "Match proposé — en attente du paiement des frais de matching par les deux membres.",
-        href: "/admin/matchs",
-        createdAt: match.proposed_at,
-        actionLabel: "Voir le suivi",
-      });
-    }
-  }
-
-  for (const user of unpaidUsers ?? []) {
-    notifications.push({
-      id: `registration-${user.id}`,
-      category: "registration",
-      priority: "medium",
-      title: user.display_name || user.email,
-      description:
-        "Inscription récente en attente de paiement — vous pouvez accorder un accès gratuit si besoin.",
-      href: `/admin/utilisateurs/${user.id}`,
-      createdAt: user.created_at,
-      actionLabel: "Voir le profil",
-    });
-  }
-
-  const unpaidIds = new Set((unpaidUsers ?? []).map((u) => u.id));
-  for (const user of newUsers ?? []) {
-    if (unpaidIds.has(user.id)) continue;
-
-    notifications.push({
-      id: `new-member-${user.id}`,
-      category: "new_member",
-      priority: "low",
-      title: user.display_name || user.email,
-      description: "Nouveau membre inscrit sur la plateforme cette semaine.",
-      href: `/admin/utilisateurs/${user.id}`,
-      createdAt: user.created_at,
-      actionLabel: "Découvrir le profil",
-    });
-  }
-
   const sorted = sortNotifications(notifications);
-  const actionable = sorted.filter((n) => n.priority !== "low").length;
+  const actionable = sorted.length;
 
   return {
     notifications: sorted,
     summary: {
       total: sorted.length,
       actionable,
-      discussions: sorted.filter(
-        (n) => n.category === "contact" || n.category === "match_chat"
-      ).length,
-      matching: sorted.filter(
-        (n) => n.category === "matching" || n.category === "match_pending"
-      ).length,
-      members: sorted.filter(
-        (n) => n.category === "registration" || n.category === "new_member"
-      ).length,
+      discussions: sorted.length,
+      matching: 0,
+      members: 0,
     },
   };
 }
 
+/** Badge admin = non lues en base + discussions actives non couvertes. */
+export async function getAdminBadgeCount(adminId: string): Promise<number> {
+  const supabase = await createClient();
+
+  const [{ count: dbUnread }, live, { data: unreadChatNotifs }] =
+    await Promise.all([
+      supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", adminId)
+        .eq("is_read", false),
+      getAdminLiveQueue(),
+      supabase
+        .from("notifications")
+        .select("metadata")
+        .eq("user_id", adminId)
+        .eq("is_read", false)
+        .eq("type", "chat_opened"),
+    ]);
+
+  const coveredChats = new Set(
+    (unreadChatNotifs ?? [])
+      .map((n) => n.metadata?.chat_id)
+      .filter((id): id is string => typeof id === "string")
+  );
+
+  const extraLive = live.notifications.filter((item) => {
+    if (item.category === "contact") {
+      const chatId = item.id.replace("contact-", "");
+      return !coveredChats.has(chatId);
+    }
+    return true;
+  }).length;
+
+  return (dbUnread ?? 0) + extraLive;
+}
+
+/** @deprecated Utiliser getAdminLiveQueue + fetchUserNotifications */
+export async function getAdminNotifications(): Promise<{
+  notifications: AdminNotification[];
+  summary: AdminNotificationSummary;
+}> {
+  return getAdminLiveQueue();
+}
+
 export async function getAdminNotificationCount(): Promise<number> {
-  const { summary } = await getAdminNotifications();
-  return summary.actionable;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return 0;
+  return getAdminBadgeCount(user.id);
 }

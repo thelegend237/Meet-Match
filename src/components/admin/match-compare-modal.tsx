@@ -140,7 +140,7 @@ function ScoreRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-serif text-2xl font-bold leading-none text-[#2e1a47]">
+        <span className="font-sans text-2xl font-bold leading-none text-[#2e1a47]">
           {score}
         </span>
         <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#9b8fa8]">
@@ -297,7 +297,7 @@ function ProfilePhotoColumn({
     <div className="min-w-0">
       <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
         <div className="min-w-0">
-          <p className="truncate font-serif text-base font-bold text-[#2e1a47] sm:text-lg">
+          <p className="truncate font-sans text-base font-bold text-[#2e1a47] sm:text-lg">
             {profile.display_name}
             {age !== null && (
               <span className="font-sans text-sm font-normal text-[#9b8fa8]">
@@ -369,7 +369,7 @@ function ProfileDetails({
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="font-serif text-lg font-bold text-[#2e1a47]">
+              <h3 className="font-sans text-lg font-bold text-[#2e1a47]">
                 Détails du profil
               </h3>
               <p className="mt-0.5 text-sm text-[#6b5f7a]">
@@ -510,7 +510,7 @@ function CompatibilitySection({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
         <ScoreRing score={score} />
         <div className="min-w-0 flex-1">
-          <p className="font-serif text-lg font-bold text-[#2e1a47]">
+          <p className="font-sans text-lg font-bold text-[#2e1a47]">
             Indice de compatibilité
           </p>
           <p className="mt-1 text-sm text-[#6b5f7a]">
@@ -578,7 +578,7 @@ export function MatchCompareModal({
                   {sourceLabel(pair.source)}
                 </span>
               </div>
-              <h2 className="mt-3 font-serif text-xl font-bold text-[#2e1a47] sm:text-2xl">
+              <h2 className="mt-3 font-sans text-xl font-bold text-[#2e1a47] sm:text-2xl">
                 Comparer les profils
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#6b5f7a]">

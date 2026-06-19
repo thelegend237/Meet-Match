@@ -78,7 +78,7 @@ export function HeroSection() {
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <Reveal direction="left">
-              <h1 className="font-serif text-3xl font-bold leading-tight tracking-tight text-primary sm:text-4xl lg:text-[2.65rem]">
+              <h1 className="font-sans text-3xl font-bold leading-tight tracking-tight text-primary sm:text-4xl lg:text-[2.65rem]">
                 Commencez votre histoire dès{" "}
                 <span className="text-secondary">aujourd&apos;hui</span>
               </h1>
@@ -117,7 +117,7 @@ export function HeroSection() {
               <p className="text-center text-xs font-semibold uppercase tracking-wider text-secondary">
                 Créer votre compte
               </p>
-              <h2 className="mt-2 text-center font-serif text-xl font-bold text-primary sm:text-2xl">
+              <h2 className="mt-2 text-center font-sans text-xl font-bold text-primary sm:text-2xl">
                 Rejoignez Meet & Match
               </h2>
               <p className="mt-2 text-center text-sm text-muted-foreground">
@@ -201,7 +201,7 @@ export function WhySection({ variant = "default" }: { variant?: SectionVariant }
           {isLanding && (
             <p className="mm-landing-eyebrow">Notre différence</p>
           )}
-          <h2 className={cn(isLanding ? "mm-landing-title mt-2" : "font-serif text-2xl font-bold text-primary sm:text-3xl lg:text-4xl")}>
+          <h2 className={cn(isLanding ? "mm-landing-title mt-2" : "font-sans text-2xl font-bold text-primary sm:text-3xl lg:text-4xl")}>
             Pourquoi choisir Meet & Match ?
           </h2>
           <p className={cn("mt-3", isLanding ? "mm-landing-subtitle" : "text-sm leading-relaxed text-muted-foreground sm:text-base")}>
@@ -231,7 +231,7 @@ export function WhySection({ variant = "default" }: { variant?: SectionVariant }
               >
                 <item.icon className="h-5 w-5 stroke-[1.75]" />
               </div>
-              <h3 className={cn("mt-4 font-serif text-lg font-semibold", isLanding ? "text-[#2e1a47]" : "text-primary")}>
+              <h3 className={cn("mt-4 font-sans text-lg font-semibold", isLanding ? "text-[#2e1a47]" : "text-primary")}>
                 {item.title}
               </h3>
               <p className={cn("mt-2 text-sm leading-relaxed", isLanding ? "text-[#6b5f7a]" : "text-muted-foreground")}>
@@ -286,7 +286,7 @@ export function StepsSection({ variant = "default" }: { variant?: SectionVariant
             <p className={cn(isLanding ? "mm-landing-eyebrow" : "text-xs font-semibold uppercase tracking-wider text-secondary")}>
               Simple & transparent
             </p>
-            <h2 className={cn(isLanding ? "mm-landing-title mt-2" : "mt-2 font-serif text-2xl font-bold text-primary sm:text-3xl lg:text-4xl")}>
+            <h2 className={cn(isLanding ? "mm-landing-title mt-2" : "mt-2 font-sans text-2xl font-bold text-primary sm:text-3xl lg:text-4xl")}>
               Comment ça marche ?
             </h2>
             <p className={cn("mt-2 max-w-lg", isLanding ? "mm-landing-subtitle" : "text-sm text-muted-foreground sm:text-base")}>
@@ -323,7 +323,7 @@ export function StepsSection({ variant = "default" }: { variant?: SectionVariant
                     index === 1 && "lg:translate-y-4"
                   )}
                 >
-                <span className="font-serif text-4xl font-bold text-[#2e1a47]/10">
+                <span className="font-sans text-4xl font-bold text-[#2e1a47]/10">
                   {item.step}
                 </span>
                 <div
@@ -336,7 +336,7 @@ export function StepsSection({ variant = "default" }: { variant?: SectionVariant
                 >
                   <item.icon className="h-6 w-6" />
                 </div>
-                <h3 className={cn("mt-4 font-serif text-xl font-semibold", isLanding ? "text-[#2e1a47]" : "text-primary")}>
+                <h3 className={cn("mt-4 font-sans text-xl font-semibold", isLanding ? "text-[#2e1a47]" : "text-primary")}>
                   {item.title}
                 </h3>
                 <p className={cn("mt-2 text-sm leading-relaxed", isLanding ? "text-[#6b5f7a]" : "text-muted-foreground")}>
@@ -371,7 +371,7 @@ export function PricingTeaserSection({ variant = "default" }: { variant?: Sectio
               <p className={cn(isLanding ? "mm-landing-eyebrow" : "text-xs font-semibold uppercase tracking-wider text-secondary")}>
                 Tarifs transparents
               </p>
-              <h2 className={cn("mt-2 font-serif text-2xl font-bold sm:text-3xl", isLanding ? "text-[#2e1a47]" : "text-primary")}>
+              <h2 className={cn("mt-2 font-sans text-2xl font-bold sm:text-3xl", isLanding ? "text-[#2e1a47]" : "text-primary")}>
                 Commencez pour{" "}
                 {formatCurrency(regFee.amount, regFee.currency)}
               </h2>
@@ -409,7 +409,7 @@ export function PricingTeaserSection({ variant = "default" }: { variant?: Sectio
               <p className="text-sm text-white/80">
                 Prêt à tester ?
               </p>
-              <p className="mt-2 font-serif text-3xl font-bold">
+              <p className="mt-2 font-sans text-3xl font-bold">
                 Créez votre compte en 2 minutes
               </p>
               <p className="mt-3 text-sm leading-relaxed text-white/85">
@@ -461,7 +461,7 @@ export function TrustSection({ variant = "default" }: { variant?: SectionVariant
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#fce7f3]/20">
               <Shield className="h-7 w-7 text-[#fce7f3]" />
             </div>
-            <h2 className="mt-5 font-serif text-2xl font-bold sm:text-3xl">
+            <h2 className="mt-5 font-sans text-2xl font-bold sm:text-3xl">
               Vous n&apos;êtes jamais seul face à l&apos;inconnu
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
@@ -511,7 +511,7 @@ export function RegisterSection({ variant = "default" }: { variant?: SectionVari
             <p className={cn(isLanding ? "mm-landing-eyebrow" : "text-xs font-semibold uppercase tracking-wider text-secondary")}>
               Rejoignez-nous
             </p>
-            <h2 className={cn("mt-2 font-serif text-2xl font-bold sm:text-3xl lg:text-4xl", isLanding ? "text-[#2e1a47]" : "text-primary")}>
+            <h2 className={cn("mt-2 font-sans text-2xl font-bold sm:text-3xl lg:text-4xl", isLanding ? "text-[#2e1a47]" : "text-primary")}>
               Testez Meet & Match dès aujourd&apos;hui
             </h2>
             <p className={cn("mt-4 text-sm leading-relaxed sm:text-base", isLanding ? "text-[#6b5f7a]" : "text-muted-foreground")}>

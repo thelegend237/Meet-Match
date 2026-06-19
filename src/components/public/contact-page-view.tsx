@@ -1,26 +1,17 @@
-import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 import {
   ArrowRight,
   Clock,
   Gift,
   Headphones,
-  Loader2,
   MessageCircle,
   Shield,
 } from "lucide-react";
-import ContactForm from "@/components/public/contact-form";
+import { ContactFormWrapper } from "@/components/public/contact-form-wrapper";
 import { PublicPage } from "@/components/layout/public-page";
+import { PageHeader, PageStack } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
-
-export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Contactez gratuitement un administrateur Meet & Match. Visiteurs et membres bienvenus.",
-};
-
-export const dynamic = "force-dynamic";
+import { getCurrentProfile } from "@/lib/auth/session";
 
 const helpTopics = [
   {
@@ -64,7 +55,83 @@ const reassurances = [
   },
 ] as const;
 
-export default function ContactPage() {
+function HelpTopics() {
+  return (
+    <div className="space-y-3">
+      {helpTopics.map((topic) => (
+        <Link
+          key={topic.title}
+          href={topic.href}
+          className="mm-landing-card group flex gap-4 p-5 transition-colors hover:border-[#f0c4dc]/60"
+        >
+          <div className="mm-landing-icon-pink h-11 w-11 shrink-0">
+            <topic.icon className="h-5 w-5 stroke-[1.75]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-sans text-base font-bold text-[#2e1a47]">
+              {topic.title}
+            </h3>
+            <p className="mt-1 text-sm leading-relaxed text-[#6b5f7a]">
+              {topic.description}
+            </p>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#e91e8c] group-hover:underline">
+              {topic.label}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export async function ContactPageView({
+  profile: profileProp = null,
+}: {
+  profile?: {
+    display_name: string | null;
+    email: string;
+    phone: string | null;
+    role: string;
+    is_deleted: boolean;
+    status: string;
+  } | null;
+} = {}) {
+  const profile = profileProp ?? (await getCurrentProfile());
+  const isMember =
+    profile?.role === "user" &&
+    !profile.is_deleted &&
+    profile.status !== "deleted";
+
+  const formProfile = isMember
+    ? {
+        display_name: profile.display_name,
+        email: profile.email,
+        phone: profile.phone,
+      }
+    : null;
+
+  if (isMember) {
+    return (
+      <PageStack>
+        <PageHeader
+          title="Contacter un administrateur"
+          description="Écrivez à l'équipe Meet & Match — gratuit et confidentiel. Vous serez redirigé vers votre conversation après l'envoi."
+        />
+
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start">
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-primary">Sujets fréquents</h2>
+            <HelpTopics />
+          </div>
+          <div className="lg:sticky lg:top-6">
+            <ContactFormWrapper profile={formProfile} />
+          </div>
+        </div>
+      </PageStack>
+    );
+  }
+
   return (
     <PublicPage
       variant="landing"
@@ -79,7 +146,7 @@ export default function ContactPage() {
             <Headphones className="h-6 w-6 stroke-[1.75]" />
           </div>
           <div>
-            <p className="font-serif text-lg font-bold text-[#2e1a47] sm:text-xl">
+            <p className="font-sans text-lg font-bold text-[#2e1a47] sm:text-xl">
               Une équipe à votre écoute
             </p>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a] sm:text-base">
@@ -98,7 +165,7 @@ export default function ContactPage() {
             <div className="mm-landing-icon-purple mx-auto h-11 w-11 sm:mx-0">
               <item.icon className="h-5 w-5 stroke-[1.75]" />
             </div>
-            <h2 className="mt-3 font-serif text-base font-bold text-[#2e1a47]">
+            <h2 className="mt-3 font-sans text-base font-bold text-[#2e1a47]">
               {item.title}
             </h2>
             <p className="mt-1 text-sm text-[#6b5f7a]">{item.text}</p>
@@ -114,44 +181,11 @@ export default function ContactPage() {
           <p className="text-sm text-[#6b5f7a]">
             Choisissez un sujet fréquent ou utilisez le formulaire.
           </p>
-
-          <div className="space-y-3">
-            {helpTopics.map((topic) => (
-              <Link
-                key={topic.title}
-                href={topic.href}
-                className="mm-landing-card group flex gap-4 p-5 transition-colors hover:border-[#f0c4dc]/60"
-              >
-                <div className="mm-landing-icon-pink h-11 w-11 shrink-0">
-                  <topic.icon className="h-5 w-5 stroke-[1.75]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-serif text-base font-bold text-[#2e1a47]">
-                    {topic.title}
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-[#6b5f7a]">
-                    {topic.description}
-                  </p>
-                  <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#e91e8c] group-hover:underline">
-                    {topic.label}
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <HelpTopics />
         </div>
 
         <div className="order-1 lg:order-2 lg:sticky lg:top-24">
-          <Suspense
-            fallback={
-              <div className="flex justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-[#e91e8c]" />
-              </div>
-            }
-          >
-            <ContactForm />
-          </Suspense>
+          <ContactFormWrapper />
         </div>
       </div>
 

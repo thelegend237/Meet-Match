@@ -118,7 +118,7 @@ export default function FonctionnementPage() {
             <Shield className="h-6 w-6 stroke-[1.75]" />
           </div>
           <div>
-            <p className="font-serif text-lg font-bold text-[#2e1a47] sm:text-xl">
+            <p className="font-sans text-lg font-bold text-[#2e1a47] sm:text-xl">
               Règle fondamentale
             </p>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a] sm:text-base">
@@ -136,7 +136,7 @@ export default function FonctionnementPage() {
             <div className="mm-landing-icon-pink h-11 w-11">
               <rule.icon className="h-5 w-5 stroke-[1.75]" />
             </div>
-            <h2 className="mt-4 font-serif text-base font-bold text-[#2e1a47] sm:text-lg">
+            <h2 className="mt-4 font-sans text-base font-bold text-[#2e1a47] sm:text-lg">
               {rule.title}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a]">
@@ -170,7 +170,7 @@ export default function FonctionnementPage() {
                   >
                     <step.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
-                  <span className="font-serif text-xs font-bold text-[#9b8fa8]">
+                  <span className="font-sans text-xs font-bold text-[#9b8fa8]">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </div>
@@ -179,7 +179,7 @@ export default function FonctionnementPage() {
                   <p className="mm-landing-eyebrow text-[10px]">
                     Étape {index + 1}
                   </p>
-                  <h2 className="mt-1 font-serif text-lg font-bold text-[#2e1a47] sm:text-xl">
+                  <h2 className="mt-1 font-sans text-lg font-bold text-[#2e1a47] sm:text-xl">
                     {step.title}
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a] sm:text-[15px]">
@@ -213,7 +213,7 @@ export default function FonctionnementPage() {
               )}
             >
               <div className="flex items-start justify-between gap-3">
-                <h3 className="font-serif text-lg font-bold text-[#2e1a47]">
+                <h3 className="font-sans text-lg font-bold text-[#2e1a47]">
                   {row.type}
                 </h3>
                 {row.highlight && (

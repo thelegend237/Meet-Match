@@ -348,7 +348,7 @@ export function ProfileHub({
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
                     Meet & Match
                   </p>
-                  <h3 className="mt-1 font-serif text-xl font-bold text-primary sm:text-2xl">
+                  <h3 className="mt-1 font-sans text-xl font-bold text-primary sm:text-2xl">
                     {registrationPaid
                       ? "Rencontres accompagnées"
                       : "Activez votre accès"}

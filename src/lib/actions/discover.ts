@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { GenderPreference } from "@/lib/discover/profile-status";
+import { touchLastSeen as touchLastSeenCore } from "@/lib/user/touch-last-seen";
 
 export async function updatePreferredGender(preference: GenderPreference) {
   const supabase = await createClient();
@@ -28,25 +29,5 @@ export async function updatePreferredGender(preference: GenderPreference) {
 }
 
 export async function touchLastSeen() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("last_seen_at")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.last_seen_at) {
-    const elapsed = Date.now() - new Date(profile.last_seen_at).getTime();
-    if (elapsed < 2 * 60 * 1000) return;
-  }
-
-  await supabase
-    .from("profiles")
-    .update({ last_seen_at: new Date().toISOString() })
-    .eq("id", user.id);
+  await touchLastSeenCore();
 }

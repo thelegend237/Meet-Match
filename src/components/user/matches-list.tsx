@@ -224,7 +224,7 @@ export function MatchesList({ matches }: MatchesListProps) {
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent">
           <Heart className="h-8 w-8 text-secondary/70" />
         </div>
-        <p className="mt-5 font-serif text-xl font-bold text-primary">
+        <p className="mt-5 font-sans text-xl font-bold text-primary">
           Aucun match pour le moment
         </p>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">

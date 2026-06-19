@@ -112,7 +112,7 @@ export function RencontresFeed({
       <header className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-serif text-2xl font-bold text-primary sm:text-3xl">
+            <h1 className="font-sans text-2xl font-bold text-primary sm:text-3xl">
               Rencontres
             </h1>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { tryCreateAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { contactSchema } from "@/lib/validations/contact";
 
@@ -46,13 +47,14 @@ export async function POST(request: Request) {
     }
 
     const { name, email, phone, message } = parsed.data;
-    const supabase = await createClient();
 
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await (await createClient()).auth.getUser();
 
-    const { data, error } = await supabase.rpc("create_admin_contact_chat", {
+    const db = tryCreateAdminClient() ?? (await createClient());
+
+    const { data, error } = await db.rpc("create_admin_contact_chat", {
       p_name: name,
       p_email: email || null,
       p_phone: phone || null,
@@ -61,9 +63,21 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      console.error("Contact error:", error);
+      console.error("Contact error:", error.message, error.code, error.details);
       return NextResponse.json(
-        { error: "Impossible d'envoyer le message. Réessayez plus tard." },
+        {
+          error:
+            process.env.NODE_ENV === "development"
+              ? error.message
+              : "Impossible d'envoyer le message. Réessayez plus tard.",
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { error: "Impossible de créer la conversation." },
         { status: 500 }
       );
     }
@@ -73,7 +87,8 @@ export async function POST(request: Request) {
       chatId: data,
       canOpenInApp: Boolean(user?.id),
     });
-  } catch {
+  } catch (err) {
+    console.error("[contact] POST failed:", err);
     return NextResponse.json(
       { error: "Une erreur est survenue." },
       { status: 500 }

@@ -375,7 +375,7 @@ export function AdminShell({
           />
           <div className="absolute bottom-0 left-0 right-0 max-h-[70dvh] overflow-y-auto rounded-t-2xl bg-card p-5 pb-8 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold text-primary">
+              <h3 className="font-sans text-lg font-semibold text-primary">
                 Administration
               </h3>
               <button

@@ -97,7 +97,7 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-serif text-2xl font-bold text-primary">
+                <h1 className="font-sans text-2xl font-bold text-primary">
                   {profile.display_name}
                   {age !== null && (
                     <span className="font-normal text-muted-foreground">, {age} ans</span>

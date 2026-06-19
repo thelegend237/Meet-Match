@@ -74,7 +74,7 @@ export function ChangePasswordForm({
             <Lock className="h-5 w-5 stroke-[1.75]" />
           </div>
           <div>
-            <h2 className="font-serif text-xl font-bold text-[#2e1a47]">
+            <h2 className="font-sans text-xl font-bold text-[#2e1a47]">
               {fromReset ? "Nouveau mot de passe" : "Modifier le mot de passe"}
             </h2>
             <p className="mt-1 text-sm text-[#6b5f7a]">

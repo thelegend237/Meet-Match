@@ -18,7 +18,19 @@ export function safeRedirectPath(value: string | null | undefined): string | nul
   return value;
 }
 
+export function isAdminRole(role?: string | null): boolean {
+  return role === "admin" || role === "superadmin";
+}
+
 export function getHomeForRole(role?: string | null): string {
-  if (role === "admin" || role === "superadmin") return ADMIN_HOME;
+  if (isAdminRole(role)) return ADMIN_HOME;
   return USER_HOME;
+}
+
+/** Destination après connexion : redirect explicite, sinon accueil selon le rôle. */
+export function resolvePostLoginPath(
+  role?: string | null,
+  redirectParam?: string | null
+): string {
+  return safeRedirectPath(redirectParam) ?? getHomeForRole(role);
 }

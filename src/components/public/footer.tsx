@@ -30,7 +30,7 @@ export function Footer({ landing = false }: { landing?: boolean }) {
           </div>
 
           <div>
-            <h3 className="font-serif text-lg font-semibold">Navigation</h3>
+            <h3 className="font-sans text-lg font-semibold">Navigation</h3>
             <ul
               className={cn(
                 "mt-4 space-y-2 text-sm",
@@ -45,7 +45,7 @@ export function Footer({ landing = false }: { landing?: boolean }) {
           </div>
 
           <div>
-            <h3 className="font-serif text-lg font-semibold">Besoin d&apos;aide ?</h3>
+            <h3 className="font-sans text-lg font-semibold">Besoin d&apos;aide ?</h3>
             <p className={cn("mt-4 text-sm", landing ? "text-[#6b5f7a]" : "text-primary-foreground/80")}>
               Notre équipe est disponible pour répondre à vos questions gratuitement.
             </p>

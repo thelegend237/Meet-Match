@@ -15,7 +15,7 @@ INSERT INTO public.app_settings (key, value) VALUES
   ('platform_name', '"Meet & Match"'),
   ('platform_tagline', '"Rencontrez des personnes sérieuses grâce à une mise en relation humaine."'),
   ('contact_email', '"contact@meetandmatch.com"'),
-  ('supported_currencies', '["EUR", "USD", "CAD"]'),
+  ('supported_currencies', '["CAD", "USD", "EUR"]'),
   ('supported_countries', '{"EU": ["FR", "BE", "CH", "LU"], "NA": ["CA", "US"], "AF": ["CM", "CI", "SN"]}')
 ON CONFLICT (key) DO NOTHING;
 

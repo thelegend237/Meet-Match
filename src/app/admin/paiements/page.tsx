@@ -124,7 +124,7 @@ export default async function AdminPaymentsPage() {
         <StatTile
           icon={Euro}
           label="Revenus encaissés"
-          value={formatCurrency(revenue, "EUR")}
+          value={formatCurrency(revenue, "CAD")}
           hint="Paiements confirmés"
           iconClassName="bg-[#fce7f3] text-[#e91e8c]"
         />

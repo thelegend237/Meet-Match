@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, LogIn, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
-import { getHomeForRole, safeRedirectPath } from "@/lib/auth/routes";
+import { resolvePostLoginPath } from "@/lib/auth/routes";
 import { loginSchema, type LoginFormData } from "@/lib/validations/auth";
 import { SocialAuthButtons, AuthDivider } from "@/components/auth/social-auth-buttons";
 import { AuthFormCard } from "@/components/auth/auth-page-shell";
@@ -67,20 +67,25 @@ export function ConnexionForm() {
         throw new Error(error.message);
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role, is_deleted, status")
         .eq("id", authData.user.id)
         .single();
+
+      if (profileError) {
+        console.error("[connexion] profile:", profileError.message);
+      }
 
       if (profile?.is_deleted || profile?.status === "deleted") {
         await supabase.auth.signOut();
         throw new Error("Ce compte a été supprimé.");
       }
 
-      const destination =
-        safeRedirectPath(searchParams.get("redirect")) ??
-        getHomeForRole(profile?.role);
+      const destination = resolvePostLoginPath(
+        profile?.role,
+        searchParams.get("redirect")
+      );
 
       window.location.assign(destination);
       return;

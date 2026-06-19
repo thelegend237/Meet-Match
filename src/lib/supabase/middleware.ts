@@ -2,15 +2,17 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   USER_HOME,
-  ADMIN_HOME,
   LOGIN_PATH,
   getHomeForRole,
+  isAdminRole,
   safeRedirectPath,
 } from "@/lib/auth/routes";
 import {
   getSupabaseEnv,
   hasSupabaseAuthCookie,
 } from "@/lib/supabase/env";
+import { isStaleAuthError } from "@/lib/supabase/auth-errors";
+import { purgeSupabaseAuthCookies } from "@/lib/supabase/purge-auth-cookies";
 
 const USER_PREFIXES = [
   "/tableau-de-bord",
@@ -34,6 +36,27 @@ function redirectToLogin(request: NextRequest, returnPath?: string) {
   const safe = safeRedirectPath(returnPath ?? null);
   if (safe) url.searchParams.set("redirect", safe);
   return NextResponse.redirect(url);
+}
+
+async function clearStaleAuth(
+  supabase: ReturnType<typeof createServerClient>,
+  response: NextResponse,
+  request: NextRequest
+) {
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // ignore
+  }
+  purgeSupabaseAuthCookies(response, request);
+}
+
+/** Server Actions et requêtes RSC — ne pas rediriger (sinon « unexpected response »). */
+function isNextDataRequest(request: NextRequest): boolean {
+  if (request.headers.has("next-action")) return true;
+  if (request.headers.get("rsc") === "1") return true;
+  if (request.headers.get("accept")?.includes("text/x-component")) return true;
+  return false;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -94,14 +117,25 @@ export async function updateSession(request: NextRequest) {
   try {
     const { data, error } = await supabase.auth.getUser();
     if (error) {
-      console.error("[middleware] auth.getUser:", error.message);
+      console.error("[middleware] auth.getUser:", error.message, error);
+      if (isStaleAuthError(error)) {
+        await clearStaleAuth(supabase, supabaseResponse, request);
+        if (isUserRoute || isAdminRoute) {
+          return redirectToLogin(request, pathname);
+        }
+        return supabaseResponse;
+      }
       authUnavailable = error.message.toLowerCase().includes("fetch");
     } else {
       user = data.user;
     }
   } catch (err) {
-    console.error("[middleware] auth.getUser fetch failed:", err);
-    authUnavailable = true;
+    console.error("[middleware] auth.getUser failed:", err);
+    await clearStaleAuth(supabase, supabaseResponse, request);
+    if (isUserRoute || isAdminRoute) {
+      return redirectToLogin(request, pathname);
+    }
+    return supabaseResponse;
   }
 
   if (authUnavailable && (isUserRoute || isAdminRoute)) {
@@ -138,44 +172,40 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.searchParams.get("redirect")
     );
 
-    if (pathname === "/inscription") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
-      url.searchParams.set("step", "gender");
-      return NextResponse.redirect(url);
-    }
-
-    if (isLoginPage || (isAuthPath && pathname !== "/inscription")) {
-      const url = request.nextUrl.clone();
-      url.pathname = postLogin ?? home;
-      url.search = "";
-      return NextResponse.redirect(url);
-    }
-
-    if (pathname === "/") {
-      const url = request.nextUrl.clone();
-      url.pathname = postLogin ?? home;
-      url.search = "";
-      return NextResponse.redirect(url);
-    }
-
-    if (isAdminRoute) {
-      if (!profile || !["admin", "superadmin"].includes(profile.role)) {
+    // Redirections de navigation uniquement (GET). Les POST Server Action / RSC
+    // sur / ou /inscription doivent passer (ex. inscription depuis la landing).
+    if (!isNextDataRequest(request)) {
+      if (pathname === "/inscription") {
         const url = request.nextUrl.clone();
-        url.pathname = USER_HOME;
+        url.pathname = "/onboarding";
+        url.searchParams.set("step", "gender");
         return NextResponse.redirect(url);
       }
-    }
 
-    if (
-      isUserRoute &&
-      profile &&
-      ["admin", "superadmin"].includes(profile.role) &&
-      pathname.startsWith("/tableau-de-bord")
-    ) {
-      const url = request.nextUrl.clone();
-      url.pathname = ADMIN_HOME;
-      return NextResponse.redirect(url);
+      if (isLoginPage || (isAuthPath && pathname !== "/inscription")) {
+        const url = request.nextUrl.clone();
+        url.pathname = postLogin ?? home;
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+
+      if (pathname === "/") {
+        const url = request.nextUrl.clone();
+        url.pathname = postLogin ?? home;
+        url.search = "";
+        return NextResponse.redirect(url);
+      }
+
+      if (isAdminRoute) {
+        if (!profile || !isAdminRole(profile.role)) {
+          const url = request.nextUrl.clone();
+          url.pathname = USER_HOME;
+          return NextResponse.redirect(url);
+        }
+      }
+
+      // Admin : accueil membre uniquement sur choix explicite (lien dans l'espace admin).
+      // Pas de redirection automatique depuis /decouvrir, /messages, etc.
     }
   }
 

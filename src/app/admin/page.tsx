@@ -87,7 +87,7 @@ export default async function AdminDashboardPage() {
     <PageStack>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-serif text-2xl font-bold tracking-tight text-primary sm:text-3xl">
+          <h1 className="font-sans text-2xl font-bold tracking-tight text-primary sm:text-3xl">
             Bonjour <span className="text-secondary">{firstName}</span> 👋
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
@@ -134,7 +134,7 @@ export default async function AdminDashboardPage() {
           label="Paiements totaux"
           value={formatCurrency(
             stats.revenueRegistration + stats.revenueMatching,
-            "EUR"
+            "CAD"
           )}
           hint={`↑ ${Math.round((stats.revenueMatching / Math.max(stats.revenueRegistration + stats.revenueMatching, 1)) * 100)}% ce mois`}
           iconClassName={statIconStyles[3]}

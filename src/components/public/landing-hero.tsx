@@ -106,7 +106,7 @@ export function LandingHeroAside({ showOnMobile = false }: { showOnMobile?: bool
       )}
     >
       <Reveal direction="left">
-        <h1 className="max-w-xl font-serif text-[2.15rem] font-bold leading-[1.15] tracking-tight text-[#2e1a47] sm:text-[2.35rem] xl:text-[2.65rem]">
+        <h1 className="max-w-xl font-sans text-[2.15rem] font-bold leading-[1.15] tracking-tight text-[#2e1a47] sm:text-[2.35rem] xl:text-[2.65rem]">
           Commencez votre histoire dès{" "}
           <span className="text-[#e91e8c]">aujourd&apos;hui</span>
         </h1>

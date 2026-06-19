@@ -449,7 +449,7 @@ export function DiscoverCardStack({
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
           <RotateCcw className="h-8 w-8 text-secondary" />
         </div>
-        <h2 className="mt-4 font-serif text-xl font-bold text-primary">
+        <h2 className="mt-4 font-sans text-xl font-bold text-primary">
           Plus de profils pour l&apos;instant
         </h2>
         <p className="mt-2 max-w-sm text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getHomeForRole, safeRedirectPath } from "@/lib/auth/routes";
+import { isAdminRole, resolvePostLoginPath, safeRedirectPath } from "@/lib/auth/routes";
 import { oauthDisplayName } from "@/lib/auth/oauth";
 
 const ONBOARDING_PATH = "/onboarding?step=gender";
@@ -52,12 +52,12 @@ export async function GET(request: Request) {
   }
 
   const needsOnboarding =
-    !profile?.gender ||
-    (profile.profile_completion ?? 0) < 40;
+    !isAdminRole(profile?.role) &&
+    (!profile?.gender || (profile.profile_completion ?? 0) < 40);
 
   const destination = needsOnboarding
     ? ONBOARDING_PATH
-    : nextParam ?? getHomeForRole(profile?.role);
+    : resolvePostLoginPath(profile?.role, nextParam);
 
   return NextResponse.redirect(`${origin}${destination}`);
 }

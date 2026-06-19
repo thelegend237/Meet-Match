@@ -59,20 +59,28 @@ function ContactField({
 const inputClass =
   "h-12 w-full rounded-xl border border-[#e8e0f0] bg-[#faf8fc] pl-11 pr-4 text-sm text-[#2e1a47] shadow-sm transition-colors placeholder:text-[#9b8fa8]/80 focus:border-[#e91e8c] focus:outline-none focus:ring-2 focus:ring-[#e91e8c]/20";
 
-export default function ContactForm() {
+export function ContactForm({
+  profile = null,
+}: {
+  profile?: {
+    display_name: string | null;
+    email: string;
+    phone: string | null;
+  } | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const subject = searchParams.get("subject");
-  const profile = searchParams.get("profile");
+  const profileParam = searchParams.get("profile");
 
   const defaultValues = useMemo<ContactFormData>(
     () => ({
-      name: "",
-      email: "",
-      phone: "",
-      message: buildDefaultMessage(subject, profile),
+      name: profile?.display_name?.trim() || "",
+      email: profile?.email?.trim() || "",
+      phone: profile?.phone?.trim() || "",
+      message: buildDefaultMessage(subject, profileParam),
     }),
-    [subject, profile]
+    [profile, subject, profileParam]
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,7 +163,7 @@ export default function ContactForm() {
             <MessageSquare className="h-5 w-5 stroke-[1.75]" />
           </div>
           <div>
-            <h2 className="font-serif text-xl font-bold text-[#2e1a47] sm:text-2xl">
+            <h2 className="font-sans text-xl font-bold text-[#2e1a47] sm:text-2xl">
               {title}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a]">

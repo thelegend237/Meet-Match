@@ -1,5 +1,5 @@
 import type { Provider } from "@supabase/supabase-js";
-import { USER_HOME } from "@/lib/auth/routes";
+import { safeRedirectPath } from "@/lib/auth/routes";
 
 export const OAUTH_PROVIDERS = [
   { id: "google" as const, label: "Google" },
@@ -18,15 +18,11 @@ export function buildOAuthCallbackUrl(nextPath?: string | null): string {
       ? window.location.origin
       : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  const next =
-    nextPath &&
-    nextPath.startsWith("/") &&
-    !nextPath.startsWith("//")
-      ? nextPath
-      : USER_HOME;
+  const base = `${origin}/auth/callback`;
+  const safe = safeRedirectPath(nextPath);
+  if (!safe) return base;
 
-  const params = new URLSearchParams({ next });
-  return `${origin}/auth/callback?${params.toString()}`;
+  return `${base}?${new URLSearchParams({ next: safe }).toString()}`;
 }
 
 export function oauthDisplayName(metadata: Record<string, unknown>): string | null {

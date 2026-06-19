@@ -45,7 +45,7 @@ export function MyProfilePreview({ profile }: MyProfilePreviewProps) {
           </div>
         )}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-5 pt-20">
-          <h1 className="font-serif text-2xl font-bold text-white">
+          <h1 className="font-sans text-2xl font-bold text-white">
             {profile.display_name || "Mon profil"}
             {age !== null && (
               <span className="font-normal text-white/90">, {age}</span>

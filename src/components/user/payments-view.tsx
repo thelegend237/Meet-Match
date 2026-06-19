@@ -103,7 +103,7 @@ function PlanCard({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             {badge}
-            <h2 className="font-serif text-xl font-bold text-primary sm:text-2xl">
+            <h2 className="font-sans text-xl font-bold text-primary sm:text-2xl">
               {title}
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -114,7 +114,7 @@ function PlanCard({
         </div>
 
         <div className="mt-5 flex flex-wrap items-end gap-2">
-          <p className="font-serif text-4xl font-bold tracking-tight text-primary">
+          <p className="font-sans text-4xl font-bold tracking-tight text-primary">
             {formatCurrency(amount, currency)}
           </p>
           <span className="mb-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
@@ -191,7 +191,7 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
                   Votre parcours
                 </span>
               </div>
-              <h2 className="mt-2 font-serif text-2xl font-bold sm:text-3xl">
+              <h2 className="mt-2 font-sans text-2xl font-bold sm:text-3xl">
                 {registrationPaid
                   ? "Vous êtes prêt à rencontrer"
                   : "Activez votre accès"}
@@ -282,7 +282,7 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
       {/* Plans tarifaires */}
       <div className="space-y-4">
         <div>
-          <h2 className="font-serif text-xl font-bold text-primary sm:text-2xl">
+          <h2 className="font-sans text-xl font-bold text-primary sm:text-2xl">
             Nos offres
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -416,7 +416,7 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
         <div className="flex gap-4 rounded-2xl border border-border/60 bg-accent/25 p-5">
           <Gift className="h-8 w-8 shrink-0 text-secondary" />
           <div>
-            <h3 className="font-serif font-semibold text-primary">
+            <h3 className="font-sans font-semibold text-primary">
               Accès gratuit possible
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
@@ -431,7 +431,7 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
         <div className="flex gap-4 rounded-2xl border border-border/60 bg-muted/30 p-5">
           <CreditCard className="h-8 w-8 shrink-0 text-secondary" />
           <div>
-            <h3 className="font-serif font-semibold text-primary">
+            <h3 className="font-sans font-semibold text-primary">
               Paiement sécurisé
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
@@ -444,7 +444,7 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
 
       {/* Historique */}
       <section>
-        <h2 className="font-serif text-xl font-bold text-primary">
+        <h2 className="font-sans text-xl font-bold text-primary">
           Historique des paiements
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">

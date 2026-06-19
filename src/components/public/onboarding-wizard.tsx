@@ -1094,7 +1094,7 @@ export function OnboardingWizard({
             />
             <StepBody className="space-y-6">
               <div className="rounded-2xl bg-muted/30 px-4 py-5 text-center">
-                <p className="font-serif text-3xl font-bold text-primary">
+                <p className="font-sans text-3xl font-bold text-primary">
                   {data.preferred_age_min} – {data.preferred_age_max} ans
                 </p>
               </div>

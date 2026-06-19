@@ -129,7 +129,7 @@ export function AuthFormCard({
             </div>
           )}
           <div className={Icon ? undefined : "w-full"}>
-            <h2 className="font-serif text-xl font-bold text-[#2e1a47] sm:text-2xl">
+            <h2 className="font-sans text-xl font-bold text-[#2e1a47] sm:text-2xl">
               {title}
             </h2>
             {subtitle && (

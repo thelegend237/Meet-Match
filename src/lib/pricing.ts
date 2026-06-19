@@ -6,13 +6,13 @@ export type FeeAmount = {
 const REGISTRATION_FEES: Record<string, FeeAmount> = {
   CA: { amount: 42, currency: "CAD" },
   US: { amount: 32, currency: "USD" },
-  DEFAULT: { amount: 29, currency: "EUR" },
+  DEFAULT: { amount: 42, currency: "CAD" },
 };
 
 const MATCHING_FEES: Record<string, FeeAmount> = {
   CA: { amount: 72, currency: "CAD" },
   US: { amount: 55, currency: "USD" },
-  DEFAULT: { amount: 49, currency: "EUR" },
+  DEFAULT: { amount: 72, currency: "CAD" },
 };
 
 export function getRegistrationFee(countryCode: string | null): FeeAmount {
@@ -119,11 +119,10 @@ export const PLAN_COMPARISON_ROWS = [
 
 export function currencyRegionLabel(currency: string): string {
   switch (currency) {
-    case "CAD":
-      return "Tarif Canada";
     case "USD":
       return "Tarif États-Unis";
+    case "CAD":
     default:
-      return "Tarif Europe";
+      return "Tarif Canada (CAD)";
   }
 }

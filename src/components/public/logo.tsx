@@ -59,7 +59,7 @@ export function Logo({
         </span>
         <span
           className={cn(
-            "font-serif font-semibold leading-tight tracking-tight text-white",
+            "font-brand font-semibold leading-tight tracking-tight text-white",
             size === "sm" && "text-lg",
             size === "md" && "text-xl",
             size === "lg" && "text-2xl"

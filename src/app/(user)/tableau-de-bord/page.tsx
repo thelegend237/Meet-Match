@@ -1,17 +1,14 @@
 import Link from "next/link";
 import {
-  Compass,
   CreditCard,
   Heart,
   MessageSquare,
-  Bell,
   Shield,
   Headphones,
 } from "lucide-react";
 import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
-import { getUnreadCount } from "@/lib/actions/notifications";
-import { createClient } from "@/lib/supabase/server";
 import { getUserMatches } from "@/lib/user/matches";
+import { DashboardNotificationsPreview } from "@/components/user/dashboard-notifications-preview";
 import {
   ProfileCompletionBanner,
   PaymentRequiredBanner,
@@ -26,14 +23,6 @@ export const metadata = {
 
 export default async function DashboardPage() {
   const profile = await requireUser();
-  const unreadCount = await getUnreadCount();
-  const supabase = await createClient();
-
-  const { count: likesSent } = await supabase
-    .from("likes")
-    .select("*", { count: "exact", head: true })
-    .eq("from_user_id", profile.id);
-
   const matches = await getUserMatches(profile.id);
   const activeMatch = matches.find(
     (m) => m.status === "active" || m.status === "pending_payment"
@@ -80,12 +69,12 @@ export default async function DashboardPage() {
                 </linearGradient>
               </defs>
             </svg>
-            <span className="absolute font-serif text-2xl font-bold text-primary">
+            <span className="absolute font-sans text-2xl font-bold text-primary">
               {completion}%
             </span>
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <h2 className="font-serif text-lg font-bold text-primary">
+            <h2 className="font-sans text-lg font-bold text-primary">
               Complétion de votre profil
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -107,7 +96,7 @@ export default async function DashboardPage() {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent">
             <Heart className="h-8 w-8 fill-secondary text-secondary" />
           </div>
-          <h2 className="mt-4 font-serif text-lg font-bold text-primary">
+          <h2 className="mt-4 font-sans text-lg font-bold text-primary">
             Statut de votre match
           </h2>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
@@ -122,59 +111,14 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="mm-card lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
-            <h2 className="font-serif text-lg font-bold text-primary">
-              Notifications récentes
-            </h2>
-            <Link
-              href="/notifications"
-              className="text-sm font-medium text-secondary hover:underline"
-            >
-              Voir toutes
-            </Link>
-          </div>
-          <div className="divide-y divide-border/40 px-2">
-            {[
-              {
-                icon: Compass,
-                text: `${likesSent ?? 0} like(s) envoyé(s) — continuez à découvrir`,
-                href: "/decouvrir",
-              },
-              {
-                icon: Heart,
-                text: "Consultez vos matchs proposés par l'équipe",
-                href: "/matchs",
-              },
-              {
-                icon: MessageSquare,
-                text:
-                  unreadCount > 0
-                    ? `${unreadCount} notification(s) non lue(s)`
-                    : "Vos discussions accompagnées",
-                href: unreadCount > 0 ? "/notifications" : "/messages",
-              },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/30"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent">
-                  <item.icon className="h-5 w-5 text-secondary" />
-                </div>
-                <p className="flex-1 text-sm text-foreground">{item.text}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <DashboardNotificationsPreview userId={profile.id} />
 
         <div className="mm-card flex flex-col justify-between bg-gradient-to-br from-accent/80 to-secondary/5 p-6">
           <div>
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 shadow-sm">
               <Headphones className="h-7 w-7 text-secondary" />
             </div>
-            <h2 className="mt-4 font-serif text-lg font-bold text-primary">
+            <h2 className="mt-4 font-sans text-lg font-bold text-primary">
               Besoin d&apos;aide ?
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">

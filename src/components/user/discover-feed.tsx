@@ -116,7 +116,7 @@ export function DiscoverFeed({
       <header className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="font-serif text-2xl font-bold text-primary sm:text-4xl">
+            <h1 className="font-sans text-2xl font-bold text-primary sm:text-4xl">
               Découvrez{" "}
               <span className="text-secondary">les profils</span>
             </h1>
