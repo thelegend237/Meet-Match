@@ -45,6 +45,7 @@ export function RegistrationPaymentButton({
           title: "Compte activé",
           description: "Vous pouvez maintenant découvrir les profils.",
         });
+        router.push("/decouvrir?welcome=1");
         router.refresh();
       }
     });

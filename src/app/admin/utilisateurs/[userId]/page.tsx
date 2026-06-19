@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminUserDetailView } from "@/components/admin/user-detail-view";
 import { getAdminUserDetail } from "@/lib/admin/users";
+import { requireAdmin } from "@/lib/auth/session";
 
 export async function generateMetadata({
   params,
@@ -22,9 +23,14 @@ interface PageProps {
 
 export default async function AdminUserDetailPage({ params }: PageProps) {
   const { userId } = await params;
-  const detail = await getAdminUserDetail(userId);
+  const [detail, currentAdmin] = await Promise.all([
+    getAdminUserDetail(userId),
+    requireAdmin(),
+  ]);
 
   if (!detail) notFound();
 
-  return <AdminUserDetailView detail={detail} />;
+  return (
+    <AdminUserDetailView detail={detail} currentAdmin={currentAdmin} />
+  );
 }

@@ -15,7 +15,8 @@ import {
 } from "@/components/user/profile-banners";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { PageHeader, PageStack } from "@/components/layout/page-header";
+import { PageHeader } from "@/components/layout/page-header";
+import { AnimatedPageStack } from "@/components/layout/animated-page-stack";
 
 export const metadata = {
   title: "Tableau de bord",
@@ -30,7 +31,7 @@ export default async function DashboardPage() {
   const completion = profile.profile_completion ?? 0;
 
   return (
-    <PageStack>
+    <AnimatedPageStack>
       <PageHeader
         title={`Bonjour ${profile.display_name?.split(" ")[0] ?? "membre"} 👋`}
         description="Voici un aperçu de votre activité sur Meet & Match."
@@ -148,6 +149,6 @@ export default async function DashboardPage() {
           </Button>
         )}
       </div>
-    </PageStack>
+    </AnimatedPageStack>
   );
 }

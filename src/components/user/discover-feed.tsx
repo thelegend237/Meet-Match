@@ -18,6 +18,7 @@ import {
 import { likeProfile } from "@/lib/actions/likes";
 import { passProfile } from "@/lib/actions/passes";
 import { toast } from "@/hooks/use-toast";
+import { Reveal } from "@/components/motion/motion";
 import type { DiscoveryProfile } from "@/lib/types/database";
 
 type ViewerLocation = Pick<DiscoveryProfile, "city" | "country_code">;
@@ -113,7 +114,7 @@ export function DiscoverFeed({
 
   return (
     <>
-      <header className="space-y-4">
+      <Reveal as="header" className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="font-sans text-2xl font-bold text-primary sm:text-4xl">
@@ -179,8 +180,9 @@ export function DiscoverFeed({
             modifier vos préférences
           </Link>
         </p>
-      </header>
+      </Reveal>
 
+      <Reveal delay={120}>
       {viewMode === "swipe" ? (
         swipeDeck.length > 0 ? (
           <DiscoverCardStack
@@ -235,6 +237,7 @@ export function DiscoverFeed({
           </button>
         </div>
       )}
+      </Reveal>
 
       <ProfileDetailModal
         profile={selected}

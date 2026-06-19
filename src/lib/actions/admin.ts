@@ -137,6 +137,33 @@ export async function grantFreeAccessAction(
   return { success: true };
 }
 
+export async function updateUserRoleAction(
+  userId: string,
+  role: "user" | "admin" | "superadmin"
+) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  if (userId === admin.id) {
+    return { error: "Vous ne pouvez pas modifier votre propre rôle." };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("update_user_role", {
+    p_admin_id: admin.id,
+    p_user_id: userId,
+    p_role: role,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/utilisateurs");
+  revalidatePath(`/admin/utilisateurs/${userId}`);
+  revalidatePath("/admin");
+  return { success: true };
+}
+
 export async function updateChatStatusAction(
   chatId: string,
   status: "open" | "closed"

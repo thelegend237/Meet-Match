@@ -2,15 +2,16 @@
 
 ## Installation
 
-1. Appliquer **toutes** les migrations **`001` → `013`** dans l'ordre — voir [`MIGRATIONS.md`](./MIGRATIONS.md)
+1. Appliquer **toutes** les migrations **`001` → `018`** dans l'ordre — voir [`MIGRATIONS.md`](./MIGRATIONS.md)
 2. Exécuter `seed.sql` (paramètres tarifaires)
-3. Exécuter **`seed_test_data.sql`** dans le **SQL Editor** Supabase
+3. **Production / vrais utilisateurs :** ne **pas** exécuter `seed_test_data.sql` — voir [`PRODUCTION_SETUP.md`](./PRODUCTION_SETUP.md)
+4. **Démo locale uniquement :** exécuter `seed_test_data.sql` — voir ci-dessous
 
 ```sql
--- Coller le contenu de supabase/seed_test_data.sql
+-- Coller le contenu de supabase/seed_test_data.sql (démo / dev uniquement)
 ```
 
-> Le script supprime puis recrée les comptes `@test.com` et `@meetandmatch.test`.
+> ⚠️ **Ne pas utiliser en production.** Pour une base vide avec de vrais inscrits : [`PRODUCTION_SETUP.md`](./PRODUCTION_SETUP.md).
 
 ## Mot de passe (tous les comptes)
 

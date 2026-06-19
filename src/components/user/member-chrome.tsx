@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth/session";
+import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
 import { getUnreadCount } from "@/lib/actions/notifications";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { getUnreadMessageCount } from "@/lib/user/messages";
@@ -14,6 +14,8 @@ export async function MemberChrome({
   children: React.ReactNode;
 }) {
   const profile = await requireUser();
+  const welcomeTourEligible =
+    profile.role === "user" && hasPlatformAccess(profile);
 
   let unreadCount = 0;
   let likedCount = 0;
@@ -45,6 +47,7 @@ export async function MemberChrome({
         likedCount={likedCount}
         displayName={profile.display_name || undefined}
         avatarUrl={profile.primary_photo_url}
+        welcomeTourEligible={welcomeTourEligible}
       >
         <UserContentArea>{children}</UserContentArea>
       </UserShell>

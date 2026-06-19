@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { ChangePasswordForm } from "@/components/user/change-password-form";
+import { ReplayWelcomeTourButton } from "@/components/user/replay-welcome-tour-button";
 import { SignOutButton } from "@/components/user/sign-out-button";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/types/database";
@@ -181,6 +182,13 @@ export function ProfileSettings({ profile, fromReset = false }: ProfileSettingsP
           </Link>
         </div>
       )}
+
+      <div>
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#9b8fa8]">
+          Aide
+        </h2>
+        <ReplayWelcomeTourButton />
+      </div>
 
       <div>
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#9b8fa8]">

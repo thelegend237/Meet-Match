@@ -20,6 +20,7 @@ import type { AdminUserListItem } from "@/lib/types/database";
 import { cn, getAge } from "@/lib/utils";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { CountrySelect } from "@/components/ui/country-select";
+import { roleLabel } from "@/lib/admin/roles";
 
 interface UsersTableProps {
   users: AdminUserListItem[];
@@ -28,6 +29,7 @@ interface UsersTableProps {
 }
 
 type StatusFilter = "all" | "active" | "inactive" | "suspended" | "deleted";
+type RoleFilter = "all" | "user" | "admin" | "superadmin";
 type PeriodFilter = "all" | "30" | "90" | "365";
 
 const PAGE_SIZE = 5;
@@ -152,6 +154,7 @@ function Pagination({
 export function UsersTable({ users, countryOptions }: UsersTableProps) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
   const [exporting, setExporting] = useState(false);
@@ -179,6 +182,7 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
       }
 
       if (statusFilter !== "all" && u.status !== statusFilter) return false;
+      if (roleFilter !== "all" && u.role !== roleFilter) return false;
       if (countryFilter !== "all" && (u.country_code ?? "") !== countryFilter)
         return false;
 
@@ -190,13 +194,13 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
 
       return true;
     });
-  }, [users, query, statusFilter, countryFilter, periodFilter]);
+  }, [users, query, statusFilter, roleFilter, countryFilter, periodFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
   useEffect(() => {
     setPage(1);
-  }, [query, statusFilter, countryFilter, periodFilter]);
+  }, [query, statusFilter, roleFilter, countryFilter, periodFilter]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -216,6 +220,7 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
       "Âge",
       "Ville",
       "Pays",
+      "Rôle",
       "Statut",
       "Inscription",
       "Likes envoyés",
@@ -228,6 +233,7 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
       getAge(u.date_of_birth)?.toString() ?? "",
       u.city ?? "",
       countryName(u.country_code),
+      roleLabel(u.role),
       u.status,
       formatCreatedAt(u.created_at),
       String(u.likes_sent),
@@ -270,7 +276,27 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
             <Search className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:contents">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:contents">
+            <div className="min-w-0 xl:min-w-[150px] xl:flex-1">
+              <label htmlFor="admin-role-filter" className="mm-admin-filter-label">
+                Rôle
+              </label>
+              <div className="relative">
+                <select
+                  id="admin-role-filter"
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+                  className="mm-admin-filter-input appearance-none pr-9"
+                >
+                  <option value="all">Tous les rôles</option>
+                  <option value="user">Membres</option>
+                  <option value="admin">Administrateurs</option>
+                  <option value="superadmin">Super administrateurs</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </div>
+
             <div className="min-w-0 xl:min-w-[150px] xl:flex-1">
               <label htmlFor="admin-status-filter" className="mm-admin-filter-label">
                 Statut
@@ -354,6 +380,7 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
                 <th className="px-4 py-2.5 font-semibold">Utilisateur</th>
                 <th className="px-4 py-2.5 font-semibold">Âge</th>
                 <th className="px-4 py-2.5 font-semibold">Pays / Ville</th>
+                <th className="px-4 py-2.5 font-semibold">Rôle</th>
                 <th className="px-4 py-2.5 font-semibold">Statut</th>
                 <th className="px-4 py-2.5 font-semibold">Inscription</th>
                 <th className="px-4 py-2.5 font-semibold">Actions</th>
@@ -411,6 +438,17 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
                       </div>
                     </td>
                     <td className="px-4 py-3">
+                      <span
+                        className={
+                          user.role === "user"
+                            ? "text-sm text-muted-foreground"
+                            : "inline-flex rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary"
+                        }
+                      >
+                        {roleLabel(user.role)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
                       <UserDisplayStatus user={user} />
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
@@ -432,13 +470,15 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
                         >
                           <MessageCircle className="h-4 w-4 stroke-[1.75]" />
                         </Link>
-                        <Link
-                          href={`/admin/matchs?tab=proposer&queue=manual&user=${user.id}`}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-secondary/90"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          Proposer un match
-                        </Link>
+                        {user.role === "user" && (
+                          <Link
+                            href={`/admin/matchs?tab=proposer&queue=manual&user=${user.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-secondary/90"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Proposer un match
+                          </Link>
+                        )}
                       </div>
                     </td>
                   </tr>

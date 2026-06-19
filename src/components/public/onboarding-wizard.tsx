@@ -575,7 +575,9 @@ export function OnboardingWizard({
               refreshed.profile?.registration_payment_status ??
               initialProfile?.registration_payment_status;
             router.push(
-              pay === "paid" || pay === "free" ? "/decouvrir" : "/paiements"
+              pay === "paid" || pay === "free"
+                ? "/decouvrir?welcome=1"
+                : "/paiements"
             );
             router.refresh();
             break;

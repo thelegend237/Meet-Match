@@ -21,6 +21,9 @@ import {
   AdminSectionCard,
 } from "@/components/admin/admin-page";
 import { grantFreeAccessAction } from "@/lib/actions/admin";
+import { AdminRoleManager } from "@/components/admin/admin-role-manager";
+import { roleLabel } from "@/lib/admin/roles";
+import type { Profile } from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -49,7 +52,13 @@ function countryName(code: string | null) {
   return COUNTRIES.find((c) => c.code === code)?.name ?? code;
 }
 
-export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
+export function AdminUserDetailView({
+  detail,
+  currentAdmin,
+}: {
+  detail: AdminUserDetail;
+  currentAdmin: Profile;
+}) {
   const { profile, stats, photos, payments, matchHistory, recentLikesSent, recentLikesReceived } =
     detail;
   const { pending, run } = useAdminAction();
@@ -133,6 +142,12 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
               <div className="mt-3 flex flex-wrap gap-2">
                 <StatusBadge kind="profile" status={profile.status} />
                 <StatusBadge kind="payment" status={profile.registration_payment_status} />
+                {profile.role !== "user" && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                    <Shield className="h-3 w-3" />
+                    {roleLabel(profile.role)}
+                  </span>
+                )}
                 {profile.gender && (
                   <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-medium text-primary">
                     {GENDER_LABELS[profile.gender]}
@@ -152,21 +167,22 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
                   Envoyer un message
                 </Link>
               </Button>
-              {ACCESS_OPTIONS.map((opt) => (
-                <Button
-                  key={opt.type}
-                  size="sm"
-                  variant="outline"
-                  disabled={pending}
-                  className="bg-white/80"
-                  onClick={() => grantAccess(opt.type)}
-                >
-                  {pending && pendingAccessType === opt.type && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {opt.label}
-                </Button>
-              ))}
+              {profile.role === "user" &&
+                ACCESS_OPTIONS.map((opt) => (
+                  <Button
+                    key={opt.type}
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    className="bg-white/80"
+                    onClick={() => grantAccess(opt.type)}
+                  >
+                    {pending && pendingAccessType === opt.type && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {opt.label}
+                  </Button>
+                ))}
             </div>
           </div>
         </div>
@@ -184,6 +200,14 @@ export function AdminUserDetailView({ detail }: { detail: AdminUserDetail }) {
           </p>
         </CardContent>
       </Card>
+
+      <AdminRoleManager
+        userId={profile.id}
+        userName={profile.display_name || profile.email}
+        currentRole={profile.role}
+        actorRole={currentAdmin.role}
+        actorId={currentAdmin.id}
+      />
 
       {/* KPIs */}
       <AdminKpiGrid cols={4}>

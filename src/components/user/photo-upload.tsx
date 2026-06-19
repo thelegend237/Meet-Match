@@ -67,7 +67,7 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
         <p className="mt-3 text-sm text-muted-foreground">
           Photo principale obligatoire pour la visibilité de votre profil.
           <br />
-          JPEG, PNG ou WebP — max 5 Mo.
+          JPEG, PNG ou WebP — max 25 Mo.
         </p>
         <input
           ref={inputRef}

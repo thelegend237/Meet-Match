@@ -33,7 +33,7 @@ export default async function AdminUsersPage() {
     <PageStack>
       <AdminPageHeader
         title="Utilisateurs"
-        description="Cliquez sur un membre pour voir son profil complet, son activité et son historique de matchs."
+        description="Consultez les profils, gérez les rôles et suivez l'activité de chaque compte."
       />
 
       <AdminKpiGrid cols={3}>

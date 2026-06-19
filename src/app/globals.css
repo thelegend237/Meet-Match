@@ -539,6 +539,73 @@
     transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  .mm-page-enter {
+    animation: mm-page-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes mm-page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .mm-tour-backdrop {
+    animation: mm-tour-fade 0.35s ease both;
+  }
+
+  .mm-tour-panel {
+    animation: mm-tour-panel-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes mm-tour-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes mm-tour-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(28px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .mm-nav-link-motion {
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .mm-nav-link-motion:hover {
+    transform: translateX(2px);
+  }
+
+  .mm-admin-sidebar-link-active.mm-nav-link-motion {
+    animation: mm-nav-pulse 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes mm-nav-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(233, 30, 140, 0.35);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(233, 30, 140, 0);
+    }
+  }
+
   @keyframes mm-card-exit-right {
     to {
       opacity: 0;
@@ -566,6 +633,17 @@
     .mm-motion-float-slow,
     .mm-motion-card-enter {
       animation: none;
+    }
+
+    .mm-page-enter,
+    .mm-tour-backdrop,
+    .mm-tour-panel,
+    .mm-admin-sidebar-link-active.mm-nav-link-motion {
+      animation: none;
+    }
+
+    .mm-nav-link-motion:hover {
+      transform: none;
     }
 
     .mm-motion-scale-hover:hover,

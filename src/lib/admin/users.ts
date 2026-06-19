@@ -23,7 +23,6 @@ export async function getDistinctUserCountries(): Promise<
   const { data } = await supabase
     .from("profiles")
     .select("country_code")
-    .eq("role", "user")
     .eq("is_deleted", false)
     .not("country_code", "is", null)
     .limit(10000);
@@ -52,9 +51,8 @@ export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
       supabase
         .from("profiles")
         .select(
-          "id, display_name, email, date_of_birth, primary_photo_url, status, profile_completion, registration_payment_status, city, country_code, is_verified, last_seen_at, created_at"
+          "id, display_name, email, date_of_birth, primary_photo_url, status, profile_completion, registration_payment_status, city, country_code, is_verified, last_seen_at, created_at, role"
         )
-        .eq("role", "user")
         .eq("is_deleted", false)
         .order("created_at", { ascending: false }),
       supabase.from("likes").select("from_user_id, to_user_id"),
@@ -102,7 +100,7 @@ export async function getAdminUserDetail(
     .eq("is_deleted", false)
     .single();
 
-  if (!profile || profile.role !== "user") return null;
+  if (!profile) return null;
 
   const [
     { count: likesSent },

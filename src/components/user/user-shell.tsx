@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/public/logo";
+import { MemberWelcomeTourGate } from "@/components/user/member-welcome-tour-gate";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -90,6 +91,7 @@ interface UserShellProps {
   likedCount?: number;
   displayName?: string;
   avatarUrl?: string | null;
+  welcomeTourEligible?: boolean;
   children: React.ReactNode;
 }
 
@@ -100,6 +102,7 @@ export function UserShell({
   likedCount = 0,
   displayName,
   avatarUrl,
+  welcomeTourEligible = false,
   children,
 }: UserShellProps) {
   const pathname = usePathname();
@@ -169,7 +172,7 @@ export function UserShell({
               href={link.href}
               onClick={onNavigate}
               className={cn(
-                "mm-admin-sidebar-link",
+                "mm-admin-sidebar-link mm-nav-link-motion",
                 active && "mm-admin-sidebar-link-active"
               )}
             >
@@ -444,6 +447,8 @@ export function UserShell({
           </div>
         </div>
       )}
+
+      <MemberWelcomeTourGate eligible={welcomeTourEligible} />
     </div>
   );
 }

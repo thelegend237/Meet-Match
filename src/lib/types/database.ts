@@ -178,6 +178,7 @@ export interface AdminUserListItem {
   matches_total: number;
   matches_success: number;
   member_days: number;
+  role: "user" | "admin" | "superadmin";
 }
 
 export interface AdminUserMatch {
