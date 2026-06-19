@@ -9,7 +9,6 @@ import {
   HelpCircle,
   Lock,
   Mail,
-  Map,
   Pencil,
   Phone,
   Shield,
@@ -73,7 +72,7 @@ function SectionHeading({
   description?: string;
 }) {
   return (
-    <div className="mb-4 flex items-start gap-3">
+    <div className="mb-3 flex items-start gap-3">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fce7f3]/70 text-[#e91e8c]">
         <Icon className="h-5 w-5 stroke-[1.75]" />
       </div>
@@ -106,7 +105,7 @@ function SettingsQuickLink({
     <Link
       href={href}
       className={cn(
-        "group flex items-center gap-3 rounded-2xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(46,26,71,0.08)] sm:p-4",
+        "group flex items-center gap-3 rounded-2xl border p-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(46,26,71,0.08)] sm:p-3.5",
         highlight
           ? "border-[#f0c4dc]/80 bg-[#fce7f3]/25 hover:border-[#e91e8c]/40"
           : "border-[#ebe6f0]/90 bg-white hover:border-[#e91e8c]/25"
@@ -192,9 +191,9 @@ export function ProfileSettings({
   const completion = profile.profile_completion ?? 0;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-8 pb-4">
+    <div className="w-full space-y-4 pb-2">
       {fromReset && (
-        <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
+        <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           Votre lien de réinitialisation est valide. Choisissez un nouveau mot de
           passe dans la section Sécurité ci-dessous.
         </div>
@@ -203,8 +202,8 @@ export function ProfileSettings({
       {/* En-tête compte */}
       <section className="mm-landing-panel overflow-hidden">
         <div className="h-1.5 w-full bg-gradient-to-r from-[#7b3d8f] via-[#e91e8c] to-[#f9a8d4]" />
-        <div className="p-5 sm:p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
               <ProfileAvatarRing
                 photoUrl={profile.primary_photo_url}
@@ -243,7 +242,7 @@ export function ProfileSettings({
             </span>
           </div>
 
-          <div className="mt-5 rounded-xl border border-[#ebe6f0]/80 bg-[#faf8fc]/80 px-4 py-3">
+          <div className="mt-4 rounded-xl border border-[#ebe6f0]/80 bg-[#faf8fc]/80 px-3 py-2.5 sm:px-4 sm:py-3">
             <div className="mb-2 flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-[#2e1a47]">
                 Profil complété à {completion}&nbsp;%
@@ -266,7 +265,7 @@ export function ProfileSettings({
       {(needsActivation || needsPhoto) && (
         <div className="space-y-3">
           {needsActivation && (
-            <div className="flex flex-col gap-3 rounded-2xl border border-[#f0c4dc]/60 bg-[#fce7f3]/35 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-2xl border border-[#f0c4dc]/60 bg-[#fce7f3]/35 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-[#2e1a47]">
                 Activez votre inscription pour liker les profils et accéder aux
                 rencontres.
@@ -280,7 +279,7 @@ export function ProfileSettings({
             </div>
           )}
           {needsPhoto && (
-            <div className="flex flex-col gap-3 rounded-2xl border border-[#f0c4dc]/60 bg-gradient-to-r from-[#fce7f3]/40 to-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-2xl border border-[#f0c4dc]/60 bg-gradient-to-r from-[#fce7f3]/40 to-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e91e8c]/10">
                   <Camera className="h-5 w-5 text-[#e91e8c]" />
@@ -336,7 +335,7 @@ export function ProfileSettings({
           description="Connexion et visibilité de vos données"
         />
         <div className="space-y-3">
-          <div className="mm-card p-5 sm:p-6">
+          <div className="mm-card p-4">
             <p className="text-sm leading-relaxed text-[#6b5f7a]">
               Vos informations ne sont visibles que par les membres actifs validés.
               Une photo authentique est requise pour limiter les faux profils.
@@ -350,7 +349,7 @@ export function ProfileSettings({
             </Link>
           </div>
 
-          <div className="mm-card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="mm-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-semibold text-[#2e1a47]">Se déconnecter</p>
               <p className="mt-1 text-sm text-[#6b5f7a]">
@@ -380,8 +379,8 @@ export function ProfileSettings({
       </section>
 
       {/* Zone de danger */}
-      <section className="rounded-2xl border border-destructive/20 bg-destructive/[0.03] p-5 sm:p-6">
-        <div className="mb-4 flex items-start gap-3">
+      <section className="rounded-2xl border border-destructive/20 bg-destructive/[0.03] p-4">
+        <div className="mb-3 flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
             <Trash2 className="h-5 w-5" />
           </div>

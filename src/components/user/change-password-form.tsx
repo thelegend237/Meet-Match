@@ -68,7 +68,7 @@ export function ChangePasswordForm({
     <section className={cn("mm-landing-panel overflow-hidden", className)}>
       <div className="h-1.5 w-full bg-gradient-to-r from-[#7b3d8f] via-[#e91e8c] to-[#f9a8d4]" />
 
-      <div className="border-b border-[#ebe6f0]/80 bg-gradient-to-br from-white via-white to-[#fce7f3]/20 px-6 py-5 sm:px-8">
+      <div className="border-b border-[#ebe6f0]/80 bg-gradient-to-br from-white via-white to-[#fce7f3]/20 px-4 py-4 sm:px-5">
         <div className="flex items-start gap-4">
           <div className="mm-landing-icon-pink h-12 w-12 shrink-0">
             <Lock className="h-5 w-5 stroke-[1.75]" />
@@ -88,7 +88,7 @@ export function ChangePasswordForm({
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-4 bg-white px-6 py-6 sm:px-8"
+        className="space-y-3 bg-white px-4 py-4 sm:px-5"
       >
         <div>
           <label

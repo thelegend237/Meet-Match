@@ -21,12 +21,13 @@ export default async function ParametresPage({ searchParams }: PageProps) {
   const hasPhoto = await viewerHasDiscoveryPhoto(supabase, profile.id, profile);
 
   return (
-    <PageStack>
+    <PageStack className="gap-3">
       <PageHeader
         title="Paramètres"
         description="Compte, sécurité, confidentialité et préférences."
         backHref="/profil"
         backLabel="Profil"
+        className="space-y-0.5"
       />
       <ProfileSettings
         profile={profile}
