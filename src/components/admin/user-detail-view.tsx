@@ -21,6 +21,7 @@ import {
   AdminSectionCard,
 } from "@/components/admin/admin-page";
 import { grantFreeAccessAction } from "@/lib/actions/admin";
+import { AdminDeleteUserButton } from "@/components/admin/admin-delete-user-button";
 import { AdminRoleManager } from "@/components/admin/admin-role-manager";
 import { roleLabel } from "@/lib/admin/roles";
 import type { Profile } from "@/lib/types/database";
@@ -207,6 +208,13 @@ export function AdminUserDetailView({
         currentRole={profile.role}
         actorRole={currentAdmin.role}
         actorId={currentAdmin.id}
+      />
+
+      <AdminDeleteUserButton
+        userId={profile.id}
+        userName={profile.display_name || profile.email}
+        actorId={currentAdmin.id}
+        actorRole={currentAdmin.role}
       />
 
       {/* KPIs */}

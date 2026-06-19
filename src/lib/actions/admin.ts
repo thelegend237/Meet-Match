@@ -137,6 +137,32 @@ export async function grantFreeAccessAction(
   return { success: true };
 }
 
+export async function deleteUserProfileAction(userId: string) {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "superadmin") {
+    return { error: "Seul un super administrateur peut supprimer un profil." };
+  }
+
+  if (userId === profile.id) {
+    return { error: "Vous ne pouvez pas supprimer votre propre compte depuis l'admin." };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("admin_delete_user", {
+    p_superadmin_id: profile.id,
+    p_user_id: userId,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/utilisateurs");
+  revalidatePath("/admin");
+  revalidatePath("/admin/matchs");
+  revalidatePath("/admin/conversations");
+  return { success: true };
+}
+
 export async function updateUserRoleAction(
   userId: string,
   role: "user" | "admin" | "superadmin"
