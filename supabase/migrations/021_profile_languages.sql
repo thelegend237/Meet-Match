@@ -75,6 +75,9 @@ BEGIN
 END;
 $$;
 
+-- PostgreSQL n'autorise pas CREATE OR REPLACE si le type de retour change.
+DROP FUNCTION IF EXISTS public.discover_profiles(UUID[], INT);
+
 CREATE OR REPLACE FUNCTION public.discover_profiles(
   p_excluded_ids UUID[] DEFAULT ARRAY[]::UUID[],
   p_limit INT DEFAULT 1000
@@ -161,3 +164,5 @@ BEGIN
   LIMIT GREATEST(1, LEAST(p_limit, 2000));
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION public.discover_profiles(UUID[], INT) TO authenticated;
