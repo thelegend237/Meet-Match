@@ -13,14 +13,15 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
 import {
-
   uploadProfilePhoto,
-
   setPrimaryPhoto,
-
   deleteProfilePhoto,
-
 } from "@/lib/actions/photos";
+import {
+  MAX_PROFILE_PHOTO_MB,
+  PROFILE_PHOTO_ACCEPT,
+  validateProfilePhotoFile,
+} from "@/lib/photos/limits";
 
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,12 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
 
     if (!file) return;
 
-
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      toast({ variant: "destructive", title: "Erreur", description: validationError });
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
 
     const formData = new FormData();
 
@@ -144,7 +150,7 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
 
           <br className="hidden sm:inline" />
 
-          <span className="sm:ml-0"> JPEG, PNG ou WebP — max 25 Mo.</span>
+          <span className="sm:ml-0"> JPEG, PNG ou WebP — max {MAX_PROFILE_PHOTO_MB} Mo.</span>
 
         </p>
 
@@ -154,7 +160,7 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
 
           type="file"
 
-          accept="image/jpeg,image/png,image/webp"
+          accept={PROFILE_PHOTO_ACCEPT}
 
           capture="environment"
 

@@ -19,9 +19,14 @@ import {
   Gem,
   Headphones,
   Bell,
+  Camera,
+  Pencil,
+  Settings,
+  Sparkles,
+  User,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/public/logo";
 
 const ADMIN_LOGO = "/logo-admin.png";
@@ -63,6 +68,27 @@ const mobileMoreLinks: NavLink[] = [
   { id: "payments", href: "/admin/paiements", label: "Paiements", icon: CreditCard },
 ];
 
+type ProfileMenuLink = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  exact?: boolean;
+};
+
+const profileMenuLinks: ProfileMenuLink[] = [
+  { href: "/profil", label: "Mon profil", icon: User, exact: true },
+  { href: "/profil/photos", label: "Mes photos", icon: Camera },
+  { href: "/profil/modifier", label: "Modifier le profil", icon: Pencil },
+  { href: "/profil/parametres", label: "Paramètres", icon: Settings, exact: true },
+  { href: "/onboarding", label: "Compléter mon profil", icon: Sparkles },
+];
+
+function isProfileMenuActive(pathname: string, href: string, exact?: boolean) {
+  if (href === "/profil/photos") return pathname.startsWith("/profil/photos");
+  if (exact) return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 function isActive(pathname: string, href: string, exact?: boolean) {
   const baseHref = href.split("?")[0]!;
   if (exact) return pathname === baseHref;
@@ -102,6 +128,7 @@ interface AdminShellProps {
   displayName?: string;
   role?: string;
   photoUrl?: string | null;
+  profileCompletion?: number;
   notificationCount?: number;
   children: React.ReactNode;
 }
@@ -110,6 +137,7 @@ export function AdminShell({
   displayName,
   role,
   photoUrl,
+  profileCompletion = 100,
   notificationCount = 0,
   children,
 }: AdminShellProps) {
@@ -117,11 +145,25 @@ export function AdminShell({
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setDrawerOpen(false);
     setMoreOpen(false);
+    setAccountOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!accountOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (!accountRef.current?.contains(e.target as Node)) {
+        setAccountOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [accountOpen]);
 
   useEffect(() => {
     if (!drawerOpen && !moreOpen) return;
@@ -169,29 +211,86 @@ export function AdminShell({
   }
 
   function ProfileBlock({ compact }: { compact?: boolean }) {
+    const menuLinks =
+      profileCompletion >= 100
+        ? profileMenuLinks.filter((l) => l.href !== "/onboarding")
+        : profileMenuLinks;
+
     return (
-      <div className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 md:pr-3">
-        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary/30 to-secondary/40 text-sm font-bold text-white">
-          {photoUrl ? (
-            <Image src={photoUrl} alt="" fill className="object-cover" sizes="40px" />
-          ) : (
-            (displayName?.[0] ?? "A").toUpperCase()
-          )}
-        </div>
-        {displayName && !compact && (
-          <div className="hidden min-w-0 sm:block">
-            <p className="truncate text-sm font-semibold text-primary">
-              {displayName}
-            </p>
-            {role && (
-              <p className="truncate text-xs text-muted-foreground">
-                {roleLabel(role)}
-              </p>
+      <div ref={accountRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setAccountOpen((o) => !o)}
+          className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-muted md:pr-3"
+          aria-expanded={accountOpen}
+          aria-haspopup="menu"
+          aria-label="Menu compte"
+        >
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary/30 to-secondary/40 text-sm font-bold text-white">
+            {photoUrl ? (
+              <Image src={photoUrl} alt="" fill className="object-cover" sizes="40px" />
+            ) : (
+              (displayName?.[0] ?? "A").toUpperCase()
             )}
           </div>
-        )}
-        {!compact && (
-          <ChevronDown className="hidden h-4 w-4 text-muted-foreground sm:block" />
+          {displayName && !compact && (
+            <div className="hidden min-w-0 sm:block">
+              <p className="truncate text-sm font-semibold text-primary">
+                {displayName}
+              </p>
+              {role && (
+                <p className="truncate text-xs text-muted-foreground">
+                  {roleLabel(role)}
+                </p>
+              )}
+            </div>
+          )}
+          {!compact && (
+            <ChevronDown
+              className={cn(
+                "hidden h-4 w-4 text-muted-foreground transition-transform sm:block",
+                accountOpen && "rotate-180"
+              )}
+            />
+          )}
+        </button>
+
+        {accountOpen && (
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border/80 bg-card py-1 shadow-lg"
+          >
+            {menuLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                role="menuitem"
+                onClick={() => setAccountOpen(false)}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted",
+                  isProfileMenuActive(pathname, link.href, link.exact)
+                    ? "text-secondary"
+                    : "text-foreground"
+                )}
+              >
+                <link.icon className="h-4 w-4 shrink-0 opacity-80" />
+                {link.label}
+              </Link>
+            ))}
+            <div className="my-1 border-t border-border/60" />
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setAccountOpen(false);
+                void logout();
+              }}
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              Déconnexion
+            </button>
+          </div>
         )}
       </div>
     );
@@ -262,6 +361,13 @@ export function AdminShell({
               </Button>
             </div>
 
+            <Link
+              href="/profil"
+              className="mm-admin-sidebar-link py-3 text-sm text-white/70"
+            >
+              <User className="h-[20px] w-[20px] shrink-0 stroke-[1.75]" />
+              Mon profil
+            </Link>
             <Link
               href="/decouvrir"
               className="mm-admin-sidebar-link py-3 text-sm text-white/70"
@@ -346,6 +452,14 @@ export function AdminShell({
             </nav>
             <div className="space-y-2 border-t border-white/10 p-4">
               <Link
+                href="/profil"
+                onClick={() => setDrawerOpen(false)}
+                className="mm-admin-sidebar-link py-3"
+              >
+                <User className="h-[20px] w-[20px] stroke-[1.75]" />
+                Mon profil
+              </Link>
+              <Link
                 href="/decouvrir"
                 onClick={() => setDrawerOpen(false)}
                 className="mm-admin-sidebar-link py-3"
@@ -407,6 +521,14 @@ export function AdminShell({
                   </Link>
                 );
               })}
+              <Link
+                href="/profil"
+                onClick={() => setMoreOpen(false)}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-muted"
+              >
+                <User className="h-5 w-5" />
+                Mon profil
+              </Link>
               <Link
                 href="/decouvrir"
                 onClick={() => setMoreOpen(false)}

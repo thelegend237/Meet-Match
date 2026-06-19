@@ -29,6 +29,11 @@ import {
   type InscriptionPhase,
 } from "@/lib/onboarding/step-groups";
 import type { OnboardingStepId } from "@/lib/onboarding/steps";
+import {
+  MAX_PROFILE_PHOTO_MB,
+  PROFILE_PHOTO_ACCEPT,
+  validateProfilePhotoFile,
+} from "@/lib/photos/limits";
 
 export function InscriptionPageLayout({
   children,
@@ -514,9 +519,11 @@ export function RegisterAgeRange({
 export function RegisterPhotoUpload({
   preview,
   onFileSelect,
+  onError,
 }: {
   preview: string | null;
   onFileSelect: (file: File) => void;
+  onError?: (message: string) => void;
 }) {
   return (
     <div className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-border/70 bg-gradient-to-b from-[#faf8fc] to-white px-4 py-10 transition-colors hover:border-secondary/35 hover:bg-white">
@@ -534,17 +541,24 @@ export function RegisterPhotoUpload({
           </div>
         )}
         <p className="mt-5 text-center text-sm text-muted-foreground">
-          JPG, PNG ou WebP — visage bien visible
+          JPG, PNG ou WebP — max {MAX_PROFILE_PHOTO_MB} Mo, visage bien visible
         </p>
         <label className="mt-4 cursor-pointer rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-md shadow-secondary/25 transition-all hover:brightness-105 active:scale-[0.98]">
           {preview ? "Changer la photo" : "Choisir une photo"}
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept={PROFILE_PHOTO_ACCEPT}
             className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) onFileSelect(file);
+              if (!file) return;
+              const validationError = validateProfilePhotoFile(file);
+              if (validationError) {
+                onError?.(validationError);
+                e.target.value = "";
+                return;
+              }
+              onFileSelect(file);
             }}
           />
         </label>

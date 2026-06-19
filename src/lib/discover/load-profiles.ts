@@ -10,6 +10,7 @@ type DiscoverProfileRow = {
   country_code: string | null;
   city: string | null;
   language: string | null;
+  languages: string[] | null;
   primary_photo_url: string | null;
   bio: string | null;
   gender: DiscoveryProfile["gender"];
@@ -65,6 +66,7 @@ export async function loadDiscoveryProfiles(
     country_code: p.country_code,
     city: p.city,
     language: p.language,
+    languages: p.languages ?? (p.language ? [p.language] : []),
     primary_photo_url: p.primary_photo_url,
     bio: p.bio,
     gender: p.gender,
@@ -98,10 +100,11 @@ async function loadDiscoveryProfilesFallback(
     .select(
       `id, display_name, date_of_birth, country_code, city, language,
        primary_photo_url, bio, gender, expectations, relationship_type,
-       created_at, is_verified, last_seen_at, latitude, longitude`
+       created_at, is_verified, last_seen_at, latitude, longitude, languages`
     )
     .eq("status", "active")
     .eq("is_deleted", false)
+    .eq("role", "user")
     .in("registration_payment_status", ["paid", "free"])
     .not("primary_photo_url", "is", null)
     .order("created_at", { ascending: false })

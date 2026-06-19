@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   Camera,
   Settings,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -92,6 +93,7 @@ interface UserShellProps {
   displayName?: string;
   avatarUrl?: string | null;
   welcomeTourEligible?: boolean;
+  showAdminLink?: boolean;
   children: React.ReactNode;
 }
 
@@ -103,6 +105,7 @@ export function UserShell({
   displayName,
   avatarUrl,
   welcomeTourEligible = false,
+  showAdminLink = false,
   children,
 }: UserShellProps) {
   const pathname = usePathname();
@@ -262,6 +265,22 @@ export function UserShell({
                   role="menu"
                   className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-border/80 bg-card py-1 shadow-lg"
                 >
+                  {showAdminLink && (
+                    <Link
+                      href="/admin"
+                      role="menuitem"
+                      onClick={() => setAccountOpen(false)}
+                      className={cn(
+                        "flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted",
+                        pathname.startsWith("/admin")
+                          ? "text-secondary"
+                          : "text-foreground"
+                      )}
+                    >
+                      <Shield className="h-4 w-4 shrink-0 opacity-80" />
+                      Administration
+                    </Link>
+                  )}
                   {accountMenuLinks.map((link) => (
                     <Link
                       key={link.href}
@@ -435,6 +454,16 @@ export function UserShell({
                   </Link>
                 );
               })}
+              {showAdminLink && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMoreOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <Shield className="h-5 w-5 shrink-0" />
+                  Administration
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}

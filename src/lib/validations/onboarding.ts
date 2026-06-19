@@ -1,4 +1,9 @@
 import { z } from "zod";
+import { SPOKEN_LANGUAGE_CODES } from "@/lib/languages";
+
+const spokenLanguageCodeSchema = z.enum(SPOKEN_LANGUAGE_CODES);
+
+const spokenLanguagesSchema = z.array(spokenLanguageCodeSchema).default([]);
 
 /** Étape « Compte » : identifiants uniquement */
 export const onboardingCredentialsSchema = z.object({
@@ -35,7 +40,7 @@ export const onboardingIdentitySchema = z.object({
     .enum(["male", "female", "other", "prefer_not_say"])
     .optional()
     .or(z.literal("")),
-  language: z.enum(["fr", "en"]).optional().or(z.literal("")),
+  languages: spokenLanguagesSchema,
   phone: z.string().optional().or(z.literal("")),
 });
 

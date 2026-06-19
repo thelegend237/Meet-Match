@@ -59,6 +59,7 @@ export interface Profile {
   country_code: string | null;
   city: string | null;
   language: string | null;
+  languages: string[];
   timezone: string | null;
   bio: string | null;
   expectations: string | null;
@@ -91,6 +92,7 @@ export interface PublicProfile {
   country_code: string | null;
   city: string | null;
   language: string | null;
+  languages?: string[] | null;
   primary_photo_url: string | null;
 }
 
@@ -119,6 +121,7 @@ export interface AdminCompareProfile {
   country_code: string | null;
   city: string | null;
   language: string | null;
+  languages?: string[] | null;
   bio: string | null;
   expectations: string | null;
   relationship_type: RelationshipType | null;

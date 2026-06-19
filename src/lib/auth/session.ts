@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isStaleAuthError } from "@/lib/supabase/auth-errors";
 import { USER_HOME } from "@/lib/auth/routes";
+import { isStaffProfile } from "@/lib/auth/staff";
 import type { Profile } from "@/lib/types/database";
 
 async function clearBrokenAuthSession() {
@@ -76,7 +77,10 @@ export async function requireAdmin(): Promise<Profile> {
   return profile;
 }
 
+export { isStaffProfile } from "@/lib/auth/staff";
+
 export function hasPlatformAccess(profile: Profile): boolean {
+  if (isStaffProfile(profile)) return true;
   return (
     profile.registration_payment_status === "paid" ||
     profile.registration_payment_status === "free"
@@ -84,5 +88,5 @@ export function hasPlatformAccess(profile: Profile): boolean {
 }
 
 export function isAdmin(profile: Profile): boolean {
-  return profile.role === "admin" || profile.role === "superadmin";
+  return isStaffProfile(profile);
 }

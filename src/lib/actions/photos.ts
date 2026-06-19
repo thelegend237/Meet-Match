@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { validateProfilePhotoFile } from "@/lib/photos/limits";
 
 export async function uploadProfilePhoto(formData: FormData) {
   const supabase = await createClient();
@@ -13,19 +14,8 @@ export async function uploadProfilePhoto(formData: FormData) {
   const file = formData.get("file") as File | null;
   const isPrimary = formData.get("isPrimary") === "true";
 
-  if (!file || file.size === 0) {
-    return { error: "Aucun fichier sélectionné" };
-  }
-
-  const allowed = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowed.includes(file.type)) {
-    return { error: "Format non supporté (JPEG, PNG, WebP uniquement)" };
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    return { error: "Fichier trop volumineux (max 5 Mo)" };
-  }
-
+  const validationError = file ? validateProfilePhotoFile(file) : "Aucun fichier sélectionné";
+  if (validationError || !file) return { error: validationError ?? "Aucun fichier sélectionné" };
   const ext = file.name.split(".").pop() || "jpg";
   const path = `${user.id}/${Date.now()}.${ext}`;
 
@@ -74,6 +64,7 @@ export async function uploadProfilePhoto(formData: FormData) {
   revalidatePath("/profil/photos");
   revalidatePath("/profil");
   revalidatePath("/tableau-de-bord");
+  revalidatePath("/admin");
   return { success: true, url: publicUrl };
 }
 
@@ -110,6 +101,7 @@ export async function setPrimaryPhoto(photoId: string) {
 
   revalidatePath("/profil/photos");
   revalidatePath("/profil");
+  revalidatePath("/admin");
   return { success: true };
 }
 
@@ -149,5 +141,6 @@ export async function deleteProfilePhoto(photoId: string) {
 
   revalidatePath("/profil/photos");
   revalidatePath("/profil");
+  revalidatePath("/admin");
   return { success: true };
 }

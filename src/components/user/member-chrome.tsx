@@ -1,4 +1,5 @@
 import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
+import { isStaffProfile } from "@/lib/auth/staff";
 import { getUnreadCount } from "@/lib/actions/notifications";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { getUnreadMessageCount } from "@/lib/user/messages";
@@ -48,6 +49,7 @@ export async function MemberChrome({
         displayName={profile.display_name || undefined}
         avatarUrl={profile.primary_photo_url}
         welcomeTourEligible={welcomeTourEligible}
+        showAdminLink={isStaffProfile(profile)}
       >
         <UserContentArea>{children}</UserContentArea>
       </UserShell>

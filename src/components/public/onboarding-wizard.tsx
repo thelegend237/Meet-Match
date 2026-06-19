@@ -93,6 +93,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { ToastAction } from "@/components/ui/toast";
 import { SocialAuthButtons, AuthDivider } from "@/components/auth/social-auth-buttons";
+import { LanguageMultiSelect } from "@/components/ui/language-multi-select";
+import { getProfileLanguages, type SpokenLanguageCode } from "@/lib/languages";
+import {
+  MAX_PROFILE_PHOTO_MB,
+  PROFILE_PHOTO_ACCEPT,
+  validateProfilePhotoFile,
+} from "@/lib/photos/limits";
 import { StepTransition } from "@/components/motion/motion";
 
 type WizardMode = "public" | "continue";
@@ -114,7 +121,7 @@ type WizardData = {
   phone: string;
   gender: string;
   date_of_birth: string;
-  language: string;
+  languages: SpokenLanguageCode[];
   bio: string;
   expectations: string;
   relationship_type: string;
@@ -134,7 +141,7 @@ function profileToData(p: Profile | null): Partial<WizardData> {
     phone: p.phone ?? "",
     gender: p.gender ?? "",
     date_of_birth: p.date_of_birth ?? "",
-    language: p.language ?? "fr",
+    languages: getProfileLanguages(p) as SpokenLanguageCode[],
     bio: p.bio ?? "",
     expectations: p.expectations ?? "",
     relationship_type: p.relationship_type ?? "",
@@ -208,7 +215,7 @@ export function OnboardingWizard({
     phone: "",
     gender: "",
     date_of_birth: "",
-    language: "fr",
+    languages: [],
     bio: "",
     expectations: "",
     relationship_type: "",
@@ -241,7 +248,7 @@ export function OnboardingWizard({
         phone: data.phone,
         gender: data.gender || null,
         date_of_birth: data.date_of_birth || null,
-        language: data.language,
+        languages: data.languages,
         bio: data.bio,
         expectations: data.expectations,
         relationship_type: data.relationship_type || null,
@@ -297,7 +304,7 @@ export function OnboardingWizard({
         country_code: d.country_code,
         city: d.city,
         phone: d.phone,
-        language: "fr",
+        languages: [],
       })
     );
     toast(message);
@@ -437,7 +444,7 @@ export function OnboardingWizard({
       gender: clear
         ? ""
         : (data.gender as "" | "male" | "female" | "other" | "prefer_not_say"),
-      language: clear ? "" : (data.language as "fr" | "en"),
+      languages: clear ? [] : data.languages,
       phone: data.phone,
     });
     if (result.profile_completion != null) setCompletion(result.profile_completion);
@@ -635,6 +642,29 @@ export function OnboardingWizard({
         });
       }
     });
+  }
+
+  function selectPhotoFile(file: File) {
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function handlePhotoFileInput(
+    file: File | undefined,
+    resetInput?: HTMLInputElement | null
+  ) {
+    if (!file) return;
+    const validationError = validateProfilePhotoFile(file);
+    if (validationError) {
+      toast({
+        variant: "destructive",
+        title: "Photo refusée",
+        description: validationError,
+      });
+      if (resetInput) resetInput.value = "";
+      return;
+    }
+    selectPhotoFile(file);
   }
 
   const stepOptional = steps.find((s) => s.id === currentStep)?.optional ?? false;
@@ -898,13 +928,10 @@ export function OnboardingWizard({
         if (mode === "public") {
           return (
             <RegisterStep icon={Globe} optional>
-              <RegisterChoiceGrid
-                value={data.language}
-                onChange={(v) => patch({ language: v })}
-                options={[
-                  { value: "fr", label: "Français", icon: Globe },
-                  { value: "en", label: "English", icon: Globe },
-                ]}
+              <LanguageMultiSelect
+                variant="register"
+                value={data.languages}
+                onChange={(languages) => patch({ languages })}
               />
               <RegisterSkipButton onClick={handleSkip} />
             </RegisterStep>
@@ -913,15 +940,15 @@ export function OnboardingWizard({
         return (
           <>
             <StepIllustration icon={Globe} />
-            <StepHeader title="Quelle langue parlez-vous ?" optional />
+            <StepHeader
+              title="Quelles langues parlez-vous ?"
+              subtitle="Sélectionnez toutes les langues que vous maîtrisez."
+              optional
+            />
             <StepBody>
-              <ChoiceGrid
-                value={data.language}
-                onChange={(v) => patch({ language: v })}
-                options={[
-                  { value: "fr", label: "Français" },
-                  { value: "en", label: "English" },
-                ]}
+              <LanguageMultiSelect
+                value={data.languages}
+                onChange={(languages) => patch({ languages })}
               />
               <SkipOption onClick={handleSkip} />
             </StepBody>
@@ -1190,10 +1217,14 @@ export function OnboardingWizard({
             <RegisterStep icon={Camera} optional>
               <RegisterPhotoUpload
                 preview={photoPreview}
-                onFileSelect={(file) => {
-                  setPhotoFile(file);
-                  setPhotoPreview(URL.createObjectURL(file));
-                }}
+                onFileSelect={selectPhotoFile}
+                onError={(message) =>
+                  toast({
+                    variant: "destructive",
+                    title: "Photo refusée",
+                    description: message,
+                  })
+                }
               />
             </RegisterStep>
           );
@@ -1220,17 +1251,17 @@ export function OnboardingWizard({
                     <Camera className="h-12 w-12 text-secondary/50" />
                   </div>
                 )}
-                <label className="mt-6 cursor-pointer rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground shadow-md">
+                <p className="mt-4 text-center text-sm text-muted-foreground">
+                  JPG, PNG ou WebP — max {MAX_PROFILE_PHOTO_MB} Mo
+                </p>
+                <label className="mt-4 cursor-pointer rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground shadow-md">
                   Choisir une photo
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept={PROFILE_PHOTO_ACCEPT}
                     className="sr-only"
                     onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      setPhotoFile(file);
-                      setPhotoPreview(URL.createObjectURL(file));
+                      handlePhotoFileInput(e.target.files?.[0], e.target);
                     }}
                   />
                 </label>

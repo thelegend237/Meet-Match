@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileCompletionBar } from "@/components/ui/progress";
+import { isStaffProfile } from "@/lib/auth/staff";
 import type { Profile } from "@/lib/types/database";
 
 export function ProfileCompletionBanner({ profile }: { profile: Profile }) {
@@ -30,6 +31,8 @@ export function ProfileCompletionBanner({ profile }: { profile: Profile }) {
 }
 
 export function PaymentRequiredBanner({ profile }: { profile: Profile }) {
+  if (isStaffProfile(profile)) return null;
+
   if (
     profile.registration_payment_status === "paid" ||
     profile.registration_payment_status === "free"

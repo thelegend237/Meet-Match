@@ -23,6 +23,7 @@ import {
   GENDER_LABELS,
   RELATIONSHIP_LABELS,
 } from "@/lib/validations/profile";
+import { formatProfileLanguages } from "@/lib/languages";
 import type { DiscoveryProfile } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
 
@@ -236,8 +237,8 @@ export function ProfileDetailModal({
           {profile.gender && (
             <p className="mt-2 text-sm text-neutral-600">
               {GENDER_LABELS[profile.gender]}
-              {profile.language && (
-                <> · {profile.language === "fr" ? "Français" : profile.language}</>
+              {formatProfileLanguages(profile) && (
+                <> · {formatProfileLanguages(profile)}</>
               )}
             </p>
           )}

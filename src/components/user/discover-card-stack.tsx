@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ProfileCardBadges } from "@/components/user/profile-card-badges";
 import { formatProfileDistance } from "@/lib/discover/geo";
+import { formatProfileLanguages } from "@/lib/languages";
 import { getAge, cn } from "@/lib/utils";
 import type { DiscoveryProfile } from "@/lib/types/database";
 import { Button } from "@/components/ui/button";
@@ -344,9 +345,9 @@ function SwipeableCard({
             </p>
           )}
 
-          {(genderLabel || profile.language) && (
+          {(genderLabel || formatProfileLanguages(profile)) && (
             <p className="mt-2 text-sm text-white/80">
-              {[genderLabel, profile.language === "fr" ? "Français" : profile.language]
+              {[genderLabel, formatProfileLanguages(profile)]
                 .filter(Boolean)
                 .join(" · ")}
             </p>

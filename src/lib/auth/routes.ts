@@ -22,6 +22,8 @@ export function isAdminRole(role?: string | null): boolean {
   return role === "admin" || role === "superadmin";
 }
 
+export { isStaffRole } from "@/lib/auth/staff";
+
 export function getHomeForRole(role?: string | null): string {
   if (isAdminRole(role)) return ADMIN_HOME;
   return USER_HOME;

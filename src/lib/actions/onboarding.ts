@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { syncProfileGeolocation } from "@/lib/actions/geocode";
+import type { SpokenLanguageCode } from "@/lib/languages";
 import {
   onboardingIdentitySchema,
   onboardingPresentationSchema,
@@ -39,12 +40,14 @@ export async function saveOnboardingIdentity(data: OnboardingIdentityData) {
   if (!userId) return { error: "Non authentifié" };
 
   const d = parsed.data;
+  const languages = d.languages ?? [];
+
   const { data: profile, error } = await supabase
     .from("profiles")
     .update({
       date_of_birth: d.date_of_birth || null,
       gender: d.gender || null,
-      language: d.language || "fr",
+      languages,
       phone: d.phone || null,
     })
     .eq("id", userId)

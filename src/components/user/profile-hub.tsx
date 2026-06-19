@@ -30,6 +30,7 @@ import {
 import { RELATIONSHIP_LABELS } from "@/lib/validations/profile";
 import { isProfileOnline } from "@/lib/discover/profile-status";
 import { cn, formatCurrency, getAge } from "@/lib/utils";
+import { isStaffProfile } from "@/lib/auth/staff";
 import type { Payment, Profile } from "@/lib/types/database";
 
 type TabId = "subscriptions" | "security";
@@ -127,10 +128,13 @@ export function ProfileHub({
     ? { label: "En ligne", tone: "high" as const }
     : getActivityLevel(profile.last_seen_at);
 
+  const isStaff = isStaffProfile(profile);
   const registrationPaid =
+    isStaff ||
     profile.registration_payment_status === "paid" ||
     profile.registration_payment_status === "free";
-  const registrationFree = profile.registration_payment_status === "free";
+  const registrationFree =
+    isStaff || profile.registration_payment_status === "free";
 
   const hasPaidMatching = payments.some(
     (p) =>
@@ -321,7 +325,9 @@ export function ProfileHub({
             >
               {registrationPaid
                 ? registrationFree
-                  ? "Gratuit"
+                  ? isStaff
+                    ? "Équipe"
+                    : "Gratuit"
                   : "Actif"
                 : "À activer"}
             </p>
@@ -349,18 +355,29 @@ export function ProfileHub({
                     Meet & Match
                   </p>
                   <h3 className="mt-1 font-sans text-xl font-bold text-primary sm:text-2xl">
-                    {registrationPaid
-                      ? "Rencontres accompagnées"
-                      : "Activez votre accès"}
+                    {isStaff
+                      ? "Compte équipe"
+                      : registrationPaid
+                        ? "Rencontres accompagnées"
+                        : "Activez votre accès"}
                   </h3>
                   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-primary/80 sm:text-[15px]">
-                    {registrationPaid
-                      ? "Likes illimités et découverte. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre compatible."
-                      : "Rejoignez la communauté, explorez les profils et envoyez des likes — un seul paiement d'inscription."}
+                    {isStaff
+                      ? "Votre compte administrateur peut aussi être complété comme un profil membre (photos, bio, préférences)."
+                      : registrationPaid
+                        ? "Likes illimités et découverte. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre compatible."
+                        : "Rejoignez la communauté, explorez les profils et envoyez des likes — un seul paiement d'inscription."}
                   </p>
                 </div>
                 <div className="mt-5 shrink-0 lg:mt-0 lg:w-[min(100%,320px)]">
-                  {registrationPaid ? (
+                  {isStaff ? (
+                    <Button
+                      className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
+                      asChild
+                    >
+                      <Link href="/profil/photos">Gérer mes photos</Link>
+                    </Button>
+                  ) : registrationPaid ? (
                     <Button
                       className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
                       asChild
@@ -378,9 +395,11 @@ export function ProfileHub({
                       className="h-12 w-full rounded-full text-base font-semibold shadow-md"
                     />
                   )}
-                  <p className="mt-3 text-center text-[10px] text-muted-foreground sm:text-xs">
-                    Paiement unique · tarif selon votre pays
-                  </p>
+                  {!isStaff && (
+                    <p className="mt-3 text-center text-[10px] text-muted-foreground sm:text-xs">
+                      Paiement unique · tarif selon votre pays
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -26,6 +26,9 @@ Appliquer **dans l'ordre** via le SQL Editor Supabase (ou `supabase db push`).
 | 017 | `017_notification_system.sql` | Notifications unifiées : types admin, like reçu, paiement confirmé, `notify_active_admins()` |
 | 018 | `018_admin_role_management.sql` | Gestion des rôles depuis l'admin (`update_user_role`) |
 | 019 | `019_admin_delete_user.sql` | Suppression de profil par superadmin (`admin_delete_user`) |
+| 020 | `020_staff_profile_access.sql` | Profil membre pour admin/superadmin : accès sans paiement, exclusion du fil découverte |
+| 021 | `021_profile_languages.sql` | Langues parlées multiples (`profiles.languages`) |
+| 022 | `022_profile_photo_size_limit.sql` | Limite upload photos profil → **25 Mo** (bucket Storage) |
 
 ## Dépendances clés
 
@@ -51,7 +54,7 @@ Variables `.env.local` : `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 
 **Ne pas** réutiliser un projet avec un autre schéma (ex. Control-Flow) : les enums et colonnes diffèrent et provoquent des erreurs en chaîne.
 
-Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 019 dans l'ordre.
+Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 022 dans l'ordre.
 
 **Base existante (Control-Flow)** : exécuter `000_schema_bridge.sql` puis `009` → `013`, ou mieux : nouveau projet dédié.
 

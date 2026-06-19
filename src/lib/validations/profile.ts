@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { SPOKEN_LANGUAGE_CODES } from "@/lib/languages";
+
+const spokenLanguageCodeSchema = z.enum(SPOKEN_LANGUAGE_CODES);
 
 export const profileSchema = z.object({
   display_name: z.string().min(2, "Minimum 2 caractères"),
@@ -10,8 +13,9 @@ export const profileSchema = z.object({
     .or(z.literal("")),
   country_code: z.string().length(2, "Sélectionnez un pays"),
   city: z.string().min(2, "La ville est requise"),
-  language: z.string().min(2),
-  bio: z.string().optional().or(z.literal("")),
+  languages: z
+    .array(spokenLanguageCodeSchema)
+    .min(1, "Sélectionnez au moins une langue"),  bio: z.string().optional().or(z.literal("")),
   expectations: z.string().optional().or(z.literal("")),
   relationship_type: z
     .enum(["serious", "friendship", "marriage", "other"])

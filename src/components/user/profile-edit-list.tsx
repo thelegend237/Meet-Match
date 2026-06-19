@@ -29,6 +29,12 @@ import {
   SCOPE_LABELS,
   type ProfileFormData,
 } from "@/lib/validations/profile";
+import { LanguageMultiSelect } from "@/components/ui/language-multi-select";
+import {
+  formatProfileLanguages,
+  getProfileLanguages,
+  type SpokenLanguageCode,
+} from "@/lib/languages";
 import type { Profile } from "@/lib/types/database";
 
 type FieldKey = keyof ProfileFormData;
@@ -49,7 +55,7 @@ function profileToForm(p: Profile): ProfileFormData {
     gender: p.gender ?? undefined,
     country_code: p.country_code ?? "FR",
     city: p.city ?? "",
-    language: p.language ?? "fr",
+    languages: getProfileLanguages(p) as SpokenLanguageCode[],
     bio: p.bio ?? "",
     expectations: p.expectations ?? "",
     relationship_type: p.relationship_type ?? undefined,
@@ -100,10 +106,10 @@ const ROWS: EditRow[] = [
     getValue: (p) => p.city || "—",
   },
   {
-    id: "language",
-    label: "Langue",
+    id: "languages",
+    label: "Langues parlées",
     icon: MapPin,
-    getValue: (p) => (p.language === "en" ? "English" : "Français"),
+    getValue: (p) => formatProfileLanguages(p) || "—",
   },
   {
     id: "bio",
@@ -366,17 +372,14 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                   onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
                 />
               )}
-              {activeField === "language" && (
-                <select
-                  className={selectClass}
-                  value={form.language}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, language: e.target.value }))
+              {activeField === "languages" && (
+                <LanguageMultiSelect
+                  value={form.languages}
+                  onChange={(languages) =>
+                    setForm((f) => ({ ...f, languages: languages as SpokenLanguageCode[] }))
                   }
-                >
-                  <option value="fr">Français</option>
-                  <option value="en">English</option>
-                </select>
+                  hint=""
+                />
               )}
               {activeField === "bio" && (
                 <Textarea

@@ -12,6 +12,7 @@ export type ProfileCompletionInput = {
   preferred_age_max?: number | null;
   preferred_relation_scope?: string | null;
   primary_photo_url?: string | null;
+  languages?: string[] | null;
   language?: string | null;
   phone?: string | null;
 };
@@ -38,7 +39,7 @@ export function calculateProfileCompletion(
 
   if (p.primary_photo_url?.trim()) score += 15;
 
-  if (p.language) score += 5;
+  if (p.languages?.length || p.language) score += 5;
   if (p.phone?.trim()) score += 5;
 
   return Math.min(score, 100);
@@ -50,5 +51,5 @@ export const COMPLETION_HINTS = [
   { label: "Attentes & type de relation", fields: ["expectations", "relationship_type"] as const },
   { label: "Préférences de recherche", fields: ["preferred_age_min", "preferred_relation_scope"] as const },
   { label: "Photo principale", fields: ["primary_photo_url"] as const },
-  { label: "Téléphone & langue", fields: ["phone", "language"] as const },
+  { label: "Téléphone & langues", fields: ["phone", "languages"] as const },
 ] as const;

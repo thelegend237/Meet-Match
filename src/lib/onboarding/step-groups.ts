@@ -42,7 +42,7 @@ export function getPublicStepTitle(step: OnboardingStepId): string {
     account: "Créer votre compte",
     gender: "Vous êtes ?",
     birthdate: "Date de naissance",
-    language: "Langue parlée",
+    language: "Langues parlées",
     bio: "Parlez-nous de vous",
     expectations: "Vos attentes",
     relationship: "Type de relation",
@@ -61,7 +61,7 @@ export function getPublicStepSubtitle(step: OnboardingStepId): string {
       "Vos identifiants et votre localisation pour démarrer en toute confiance.",
     gender: "Cette information aide à personnaliser vos suggestions.",
     birthdate: "Votre âge sera visible sur votre profil public.",
-    language: "Langue utilisée pour les échanges avec l'équipe et les matchs.",
+    language: "Langues utilisées pour les échanges avec l'équipe et les matchs.",
     bio: "Présentez-vous en quelques lignes — minimum 20 caractères.",
     expectations:
       "Décrivez ce que vous recherchez : nos administrateurs s'en servent pour vous accompagner.",

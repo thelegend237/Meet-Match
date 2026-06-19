@@ -19,6 +19,7 @@ export default async function AdminLayout({
       displayName={profile.display_name || profile.email}
       role={profile.role}
       photoUrl={profile.primary_photo_url}
+      profileCompletion={profile.profile_completion}
       notificationCount={notificationCount}
     >
       <div className="mm-admin-page-container">{children}</div>

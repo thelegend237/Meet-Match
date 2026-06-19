@@ -34,7 +34,7 @@ export async function updateProfile(data: ProfileFormData) {
       gender: p.gender || null,
       country_code: p.country_code,
       city: p.city,
-      language: p.language,
+      languages: p.languages,
       bio: p.bio || null,
       expectations: p.expectations || null,
       relationship_type: p.relationship_type || null,
