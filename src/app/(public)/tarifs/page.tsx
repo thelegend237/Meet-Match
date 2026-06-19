@@ -41,7 +41,7 @@ const pricingPlans = [
     amount: regFee.amount,
     currency: regFee.currency,
     description:
-      "Accès à la plateforme : création de profil, consultation des membres actifs et envoi de likes.",
+      "Parcourez les profils gratuitement dès l'inscription. Activez votre compte pour liker et interagir avec les membres.",
     features: [...REGISTRATION_FEATURES],
     extra: "Contact administrateur gratuit",
     cta: "S'inscrire",
@@ -70,12 +70,12 @@ const paymentSteps = [
   {
     step: "01",
     title: "Inscription",
-    text: "Vous rejoignez la communauté et activez votre profil.",
+    text: "Créez votre profil et parcourez gratuitement les membres actifs.",
   },
   {
     step: "02",
-    title: "Likes & analyse",
-    text: "Vous likez des profils ; l'équipe étudie les compatibilités.",
+    title: "Activation",
+    text: "Activez votre compte pour envoyer des likes ; l'équipe étudie les compatibilités.",
   },
   {
     step: "03",

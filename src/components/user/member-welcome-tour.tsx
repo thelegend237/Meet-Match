@@ -48,7 +48,7 @@ const TOUR_STEPS: TourStep[] = [
     icon: Compass,
     title: "Découvrir des profils",
     description:
-      "Parcourez les profils actifs, likez ceux qui vous intéressent ou passez au suivant. Pas de chat libre entre membres — seulement des likes.",
+      "Parcourez gratuitement les profils actifs. Activez votre compte depuis Paiements pour envoyer des likes — pas de chat libre entre membres.",
     href: "/decouvrir",
     hrefLabel: "Aller à Découvrir",
   },

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { PublicPage } from "@/components/layout/public-page";
+import { UserFaqSection } from "@/components/public/user-faq-section";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -37,9 +38,15 @@ const steps: {
   },
   {
     icon: Search,
-    title: "Consultez les profils",
+    title: "Parcourez les profils gratuitement",
     description:
-      "Une fois votre inscription validée, parcourez les profils de membres actifs compatibles avec vos critères. Vous voyez la photo, le nom, l'âge, le pays et la ville — sans possibilité de contacter directement.",
+      "Dès la création de votre compte, consultez les profils des membres actifs dans Découvrir et Rencontres. Photo, prénom, âge, ville, bio — sans possibilité de les contacter directement.",
+  },
+  {
+    icon: CreditCard,
+    title: "Activez votre compte pour liker",
+    description:
+      "Quand vous souhaitez interagir, réglez les frais d'inscription depuis la page Paiements. Cela débloque les likes, les passes et la consultation de vos likes envoyés.",
   },
   {
     icon: Heart,
@@ -242,6 +249,8 @@ export default function FonctionnementPage() {
           ))}
         </div>
       </section>
+
+      <UserFaqSection />
 
       <div className="mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap">
         <Button
