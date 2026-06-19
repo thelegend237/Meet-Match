@@ -64,7 +64,7 @@ const steps: {
     icon: CreditCard,
     title: "Paiement du matching",
     description:
-      "Lorsqu'un administrateur vous propose un match, chaque personne doit régler les frais de matching (ou bénéficier d'un accès gratuit accordé par l'administration).",
+      "Le premier match est payant. Ensuite, 3 mises en relation gratuites par mois (renouvelées chaque mois). Au-delà, les frais de matching s'appliquent à nouveau.",
   },
   {
     icon: MessageSquare,

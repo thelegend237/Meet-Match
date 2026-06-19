@@ -27,6 +27,8 @@ import {
   REGISTRATION_FEATURES,
 } from "@/lib/pricing";
 import { RegistrationPaymentButton } from "@/components/user/registration-payment-button";
+import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
+import { MONTHLY_FREE_MATCHES } from "@/lib/pricing";
 import type { Payment, Profile } from "@/lib/types/database";
 
 const STATUS_LABELS: Record<
@@ -48,6 +50,7 @@ const PAYMENT_TYPE_LABELS: Record<string, string> = {
 interface PaymentsViewProps {
   profile: Profile;
   payments: Payment[];
+  matchingCredits: MatchingCreditsStatus;
 }
 
 function FeatureRow({ children }: { children: string }) {
@@ -153,7 +156,7 @@ function PlanCard({
   );
 }
 
-export function PaymentsView({ profile, payments }: PaymentsViewProps) {
+export function PaymentsView({ profile, payments, matchingCredits }: PaymentsViewProps) {
   const registrationPaid =
     profile.registration_payment_status === "paid" ||
     profile.registration_payment_status === "free";
@@ -164,9 +167,7 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
   const matchFee = getMatchingFee(profile.country_code);
 
   const matchingPayments = payments.filter((p) => p.type === "matching");
-  const hasPaidMatching = matchingPayments.some(
-    (p) => p.status === "paid" || p.status === "free"
-  );
+  const hasPaidMatching = matchingCredits.hasEverPaidMatching;
 
   const steps = [
     { label: "Compte créé", done: true },
@@ -279,6 +280,36 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
         ))}
       </div>
 
+      {hasPaidMatching && (
+        <section className="rounded-2xl border border-secondary/25 bg-gradient-to-br from-[#fce7f3]/30 to-white p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h3 className="font-sans font-semibold text-primary">
+                Forfait matching mensuel
+              </h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                Après votre premier paiement matching, vous bénéficiez de{" "}
+                {MONTHLY_FREE_MATCHES} mises en relation gratuites par mois.
+                Les crédits se renouvellent automatiquement chaque mois.
+              </p>
+            </div>
+            <div className="rounded-xl bg-white px-4 py-3 text-center shadow-sm ring-1 ring-border/60">
+              <p className="text-3xl font-bold text-secondary">
+                {matchingCredits.remainingThisMonth}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                crédit{matchingCredits.remainingThisMonth > 1 ? "s" : ""} restant
+                {matchingCredits.remainingThisMonth > 1 ? "s" : ""} ce mois
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                {matchingCredits.usedThisMonth} / {matchingCredits.monthlyAllowance}{" "}
+                utilisés
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Plans tarifaires */}
       <div className="space-y-4">
         <div>
@@ -360,7 +391,7 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
 
           <PlanCard
             title="Frais de matching"
-            subtitle="Uniquement lorsqu'un administrateur vous propose une mise en relation compatible."
+            subtitle="1er match payant, puis 3 mises en relation gratuites par mois après votre premier paiement."
             amount={matchFee.amount}
             currency={matchFee.currency}
             regionLabel={currencyRegionLabel(matchFee.currency)}
@@ -389,7 +420,9 @@ export function PaymentsView({ profile, payments }: PaymentsViewProps) {
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
                   {registrationPaid
-                    ? "Vous serez notifié dès qu'un admin valide un match. Le paiement se fait depuis la page Mes matchs."
+                    ? hasPaidMatching
+                      ? `Vous avez ${matchingCredits.remainingThisMonth} crédit(s) gratuit(s) ce mois. Au-delà, les frais de matching s'appliquent à nouveau.`
+                      : "Votre premier match proposé nécessitera le paiement des frais de matching."
                     : "Disponible après activation de votre inscription."}
                 </p>
                 <Button

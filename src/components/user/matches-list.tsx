@@ -12,6 +12,7 @@ import {
   XCircle,
   CreditCard,
   Loader2,
+  Gift,
 } from "lucide-react";
 import { confirmMatchingPayment } from "@/lib/actions/matches";
 import { Button } from "@/components/ui/button";
@@ -19,11 +20,14 @@ import { Badge } from "@/components/ui/badge";
 import { matchStatusLabels } from "@/lib/admin/labels";
 import { formatCurrency } from "@/lib/utils";
 import type { UserMatch } from "@/lib/types/database";
+import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
+import { MONTHLY_FREE_MATCHES } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
 interface MatchesListProps {
   matches: UserMatch[];
+  matchingCredits?: MatchingCreditsStatus;
 }
 
 function statusVariant(
@@ -35,7 +39,13 @@ function statusVariant(
   return "default";
 }
 
-function MatchCard({ match }: { match: UserMatch }) {
+function MatchCard({
+  match,
+  matchingCredits,
+}: {
+  match: UserMatch;
+  matchingCredits?: MatchingCreditsStatus;
+}) {
   const [pending, startTransition] = useTransition();
   const [localPaymentDone, setLocalPaymentDone] = useState(false);
 
@@ -44,8 +54,13 @@ function MatchCard({ match }: { match: UserMatch }) {
     match.myPayment?.status === "unpaid";
   const needsPaymentLocal = needsPayment && !localPaymentDone;
 
+  const coveredByCredit =
+    match.status === "pending_payment" &&
+    match.myPayment?.status === "free";
+
   const waitingPartner =
     match.status === "pending_payment" &&
+    !coveredByCredit &&
     (localPaymentDone ||
       (match.myPayment && ["paid", "free"].includes(match.myPayment.status))) &&
     !match.partnerHasPaid;
@@ -125,6 +140,26 @@ function MatchCard({ match }: { match: UserMatch }) {
       </div>
 
       <div className="border-t border-border bg-muted/30 px-4 py-3">
+        {match.status === "pending_payment" && coveredByCredit && !match.partnerHasPaid && (
+          <div className="flex items-start gap-2 text-sm text-secondary">
+            <Gift className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              Ce match est inclus dans votre forfait mensuel.
+              {matchingCredits
+                ? ` Il vous reste ${matchingCredits.remainingThisMonth} crédit(s) gratuit(s) ce mois.`
+                : ""}{" "}
+              En attente du paiement de {match.partner.display_name.split(" ")[0]}.
+            </span>
+          </div>
+        )}
+
+        {match.status === "pending_payment" && coveredByCredit && match.partnerHasPaid && (
+          <div className="flex items-center gap-2 text-sm text-green-700">
+            <CheckCircle2 className="h-4 w-4" />
+            Match inclus — activation en cours.
+          </div>
+        )}
+
         {match.status === "pending_payment" && needsPaymentLocal && match.myPayment && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
@@ -189,11 +224,18 @@ function MatchCard({ match }: { match: UserMatch }) {
         )}
 
         {(match.status === "failed" || match.status === "cancelled") && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <XCircle className="h-4 w-4" />
-            {match.status === "failed"
-              ? "Ce match n'a pas abouti. Nous continuons à chercher pour vous."
-              : "Ce match a été annulé."}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <XCircle className="h-4 w-4" />
+              {match.status === "failed"
+                ? "Ce match n'a pas abouti. Nous continuons à chercher pour vous."
+                : "Ce match a été annulé."}
+            </div>
+            {matchingCredits?.hasEverPaidMatching && (
+              <p className="text-xs text-muted-foreground">
+                Votre prochain match peut utiliser un crédit gratuit ({matchingCredits.remainingThisMonth} / {MONTHLY_FREE_MATCHES} restants ce mois).
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -201,7 +243,7 @@ function MatchCard({ match }: { match: UserMatch }) {
   );
 }
 
-export function MatchesList({ matches }: MatchesListProps) {
+export function MatchesList({ matches, matchingCredits }: MatchesListProps) {
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("match");
 
@@ -250,7 +292,7 @@ export function MatchesList({ matches }: MatchesListProps) {
                     "rounded-2xl ring-2 ring-secondary ring-offset-2"
                 )}
               >
-                <MatchCard match={match} />
+                <MatchCard match={match} matchingCredits={matchingCredits} />
               </div>
             ))}
           </div>
@@ -262,7 +304,11 @@ export function MatchesList({ matches }: MatchesListProps) {
           <h2 className="mb-4 text-lg font-bold text-primary">Historique</h2>
           <div className="space-y-4">
             {closed.map((match) => (
-              <MatchCard key={match.id} match={match} />
+              <MatchCard
+                key={match.id}
+                match={match}
+                matchingCredits={matchingCredits}
+              />
             ))}
           </div>
         </section>

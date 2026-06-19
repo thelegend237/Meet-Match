@@ -85,7 +85,7 @@ const paymentSteps = [
   {
     step: "04",
     title: "Discussion",
-    text: "Après paiement des deux côtés, la conversation encadrée s'ouvre.",
+    text: "Après paiement (ou crédit gratuit mensuel), la conversation encadrée s'ouvre.",
   },
 ] as const;
 

@@ -35,7 +35,13 @@ export const USER_FAQ_ITEMS: UserFaqItem[] = [
     id: "matching-fee",
     question: "À quoi servent les frais de matching ?",
     answer:
-      "Lorsqu'un administrateur juge deux profils compatibles, il vous propose un match. Chaque personne règle alors ses frais de matching (sauf accès gratuit accordé par l'administration). Une fois les deux paiements validés, une discussion de groupe s'ouvre avec un administrateur présent.",
+      "Le premier match proposé nécessite le paiement des frais de matching. Ensuite, vous bénéficiez de 3 mises en relation gratuites par mois (renouvelées chaque mois). Au-delà, les frais de matching s'appliquent à nouveau. Chaque match ouvre une discussion encadrée avec un administrateur.",
+  },
+  {
+    id: "matching-credits",
+    question: "Que se passe-t-il si un match échoue ?",
+    answer:
+      "Si un match n'aboutit pas, votre prochain match peut utiliser un de vos crédits gratuits mensuels (3 par mois après votre premier paiement matching). Les crédits se renouvellent automatiquement chaque mois.",
   },
   {
     id: "like-reciproque",

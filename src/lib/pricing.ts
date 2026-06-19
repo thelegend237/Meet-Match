@@ -15,6 +15,8 @@ const MATCHING_FEES: Record<string, FeeAmount> = {
   DEFAULT: { amount: 72, currency: "CAD" },
 };
 
+export const MONTHLY_FREE_MATCHES = 3;
+
 export function getRegistrationFee(countryCode: string | null): FeeAmount {
   if (countryCode === "CA") return REGISTRATION_FEES.CA;
   if (countryCode === "US") return REGISTRATION_FEES.US;
@@ -52,24 +54,26 @@ export const REGISTRATION_FEATURES = [
 
 export const MATCHING_BENEFITS = [
   {
-    title: "Sélection par un admin",
-    description: "Mise en relation proposée uniquement après analyse de compatibilité.",
+    title: "1er match payant",
+    description:
+      "Le premier frais de matching couvre l'ouverture de votre première mise en relation encadrée.",
+  },
+  {
+    title: "3 matchs gratuits par mois",
+    description:
+      "Après ce premier paiement, bénéficiez de 3 mises en relation gratuites chaque mois (renouvelées automatiquement).",
   },
   {
     title: "Discussion encadrée",
     description: "Chat de groupe ouvert avec accompagnement de l'équipe.",
   },
-  {
-    title: "Rencontre sérieuse",
-    description: "Pas de swipe anonyme : chaque match est validé humainement.",
-  },
 ] as const;
 
 export const MATCHING_FEATURES = [
   "Proposition de match par un administrateur",
-  "Analyse de compatibilité humaine",
+  "1er match : frais de matching",
+  "3 matchs gratuits par mois ensuite (renouvelés chaque mois)",
   "Ouverture de discussion groupée encadrée",
-  "Message d'introduction personnalisé",
   "Accompagnement Meet & Match",
 ] as const;
 

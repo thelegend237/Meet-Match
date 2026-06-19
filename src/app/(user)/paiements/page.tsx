@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
 import { PaymentsView } from "@/components/user/payments-view";
 import { PageHeader, PageStack } from "@/components/layout/page-header";
 import type { Payment } from "@/lib/types/database";
@@ -18,6 +19,8 @@ export default async function PaiementsPage() {
     .eq("user_id", profile.id)
     .order("created_at", { ascending: false });
 
+  const matchingCredits = await getMatchingCreditsStatus(profile.id);
+
   return (
     <PageStack>
       <PageHeader
@@ -27,6 +30,7 @@ export default async function PaiementsPage() {
       <PaymentsView
         profile={profile}
         payments={(payments as Payment[]) ?? []}
+        matchingCredits={matchingCredits}
       />
     </PageStack>
   );
