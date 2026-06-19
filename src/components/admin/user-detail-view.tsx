@@ -160,8 +160,8 @@ export function AdminUserDetailView({
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 sm:flex-col">
-              <Button size="sm" variant="secondary" className="rounded-full" asChild>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+              <Button size="sm" variant="secondary" className="min-h-11 w-full rounded-full sm:min-h-9 sm:w-auto" asChild>
                 <Link href={`/admin/conversations/open?user=${profile.id}`}>
                   <MessageSquare className="h-4 w-4" />
                   Envoyer un message
@@ -174,7 +174,7 @@ export function AdminUserDetailView({
                     size="sm"
                     variant="outline"
                     disabled={pending}
-                    className="bg-white/80"
+                    className="min-h-11 w-full rounded-full bg-white/80 sm:min-h-9 sm:w-auto"
                     onClick={() => grantAccess(opt.type)}
                   >
                     {pending && pendingAccessType === opt.type && (

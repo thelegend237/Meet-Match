@@ -472,10 +472,13 @@ export function DiscoverCardStack({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
         <span>
           {remaining} profil{remaining > 1 ? "s" : ""} restant
           {remaining > 1 ? "s" : ""}
+        </span>
+        <span className="text-xs text-muted-foreground/90 sm:hidden">
+          Glissez ou utilisez les boutons ci-dessous
         </span>
         <span className="hidden text-xs text-muted-foreground/80 sm:inline">
           Glissez à droite pour liker · à gauche pour passer

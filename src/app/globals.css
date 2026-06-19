@@ -589,8 +589,26 @@
       transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .mm-nav-link-motion:hover {
-    transform: translateX(2px);
+  .mm-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mm-touch-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .mm-nav-link-motion:hover {
+      transform: translateX(2px);
+    }
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .mm-nav-link-motion:hover {
+      transform: none;
+    }
   }
 
   .mm-admin-sidebar-link-active.mm-nav-link-motion {

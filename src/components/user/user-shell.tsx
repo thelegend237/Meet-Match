@@ -363,7 +363,7 @@ export function UserShell({
                     key={tab.href}
                     href={tab.href}
                     className={cn(
-                      "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium transition-colors",
+                      "relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium transition-colors",
                       active ? "text-secondary" : "text-muted-foreground"
                     )}
                   >

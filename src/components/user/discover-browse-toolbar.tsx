@@ -69,9 +69,9 @@ export function DiscoverBrowseToolbar({
           {filter.label}
         </button>
       ))}
-      <div className="ml-auto hidden sm:flex">
-        <span className="inline-flex items-center gap-2 rounded-full bg-secondary/10 px-4 py-2 text-sm font-medium text-secondary">
-          <Filter className="h-4 w-4" />
+      <div className="ml-auto flex w-full sm:w-auto">
+        <span className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-secondary/10 px-4 py-2 text-sm font-medium text-secondary sm:w-auto">
+          <Filter className="h-4 w-4 shrink-0" />
           {profileCount} profil{profileCount !== 1 ? "s" : ""}
         </span>
       </div>

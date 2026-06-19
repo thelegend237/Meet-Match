@@ -26,7 +26,7 @@ export default async function PhotosPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-sans text-3xl font-bold text-primary">Mes photos</h1>
+          <h1 className="font-sans text-2xl font-bold text-primary sm:text-3xl">Mes photos</h1>
           <p className="mt-2 text-muted-foreground">
             Ajoutez une photo principale pour rendre votre profil visible.
           </p>

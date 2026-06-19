@@ -373,7 +373,98 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
           <h2 className="text-lg font-bold text-primary">Liste des utilisateurs</h2>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Cartes mobile */}
+        <div className="space-y-3 p-4 md:hidden">
+          {paginated.map((user) => {
+            const age = getAge(user.date_of_birth);
+            return (
+              <article
+                key={user.id}
+                className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
+              >
+                <Link
+                  href={`/admin/utilisateurs/${user.id}`}
+                  className="flex items-center gap-3"
+                >
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
+                    {user.primary_photo_url ? (
+                      <Image
+                        src={user.primary_photo_url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="48px"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm font-semibold text-primary">
+                        {(user.display_name || "?")[0]}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-primary">
+                      {user.display_name || "—"}
+                      {age !== null && (
+                        <span className="font-normal text-muted-foreground">, {age} ans</span>
+                      )}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </Link>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <UserDisplayStatus user={user} />
+                  <span
+                    className={
+                      user.role === "user"
+                        ? "text-xs text-muted-foreground"
+                        : "inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"
+                    }
+                  >
+                    {roleLabel(user.role)}
+                  </span>
+                </div>
+
+                <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <CountryFlag code={user.country_code} size={18} />
+                  {countryName(user.country_code)}
+                  {user.city && ` · ${user.city}`}
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground/80">
+                  Inscrit le {formatCreatedAt(user.created_at)}
+                </p>
+
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link
+                    href={`/admin/utilisateurs/${user.id}`}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-muted/30 text-sm font-medium text-primary"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Profil
+                  </Link>
+                  <Link
+                    href={`/admin/conversations/open?user=${user.id}`}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-muted/30 text-sm font-medium text-primary"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Message
+                  </Link>
+                  {user.role === "user" && (
+                    <Link
+                      href={`/admin/matchs?tab=proposer&queue=manual&user=${user.id}`}
+                      className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-secondary text-sm font-semibold text-white"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Proposer un match
+                    </Link>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="mm-table-scroll hidden overflow-x-auto md:block">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-border/60 bg-muted/20 text-xs uppercase tracking-wide text-muted-foreground">
@@ -458,14 +549,14 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/admin/utilisateurs/${user.id}`}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                          className="mm-touch-target inline-flex items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
                           title="Voir le profil"
                         >
                           <Eye className="h-4 w-4 stroke-[1.75]" />
                         </Link>
                         <Link
                           href={`/admin/conversations/open?user=${user.id}`}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
+                          className="mm-touch-target inline-flex items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
                           title="Envoyer un message"
                         >
                           <MessageCircle className="h-4 w-4 stroke-[1.75]" />
@@ -489,7 +580,7 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
         </div>
 
         {filtered.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground md:col-span-full">
             Aucun résultat pour les filtres actuels.
           </p>
         )}
