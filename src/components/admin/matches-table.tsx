@@ -10,15 +10,19 @@ import {
   Loader2,
   MessageCircle,
   Search,
+  Bell,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { updateMatchStatusAction } from "@/lib/actions/admin";
-import { matchStatusLabels } from "@/lib/admin/labels";
-import type { AdminMatchRow } from "@/lib/admin/matches";
+import {
+  remindMatchingPaymentAction,
+  updateMatchStatusAction,
+} from "@/lib/actions/admin";
+import { matchStatusLabels, paymentStatusLabels } from "@/lib/admin/labels";
+import type { AdminMatchPayment, AdminMatchRow } from "@/lib/admin/matches";
 import { getInitials } from "@/lib/chat/format";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { useAdminAction } from "@/hooks/use-admin-action";
-import { cn } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 
 interface MatchesTableProps {
   matches: AdminMatchRow[];
@@ -35,7 +39,23 @@ type StatusFilter =
 
 type PeriodFilter = "all" | "30" | "90" | "365";
 
+type PaymentFilter = "all" | "incomplete" | "complete";
+
 const PAGE_SIZE = 10;
+
+function paymentNeedsReminder(payment: AdminMatchPayment | null) {
+  return payment?.status === "unpaid" || payment?.status === "failed";
+}
+
+function matchHasIncompletePayment(match: AdminMatchRow) {
+  return paymentNeedsReminder(match.paymentA) || paymentNeedsReminder(match.paymentB);
+}
+
+function matchPaymentsComplete(match: AdminMatchRow) {
+  const done = (p: AdminMatchPayment | null) =>
+    p != null && ["paid", "free"].includes(p.status);
+  return done(match.paymentA) && done(match.paymentB);
+}
 
 function formatMatchDate(value: string) {
   return new Date(value).toLocaleDateString("fr-FR", {
@@ -103,6 +123,108 @@ function CoupleCell({ match }: { match: AdminMatchRow }) {
           {match.userBName}
         </Link>
       </div>
+    </div>
+  );
+}
+
+function MemberPaymentRow({
+  matchId,
+  userId,
+  name,
+  payment,
+  canRemind,
+  reminding,
+  onRemind,
+}: {
+  matchId: string;
+  userId: string;
+  name: string;
+  payment: AdminMatchPayment | null;
+  canRemind: boolean;
+  reminding: boolean;
+  onRemind: (matchId: string, userId: string) => void;
+}) {
+  const needsReminder = paymentNeedsReminder(payment);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 py-1.5 first:pt-0 last:pb-0">
+      <Link
+        href={`/admin/utilisateurs/${userId}`}
+        className="min-w-[7rem] truncate text-sm font-medium text-primary hover:text-secondary hover:underline"
+      >
+        {name.split(" ")[0]}
+      </Link>
+      {payment ? (
+        <>
+          <StatusBadge
+            kind="payment"
+            status={payment.status}
+            className="px-2.5 py-0.5 text-[11px]"
+          />
+          {payment.status === "unpaid" && (
+            <span className="text-xs text-muted-foreground">
+              {formatCurrency(payment.amount, payment.currency)}
+            </span>
+          )}
+        </>
+      ) : (
+        <span className="text-xs text-muted-foreground">—</span>
+      )}
+      {canRemind && needsReminder && (
+        <button
+          type="button"
+          disabled={reminding}
+          onClick={() => onRemind(matchId, userId)}
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#ffedd5] bg-[#fff7ed] px-2.5 text-xs font-semibold text-[#c2410c] transition-colors hover:bg-[#ffedd5] disabled:opacity-60"
+        >
+          {reminding ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Bell className="h-3.5 w-3.5" />
+          )}
+          Relancer
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PaymentsCell({
+  match,
+  remindingKey,
+  onRemind,
+}: {
+  match: AdminMatchRow;
+  remindingKey: string | null;
+  onRemind: (matchId: string, userId: string) => void;
+}) {
+  const canRemind =
+    match.status === "pending_payment" || match.status === "pending";
+
+  if (!match.paymentA && !match.paymentB) {
+    return <span className="text-sm text-muted-foreground">—</span>;
+  }
+
+  return (
+    <div className="divide-y divide-border/40 rounded-xl border border-border/50 bg-muted/15 px-3 py-1">
+      <MemberPaymentRow
+        matchId={match.id}
+        userId={match.userAId}
+        name={match.userAName}
+        payment={match.paymentA}
+        canRemind={canRemind}
+        reminding={remindingKey === `${match.id}:${match.userAId}`}
+        onRemind={onRemind}
+      />
+      <MemberPaymentRow
+        matchId={match.id}
+        userId={match.userBId}
+        name={match.userBName}
+        payment={match.paymentB}
+        canRemind={canRemind}
+        reminding={remindingKey === `${match.id}:${match.userBId}`}
+        onRemind={onRemind}
+      />
     </div>
   );
 }
@@ -195,9 +317,11 @@ export function MatchesTable({ matches }: MatchesTableProps) {
   const { pending, run } = useAdminAction();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
   const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(1);
+  const [remindingKey, setRemindingKey] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -217,6 +341,13 @@ export function MatchesTable({ matches }: MatchesTableProps) {
 
       if (statusFilter !== "all" && match.status !== statusFilter) return false;
 
+      if (paymentFilter === "incomplete" && !matchHasIncompletePayment(match)) {
+        return false;
+      }
+      if (paymentFilter === "complete" && !matchPaymentsComplete(match)) {
+        return false;
+      }
+
       if (periodFilter !== "all") {
         const days = Number(periodFilter);
         const cutoff = now - days * 24 * 60 * 60 * 1000;
@@ -225,13 +356,13 @@ export function MatchesTable({ matches }: MatchesTableProps) {
 
       return true;
     });
-  }, [matches, query, statusFilter, periodFilter]);
+  }, [matches, query, statusFilter, paymentFilter, periodFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
   useEffect(() => {
     setPage(1);
-  }, [query, statusFilter, periodFilter]);
+  }, [query, statusFilter, paymentFilter, periodFilter]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -253,14 +384,26 @@ export function MatchesTable({ matches }: MatchesTableProps) {
     });
   }
 
+  function remindPayment(matchId: string, userId: string) {
+    const key = `${matchId}:${userId}`;
+    setRemindingKey(key);
+    void run(() => remindMatchingPaymentAction(matchId, userId), {
+      success: "Rappel de paiement envoyé au membre.",
+    }).finally(() => {
+      setRemindingKey((current) => (current === key ? null : current));
+    });
+  }
+
   function exportCsv() {
     if (exporting) return;
     setExporting(true);
 
     const header = [
       "Membre A",
+      "Paiement A",
       "Membre B",
-      "Statut",
+      "Paiement B",
+      "Statut match",
       "Proposé le",
       "Match ID",
       "Discussion ID",
@@ -268,7 +411,13 @@ export function MatchesTable({ matches }: MatchesTableProps) {
 
     const rows = filtered.map((match) => [
       match.userAName,
+      match.paymentA
+        ? paymentStatusLabels[match.paymentA.status] ?? match.paymentA.status
+        : "",
       match.userBName,
+      match.paymentB
+        ? paymentStatusLabels[match.paymentB.status] ?? match.paymentB.status
+        : "",
       matchStatusLabels[match.status] ?? match.status,
       formatMatchDate(match.proposedAt),
       match.id,
@@ -313,6 +462,27 @@ export function MatchesTable({ matches }: MatchesTableProps) {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:contents">
+            <div className="min-w-0 xl:min-w-[170px] xl:flex-1">
+              <label htmlFor="admin-match-payment" className="mm-admin-filter-label">
+                Paiement
+              </label>
+              <div className="relative">
+                <select
+                  id="admin-match-payment"
+                  value={paymentFilter}
+                  onChange={(e) =>
+                    setPaymentFilter(e.target.value as PaymentFilter)
+                  }
+                  className="mm-admin-filter-input appearance-none pr-9"
+                >
+                  <option value="all">Tous</option>
+                  <option value="incomplete">Impayé (au moins 1)</option>
+                  <option value="complete">Tous payés / gratuits</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
+            </div>
+
             <div className="min-w-0 xl:min-w-[170px] xl:flex-1">
               <label htmlFor="admin-match-status" className="mm-admin-filter-label">
                 Statut
@@ -401,17 +571,25 @@ export function MatchesTable({ matches }: MatchesTableProps) {
               <table className="mm-admin-data-table">
                 <thead>
                   <tr>
-                    <th className="min-w-[280px]">Couple</th>
-                    <th className="min-w-[150px]">Statut</th>
-                    <th className="min-w-[170px]">Proposé le</th>
-                    <th className="min-w-[240px]">Actions</th>
+                    <th className="min-w-[220px]">Couple</th>
+                    <th className="min-w-[280px]">Paiements</th>
+                    <th className="min-w-[140px]">Statut</th>
+                    <th className="min-w-[150px]">Proposé le</th>
+                    <th className="min-w-[200px]">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((match) => (
-                    <tr key={match.id} className="group">
+                    <tr key={match.id} className="group align-top">
                       <td>
                         <CoupleCell match={match} />
+                      </td>
+                      <td>
+                        <PaymentsCell
+                          match={match}
+                          remindingKey={remindingKey}
+                          onRemind={remindPayment}
+                        />
                       </td>
                       <td>
                         <StatusBadge

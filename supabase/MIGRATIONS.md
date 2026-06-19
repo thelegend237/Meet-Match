@@ -36,6 +36,7 @@ Appliquer **dans l'ordre** via le SQL Editor Supabase (ou `supabase db push`).
 | 027 | `027_unpaid_discovery_browse.sql` | Parcourir sans payer (`can_browse_discovery`), interagir après abonnement |
 | 028 | `028_fix_profiles_rls_recursion.sql` | Corriger récursion RLS infinite sur `profiles` (migration 027) |
 | 029 | `029_matching_monthly_credits.sql` | 3 matchs gratuits / mois après 1er paiement matching |
+| 030 | `030_admin_remind_matching_payment.sql` | Relance admin paiement matching (notification) |
 
 ## Dépendances clés
 
@@ -61,7 +62,7 @@ Variables `.env.local` : `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 
 **Ne pas** réutiliser un projet avec un autre schéma (ex. Control-Flow) : les enums et colonnes diffèrent et provoquent des erreurs en chaîne.
 
-Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 029 dans l'ordre.
+Pour Meet & Match : **nouveau projet Supabase** → appliquer 001 → 030 dans l'ordre.
 
 **Base existante (Control-Flow)** : exécuter `000_schema_bridge.sql` puis `009` → `013`, ou mieux : nouveau projet dédié.
 

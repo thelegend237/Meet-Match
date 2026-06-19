@@ -133,6 +133,29 @@ export async function updateMatchStatusAction(
   return { success: true };
 }
 
+export async function remindMatchingPaymentAction(
+  matchId: string,
+  userId: string
+) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("admin_remind_matching_payment", {
+    p_admin_id: admin.id,
+    p_match_id: matchId,
+    p_user_id: userId,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/matchs");
+  revalidatePath("/notifications");
+  revalidatePath("/matchs");
+  return { success: true };
+}
+
 export async function grantFreeAccessAction(
   userId: string,
   accessType: "registration" | "matching" | "full"
