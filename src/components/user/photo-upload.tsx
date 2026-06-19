@@ -22,6 +22,7 @@ import {
   PROFILE_PHOTO_ACCEPT,
   validateProfilePhotoFile,
 } from "@/lib/photos/limits";
+import { PROFILE_PHOTO_ANTI_FAKE_SHORT } from "@/lib/photos/copy";
 
 import { cn } from "@/lib/utils";
 
@@ -145,13 +146,9 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
         <Camera className="mx-auto h-10 w-10 text-muted-foreground" />
 
         <p className="mt-3 text-sm text-muted-foreground">
-
-          Photo principale obligatoire pour la visibilité de votre profil.
-
+          {PROFILE_PHOTO_ANTI_FAKE_SHORT}
           <br className="hidden sm:inline" />
-
           <span className="sm:ml-0"> JPEG, PNG ou WebP — max {MAX_PROFILE_PHOTO_MB} Mo.</span>
-
         </p>
 
         <input

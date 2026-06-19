@@ -34,6 +34,7 @@ import {
   PROFILE_PHOTO_ACCEPT,
   validateProfilePhotoFile,
 } from "@/lib/photos/limits";
+import { PROFILE_PHOTO_ANTI_FAKE_SHORT } from "@/lib/photos/copy";
 
 export function InscriptionPageLayout({
   children,
@@ -540,7 +541,10 @@ export function RegisterPhotoUpload({
             <User className="h-14 w-14 text-secondary/45" strokeWidth={1.25} />
           </div>
         )}
-        <p className="mt-5 text-center text-sm text-muted-foreground">
+        <p className="mt-5 max-w-sm text-center text-sm text-muted-foreground">
+          {PROFILE_PHOTO_ANTI_FAKE_SHORT}
+        </p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
           JPG, PNG ou WebP — max {MAX_PROFILE_PHOTO_MB} Mo, visage bien visible
         </p>
         <label className="mt-4 cursor-pointer rounded-xl bg-secondary px-6 py-3 text-sm font-semibold text-white shadow-md shadow-secondary/25 transition-all hover:brightness-105 active:scale-[0.98]">

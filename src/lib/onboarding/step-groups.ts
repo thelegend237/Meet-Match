@@ -1,4 +1,5 @@
 import type { OnboardingStepId } from "@/lib/onboarding/steps";
+import { PROFILE_PHOTO_ANTI_FAKE_ONBOARDING } from "@/lib/photos/copy";
 
 export type InscriptionPhase = 1 | 2 | 3 | 4 | 5;
 
@@ -69,14 +70,14 @@ export function getPublicStepSubtitle(step: OnboardingStepId): string {
     seek_gender: "Indiquez le genre des profils que vous souhaitez découvrir.",
     age_range: "Affinez les profils proposés selon la tranche d'âge idéale.",
     scope: "Proximité géographique souhaitée pour vos rencontres.",
-    photo: "Les profils avec photo reçoivent davantage de propositions.",
+    photo: PROFILE_PHOTO_ANTI_FAKE_ONBOARDING,
     done: "Votre profil est prêt — vous pourrez le compléter à tout moment.",
   };
   return subtitles[step] ?? "";
 }
 
 export function isPublicStepOptional(step: OnboardingStepId): boolean {
-  return step !== "account" && step !== "done";
+  return step !== "account" && step !== "done" && step !== "photo";
 }
 
 export function phaseProgressPercent(step: OnboardingStepId): number {

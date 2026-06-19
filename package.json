@@ -10,7 +10,8 @@
     "lint": "node node_modules/next/dist/bin/next lint",
     "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit",
     "seed:geo": "node scripts/seed-geo-cities.mjs",
-    "storage:empty-photos": "node scripts/empty-profile-photos.mjs"
+    "storage:empty-photos": "node scripts/empty-profile-photos.mjs",
+    "diagnose:discovery": "node scripts/diagnose-discovery.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

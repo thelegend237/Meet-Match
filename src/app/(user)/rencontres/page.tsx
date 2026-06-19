@@ -9,6 +9,7 @@ import { RencontresFeed } from "@/components/user/rencontres-feed";
 import {
   ProfileCompletionBanner,
   PaymentRequiredBanner,
+  PhotoRequiredBanner,
 } from "@/components/user/profile-banners";
 import { PageStack } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/layout/empty-state";
@@ -18,6 +19,8 @@ import { getRencontresProfiles } from "@/lib/discover/rencontres";
 import { getViewerLocation } from "@/lib/discover/geo";
 import { touchLastSeen } from "@/lib/actions/discover";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
+import { viewerHasDiscoveryPhoto } from "@/lib/discover/eligibility";
+import { PROFILE_PHOTO_ANTI_FAKE_DISCOVERY } from "@/lib/photos/copy";
 import type { GenderPreference } from "@/lib/types/database";
 
 export const metadata = {
@@ -50,6 +53,7 @@ export default async function RencontresPage() {
   }
 
   const supabase = await createClient();
+  const hasPhoto = await viewerHasDiscoveryPhoto(supabase, profile.id, profile);
   const [excludedUserIds, likedIds, passedIds] = await Promise.all([
     getDiscoveryExcludedUserIds(supabase, profile.id),
     getMyLikedIds(),
@@ -73,15 +77,24 @@ export default async function RencontresPage() {
 
   return (
     <PageStack className="gap-4">
+      {!hasPhoto && <PhotoRequiredBanner />}
       {profile.profile_completion < 100 && (
         <ProfileCompletionBanner profile={profile} />
       )}
 
-      {rencontresProfiles.length === 0 ? (
+      {!hasPhoto ? (
+        <EmptyState
+          icon={Layers}
+          title="Ajoutez une photo pour commencer"
+          description={PROFILE_PHOTO_ANTI_FAKE_DISCOVERY}
+          actionHref="/profil/photos"
+          actionLabel="Ajouter ma photo"
+        />
+      ) : rencontresProfiles.length === 0 ? (
         <EmptyState
           icon={Layers}
           title="Aucune suggestion du jour"
-          description="Explorez tous les profils dans Découvrir ou revenez demain."
+          description="Il n'y a pas encore d'autres membres actifs avec une photo. Revenez demain ou explorez Découvrir."
           action={
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button variant="secondary" className="rounded-full" asChild>

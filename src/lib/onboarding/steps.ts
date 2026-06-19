@@ -30,7 +30,7 @@ export const PROFILE_STEPS: OnboardingStepMeta[] = [
   { id: "seek_gender", optional: true },
   { id: "age_range", optional: true },
   { id: "scope", optional: true },
-  { id: "photo", optional: true },
+  { id: "photo", optional: false },
   { id: "done", optional: false },
 ];
 

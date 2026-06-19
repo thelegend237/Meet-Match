@@ -100,6 +100,7 @@ import {
   PROFILE_PHOTO_ACCEPT,
   validateProfilePhotoFile,
 } from "@/lib/photos/limits";
+import { PROFILE_PHOTO_ANTI_FAKE_ONBOARDING } from "@/lib/photos/copy";
 import { StepTransition } from "@/components/motion/motion";
 
 type WizardMode = "public" | "continue";
@@ -562,6 +563,14 @@ export function OnboardingWizard({
             goNext();
             break;
           case "photo":
+            if (!photoFile && !photoPreview) {
+              toast({
+                variant: "destructive",
+                title: "Photo requise",
+                description: PROFILE_PHOTO_ANTI_FAKE_ONBOARDING,
+              });
+              return;
+            }
             if (photoFile) {
               const fd = new FormData();
               fd.set("file", photoFile);
@@ -1214,7 +1223,7 @@ export function OnboardingWizard({
       case "photo":
         if (mode === "public") {
           return (
-            <RegisterStep icon={Camera} optional>
+            <RegisterStep icon={Camera}>
               <RegisterPhotoUpload
                 preview={photoPreview}
                 onFileSelect={selectPhotoFile}
@@ -1234,8 +1243,7 @@ export function OnboardingWizard({
             <StepIllustration icon={Camera} />
             <StepHeader
               title="Ajoutez votre plus belle photo"
-              subtitle="+15 % de complétion — les profils avec photo ont plus de matchs."
-              optional
+              subtitle={PROFILE_PHOTO_ANTI_FAKE_ONBOARDING}
             />
             <StepBody>
               <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-border/70 bg-muted/15 py-10">

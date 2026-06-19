@@ -93,6 +93,16 @@ async function attachPhotos(
   return profiles.map((p) => mapDiscoveryProfile(p, photosByProfile));
 }
 
+function hasVisiblePhoto(
+  profile: DiscoveryProfile | DiscoverProfileRow,
+  photosByProfile?: Record<string, string[]>
+): boolean {
+  if (profile.primary_photo_url?.trim()) return true;
+  if (photosByProfile && photosByProfile[profile.id]?.length > 0) return true;
+  if ("photos" in profile && (profile.photos?.length ?? 0) > 0) return true;
+  return false;
+}
+
 export async function loadDiscoveryProfiles(
   supabase: SupabaseServer,
   excludedUserIds: Set<string>,
@@ -133,7 +143,6 @@ async function loadDiscoveryProfilesFallback(
     .eq("is_deleted", false)
     .eq("role", "user")
     .in("registration_payment_status", ["paid", "free"])
-    .not("primary_photo_url", "is", null)
     .order("created_at", { ascending: false })
     .limit(DISCOVERY_LIMIT);
 
@@ -147,7 +156,6 @@ async function loadDiscoveryProfilesFallback(
           .eq("is_deleted", false)
           .eq("role", "user")
           .in("registration_payment_status", ["paid", "free"])
-          .not("primary_photo_url", "is", null)
           .order("created_at", { ascending: false })
           .limit(DISCOVERY_LIMIT)
       : withLanguages;
@@ -163,5 +171,6 @@ async function loadDiscoveryProfilesFallback(
       (!resolvedViewerId || p.id !== resolvedViewerId)
   ) as DiscoverProfileRow[];
 
-  return attachPhotos(supabase, visible);
+  const withPhotos = await attachPhotos(supabase, visible);
+  return withPhotos.filter((p) => hasVisiblePhoto(p));
 }
