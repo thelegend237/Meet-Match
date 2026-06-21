@@ -54,11 +54,25 @@ function UserDisplayStatus({ user }: { user: AdminUserListItem }) {
       <span className="mm-user-status-pending-payment">En attente de paiement</span>
     );
   }
+  if (user.matches_active > 0) {
+    return <span className="mm-user-status-match-active">Match actif</span>;
+  }
+  if (user.matches_pending_payment > 0) {
+    return (
+      <span className="mm-user-status-pending-payment">Paiement matching</span>
+    );
+  }
+  if (user.matches_pending > 0) {
+    return <span className="mm-user-status-match-pending">Match proposé</span>;
+  }
   if (user.matches_success > 0) {
     return <span className="mm-user-status-match-success">Match réussi</span>;
   }
-  if (user.matches_total > 0 && user.matches_success === 0) {
+  if (user.matches_failed > 0) {
     return <span className="mm-user-status-match-failed">Match échoué</span>;
+  }
+  if (user.matches_cancelled > 0) {
+    return <span className="mm-user-status-match-cancelled">Match annulé</span>;
   }
   if (user.status === "active") {
     return <span className="mm-user-status-active">Actif</span>;

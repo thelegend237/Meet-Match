@@ -68,11 +68,36 @@ export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
 
   const matchCount = new Map<string, number>();
   const successCount = new Map<string, number>();
+  const activeCount = new Map<string, number>();
+  const pendingPaymentCount = new Map<string, number>();
+  const pendingCount = new Map<string, number>();
+  const failedCount = new Map<string, number>();
+  const cancelledCount = new Map<string, number>();
+
   for (const m of matches ?? []) {
     for (const uid of [m.user_a_id, m.user_b_id]) {
       matchCount.set(uid, (matchCount.get(uid) ?? 0) + 1);
-      if (m.status === "success") {
-        successCount.set(uid, (successCount.get(uid) ?? 0) + 1);
+      switch (m.status) {
+        case "success":
+          successCount.set(uid, (successCount.get(uid) ?? 0) + 1);
+          break;
+        case "active":
+          activeCount.set(uid, (activeCount.get(uid) ?? 0) + 1);
+          break;
+        case "pending_payment":
+          pendingPaymentCount.set(uid, (pendingPaymentCount.get(uid) ?? 0) + 1);
+          break;
+        case "pending":
+          pendingCount.set(uid, (pendingCount.get(uid) ?? 0) + 1);
+          break;
+        case "failed":
+          failedCount.set(uid, (failedCount.get(uid) ?? 0) + 1);
+          break;
+        case "cancelled":
+          cancelledCount.set(uid, (cancelledCount.get(uid) ?? 0) + 1);
+          break;
+        default:
+          break;
       }
     }
   }
@@ -84,6 +109,11 @@ export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
     likes_received: likesReceived.get(u.id) ?? 0,
     matches_total: matchCount.get(u.id) ?? 0,
     matches_success: successCount.get(u.id) ?? 0,
+    matches_active: activeCount.get(u.id) ?? 0,
+    matches_pending_payment: pendingPaymentCount.get(u.id) ?? 0,
+    matches_pending: pendingCount.get(u.id) ?? 0,
+    matches_failed: failedCount.get(u.id) ?? 0,
+    matches_cancelled: cancelledCount.get(u.id) ?? 0,
     member_days: daysSince(u.created_at),
   })) as AdminUserListItem[];
 }

@@ -180,6 +180,11 @@ export interface AdminUserListItem {
   likes_received: number;
   matches_total: number;
   matches_success: number;
+  matches_active: number;
+  matches_pending_payment: number;
+  matches_pending: number;
+  matches_failed: number;
+  matches_cancelled: number;
   member_days: number;
   role: "user" | "admin" | "superadmin";
 }
