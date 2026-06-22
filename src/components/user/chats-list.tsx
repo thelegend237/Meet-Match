@@ -22,6 +22,8 @@ type FilterId = "all" | "unread" | "contact" | "match";
 const FILTERS_USER: { id: FilterId; label: string }[] = [
   { id: "all", label: "Toutes" },
   { id: "unread", label: "Non lues" },
+  { id: "match", label: "Matchs" },
+  { id: "contact", label: "Équipe" },
 ];
 
 const FILTERS_ADMIN: { id: FilterId; label: string }[] = [
@@ -83,7 +85,7 @@ export function ChatsList({
   const newChatHref = isAdmin ? "/admin/conversations" : "/contact";
   const emptyCtaHref = isAdmin ? "/admin/utilisateurs" : "/contact";
   const emptyCtaLabel = isAdmin ? "Voir les membres" : "Contacter l'admin";
-  const footerVisible = showFooter ?? !isAdmin;
+  const footerVisible = showFooter === true;
   const allHref = isAdmin ? "/admin/conversations" : "/messages";
   const filters = isAdmin ? FILTERS_ADMIN : FILTERS_USER;
 
@@ -140,38 +142,34 @@ export function ChatsList({
           )}
         </div>
 
-        {isAdmin && (
-          <>
-            <div className="relative mt-3">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9b8fa8]" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Rechercher..."
-                aria-label="Rechercher une conversation"
-                className="mm-chat-list-search w-full"
-              />
-            </div>
+        <div className="relative mt-3">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9b8fa8]" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher une conversation…"
+            aria-label="Rechercher une conversation"
+            className="mm-chat-list-search w-full"
+          />
+        </div>
 
-            <div className="mm-chat-list-filters mt-3">
-              {filters.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setFilter(item.id)}
-                  className={cn(
-                    "mm-chat-list-filter-btn",
-                    filter === item.id && "mm-chat-list-filter-btn-active"
-                  )}
-                >
-                  {item.label}
-                  <span className="tabular-nums">{filterCounts[item.id]}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+        <div className="mm-chat-list-filters mt-3">
+          {filters.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setFilter(item.id)}
+              className={cn(
+                "mm-chat-list-filter-btn",
+                filter === item.id && "mm-chat-list-filter-btn-active"
+              )}
+            >
+              {item.label}
+              <span className="tabular-nums">{filterCounts[item.id]}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {chats.length === 0 ? (
@@ -235,6 +233,16 @@ export function ChatsList({
                           >
                             {title}
                           </p>
+                          <span
+                            className={cn(
+                              "mm-chat-type-badge",
+                              chat.type === "match_group"
+                                ? "mm-chat-type-badge-match"
+                                : "mm-chat-type-badge-team"
+                            )}
+                          >
+                            {chat.type === "match_group" ? "Match" : "Équipe"}
+                          </span>
                           {online && (
                             <span
                               className="mm-chat-list-online-dot"

@@ -32,6 +32,8 @@ export default async function MessageThreadPage({ params }: PageProps) {
         ? TEAM_DISPLAY_NAME
         : "Discussion";
 
+  const partnerForWelcome = participants.find((p) => !p.isAdmin && !p.isSelf);
+
   return (
     <ChatThread
       chatId={chatId}
@@ -40,6 +42,7 @@ export default async function MessageThreadPage({ params }: PageProps) {
       currentUserId={profile.id}
       canSend={thread.canSend}
       className="h-full min-h-0 flex-1"
+      matchPartnerName={partnerForWelcome?.name ?? thread.partnerName}
       header={{
         title,
         subtitle: isMatchGroup

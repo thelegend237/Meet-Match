@@ -35,7 +35,6 @@ export function MessagesShell({ chats, children }: MessagesShellProps) {
           <ChatsList
             chats={chats}
             activeChatId={activeChatId ?? undefined}
-            showFooter
           />
         </aside>
 
@@ -52,8 +51,9 @@ export function MessagesShell({ chats, children }: MessagesShellProps) {
               <h2 className="mt-6 text-xl font-bold text-primary">
                 Sélectionnez une conversation
               </h2>
-              <p className="mt-2 max-w-xs text-sm text-[#6b5f7a]">
-                Choisissez un fil à gauche pour afficher les messages ici.
+              <p className="mt-2 max-w-sm text-sm text-[#6b5f7a]">
+                Vos échanges de match et vos messages avec l&apos;équipe
+                s&apos;affichent ici. Choisissez un fil à gauche pour commencer.
               </p>
             </div>
           )}

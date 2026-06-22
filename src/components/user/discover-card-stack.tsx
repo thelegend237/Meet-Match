@@ -57,7 +57,7 @@ function ProfileBackdrop({ profiles }: { profiles: DiscoveryProfile[] }) {
       className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2rem]"
       aria-hidden
     >
-      <div className="grid h-full grid-cols-3 gap-2 p-3 opacity-35 blur-md sm:grid-cols-4">
+      <div className="grid h-full grid-cols-3 gap-2 p-3 opacity-20 blur-sm sm:grid-cols-4">
         {profiles.map((profile) => (
           <div
             key={profile.id}
@@ -75,7 +75,7 @@ function ProfileBackdrop({ profiles }: { profiles: DiscoveryProfile[] }) {
           </div>
         ))}
       </div>
-      <div className="absolute inset-0 bg-[#f8f6fc]/55 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-[#f8f6fc]/40" />
     </div>
   );
 }
@@ -285,7 +285,7 @@ function SwipeableCard({
             src={profile.primary_photo_url}
             alt={profile.display_name}
             fill
-            className="pointer-events-none object-cover"
+            className="pointer-events-none object-cover object-[center_22%]"
             sizes="(max-width: 640px) 90vw, 560px"
             priority
             draggable={false}
@@ -327,7 +327,7 @@ function SwipeableCard({
         <SwipeStamp label="Like" side="right" opacity={likeOpacity} />
         <SwipeStamp label="Passer" side="left" opacity={passOpacity} />
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/45 to-transparent px-5 pb-28 pt-32 sm:px-7">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-5 pb-[5.5rem] pt-24 sm:px-7 sm:pb-24 sm:pt-28">
           <h2 className="text-2xl font-bold text-white sm:text-3xl">
             {profile.display_name}
             {age !== null && (

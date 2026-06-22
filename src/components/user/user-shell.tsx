@@ -40,7 +40,7 @@ type NavLink = {
 };
 
 const sidebarLinks: NavLink[] = [
-  { href: "/decouvrir", label: "Profils", icon: Compass, exact: true },
+  { href: "/decouvrir", label: "Découvrir", icon: Compass, exact: true },
   { href: "/rencontres", label: "Rencontres", icon: Layers, exact: true },
   { href: "/decouvrir/likes", label: "Mes likes", icon: Heart, exact: false },
   { href: "/matchs", label: "Mon match", icon: Sparkles, exact: true },

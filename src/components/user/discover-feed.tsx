@@ -248,6 +248,7 @@ export function DiscoverFeed({
         onClose={() => setSelected(null)}
         onLiked={handleLiked}
         canInteract={canInteract}
+        viewerLocation={viewerLocation}
       />
     </>
   );

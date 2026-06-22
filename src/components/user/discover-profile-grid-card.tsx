@@ -47,7 +47,7 @@ export function DiscoverProfileGridCard({
             src={profile.primary_photo_url}
             alt={profile.display_name}
             fill
-            className="object-cover transition-transform duration-300 hover:scale-105"
+            className="object-cover object-[center_22%] transition-transform duration-300 hover:scale-105"
             sizes="(max-width: 640px) 50vw, 20vw"
           />
         ) : (

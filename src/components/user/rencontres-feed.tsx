@@ -242,6 +242,7 @@ export function RencontresFeed({
         onClose={() => setSelected(null)}
         onLiked={handleLiked}
         canInteract={canInteract}
+        viewerLocation={viewerLocation}
       />
     </>
   );
