@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -172,7 +173,7 @@ function ProfilePhotoGallery({
         className={cn(
           "relative w-full overflow-hidden rounded-[1.15rem] bg-[#f3eef8]",
           hero
-            ? "aspect-[4/5] max-h-[min(42vh,360px)]"
+            ? "aspect-[4/5] max-h-[min(28dvh,220px)] sm:max-h-[min(36vh,300px)] lg:max-h-[min(42vh,360px)]"
             : "aspect-[4/5]"
         )}
       >
@@ -506,19 +507,19 @@ function CompatibilitySection({
   points: CompatibilityPoint[];
 }) {
   return (
-    <section className="border-t border-[#ebe6f0]/80 bg-white px-4 py-5 sm:px-6 sm:py-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+    <section className="border-t border-[#ebe6f0]/80 bg-white px-4 py-4 sm:px-6 sm:py-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
         <ScoreRing score={score} />
         <div className="min-w-0 flex-1">
-          <p className="font-sans text-lg font-bold text-[#2e1a47]">
+          <p className="font-sans text-base font-bold text-[#2e1a47] sm:text-lg">
             Indice de compatibilité
           </p>
-          <p className="mt-1 text-sm text-[#6b5f7a]">
+          <p className="mt-1 text-xs text-[#6b5f7a] sm:text-sm">
             Aide à la décision — votre jugement reste essentiel.
           </p>
         </div>
       </div>
-      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+      <ul className="mt-3 grid gap-2 sm:mt-4 sm:grid-cols-2">
         {points.map((point, i) => (
           <li
             key={i}
@@ -542,6 +543,12 @@ export function MatchCompareModal({
   onClose,
   onPropose,
 }: MatchCompareModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!pair) return;
     document.body.style.overflow = "hidden";
@@ -550,12 +557,13 @@ export function MatchCompareModal({
     };
   }, [pair]);
 
-  if (!pair) return null;
+  if (!pair || !mounted) return null;
 
   const points = computePairCompatibility(pair.profileA, pair.profileB);
   const score = compatibilityScore(points);
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4 lg:p-6">
+
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4 lg:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-[#2e1a47]/55 backdrop-blur-[3px]"
@@ -563,9 +571,14 @@ export function MatchCompareModal({
         onClick={onClose}
       />
 
-      <div className="relative flex max-h-[94dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-[1.75rem] bg-[#f8f6fc] shadow-[0_24px_80px_rgba(46,26,71,0.28)] sm:rounded-[1.75rem]">
+      <div
+        className="relative flex max-h-[min(92dvh,900px)] w-full max-w-6xl flex-col overflow-hidden rounded-t-[1.75rem] bg-[#f8f6fc] shadow-[0_24px_80px_rgba(46,26,71,0.28)] sm:max-h-[min(90dvh,900px)] sm:rounded-[1.75rem]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="match-compare-title"
+      >
         {/* Header */}
-        <div className="relative shrink-0 overflow-hidden border-b border-[#ebe6f0]/80 bg-white px-5 py-5 sm:px-6">
+        <div className="relative shrink-0 overflow-hidden border-b border-[#ebe6f0]/80 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_0%_0%,rgba(252,231,243,0.45),transparent_55%),radial-gradient(ellipse_60%_60%_at_100%_0%,rgba(237,233,254,0.4),transparent_50%)]"
             aria-hidden
@@ -578,7 +591,10 @@ export function MatchCompareModal({
                   {sourceLabel(pair.source)}
                 </span>
               </div>
-              <h2 className="mt-3 font-sans text-xl font-bold text-[#2e1a47] sm:text-2xl">
+              <h2
+                id="match-compare-title"
+                className="mt-3 font-sans text-xl font-bold text-[#2e1a47] sm:text-2xl"
+              >
                 Comparer les profils
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#6b5f7a]">
@@ -599,7 +615,7 @@ export function MatchCompareModal({
         {/* Corps : profils en premier, compatibilité en bas */}
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="relative bg-[#f8f6fc] px-4 pb-4 pt-4 sm:px-6 sm:pb-5 sm:pt-5">
-            <div className="relative grid gap-4 lg:grid-cols-2 lg:gap-6">
+            <div className="relative grid gap-4 sm:grid-cols-2 lg:gap-6">
               <div className="hidden lg:pointer-events-none lg:absolute lg:left-1/2 lg:top-[min(21vh,180px)] lg:z-10 lg:flex lg:-translate-x-1/2 lg:-translate-y-1/2 lg:items-center lg:justify-center">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_4px_20px_rgba(233,30,140,0.2)] ring-4 ring-[#f8f6fc]">
                   {pair.source === "one_way" ? (
@@ -614,7 +630,7 @@ export function MatchCompareModal({
             </div>
           </div>
 
-          <div className="grid gap-4 border-t border-[#ebe6f0]/80 bg-white px-4 py-5 sm:grid-cols-2 sm:gap-5 sm:px-6">
+          <div className="grid gap-4 border-t border-[#ebe6f0]/80 bg-white px-4 py-4 sm:grid-cols-2 sm:gap-5 sm:px-6 sm:py-5">
             <ProfileDetails profile={pair.profileA} accent="left" />
             <ProfileDetails profile={pair.profileB} accent="right" />
           </div>
@@ -622,30 +638,33 @@ export function MatchCompareModal({
           <CompatibilitySection score={score} points={points} />
         </div>
 
-        {/* Footer */}
-        <div className="flex shrink-0 flex-col gap-3 border-t border-[#ebe6f0]/80 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={pending}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-[#d8cfe8] bg-white px-6 text-sm font-semibold text-[#2e1a47] transition hover:bg-[#faf8fc] disabled:opacity-60"
-          >
-            Fermer
-          </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => onPropose(pair.userAId, pair.userBId)}
-            className={cn(
-              "inline-flex h-11 items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-60",
-              "bg-gradient-to-r from-[#7b3d8f] to-[#e91e8c] shadow-[#e91e8c]/25 hover:brightness-105"
-            )}
-          >
-            <Heart className="h-4 w-4" />
-            {pending ? "Envoi en cours…" : "Proposer le match"}
-          </button>
+        {/* Footer — toujours visible au-dessus de la nav mobile */}
+        <div className="shrink-0 border-t border-[#ebe6f0]/80 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(46,26,71,0.06)] sm:px-6 sm:py-4">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-end sm:gap-3">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => onPropose(pair.userAId, pair.userBId)}
+              className={cn(
+                "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-60 sm:order-2 sm:h-11 sm:w-auto",
+                "bg-gradient-to-r from-[#7b3d8f] to-[#e91e8c] shadow-[#e91e8c]/25 hover:brightness-105"
+              )}
+            >
+              <Heart className="h-4 w-4" />
+              {pending ? "Envoi en cours…" : "Proposer le match"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={pending}
+              className="inline-flex h-11 w-full items-center justify-center rounded-full border border-[#d8cfe8] bg-white px-6 text-sm font-semibold text-[#2e1a47] transition hover:bg-[#faf8fc] disabled:opacity-60 sm:order-1 sm:w-auto"
+            >
+              Fermer
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -146,11 +146,12 @@ function PairCard({
               onSelect();
             }}
             className={cn(
-              "inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white shadow-md transition-all sm:w-auto",
+              "inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white shadow-md transition-all sm:w-auto sm:px-5",
               "bg-gradient-to-r from-[#7b3d8f] to-[#e91e8c] hover:shadow-lg hover:brightness-105"
             )}
           >
-            Comparer les profils
+            <span className="sm:hidden">Comparer</span>
+            <span className="hidden sm:inline">Comparer les profils</span>
             <ChevronRight className="h-4 w-4 stroke-[2]" />
           </button>
         </div>
