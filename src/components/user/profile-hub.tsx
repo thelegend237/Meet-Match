@@ -23,13 +23,15 @@ import { Button } from "@/components/ui/button";
 import { ProfileAvatarRing } from "@/components/user/profile-avatar-ring";
 import { RegistrationPaymentButton } from "@/components/user/registration-payment-button";
 import {
+  formatDisplayPrice,
   getMatchingFee,
   getRegistrationFee,
   PLAN_COMPARISON_ROWS,
+  PRICING_TEST_MODE,
 } from "@/lib/pricing";
 import { RELATIONSHIP_LABELS } from "@/lib/validations/profile";
 import { isProfileOnline } from "@/lib/discover/profile-status";
-import { cn, formatCurrency, getAge } from "@/lib/utils";
+import { cn, getAge } from "@/lib/utils";
 import { isStaffProfile } from "@/lib/auth/staff";
 import type { Payment, Profile } from "@/lib/types/database";
 
@@ -359,14 +361,20 @@ export function ProfileHub({
                       ? "Compte équipe"
                       : registrationPaid
                         ? "Rencontres accompagnées"
-                        : "Activez votre accès"}
+                        : PRICING_TEST_MODE
+                          ? "Activez votre accès gratuitement"
+                          : "Activez votre accès"}
                   </h3>
                   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-primary/80 sm:text-[15px]">
                     {isStaff
                       ? "Votre compte administrateur peut aussi être complété comme un profil membre (photos, bio, préférences)."
                       : registrationPaid
-                        ? "Likes illimités et découverte. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre compatible."
-                        : "Rejoignez la communauté, explorez les profils et envoyez des likes — un seul paiement d'inscription."}
+                        ? PRICING_TEST_MODE
+                          ? "Likes illimités et découverte. Les mises en relation sont gratuites pendant la phase test."
+                          : "Likes illimités et découverte. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre compatible."
+                        : PRICING_TEST_MODE
+                          ? "Rejoignez la communauté gratuitement — explorez les profils et envoyez des likes sans aucun paiement."
+                          : "Rejoignez la communauté, explorez les profils et envoyez des likes — un seul paiement d'inscription."}
                   </p>
                 </div>
                 <div className="mt-5 shrink-0 lg:mt-0 lg:w-[min(100%,320px)]">
@@ -385,7 +393,7 @@ export function ProfileHub({
                       <Link href="/paiements">
                         {hasPaidMatching
                           ? "Voir mon historique de paiements"
-                          : `Matching accompagné · ${formatCurrency(matchFee.amount, matchFee.currency)}`}
+                          : `Matching accompagné · ${formatDisplayPrice(matchFee.amount, matchFee.currency)}`}
                       </Link>
                     </Button>
                   ) : (
@@ -397,7 +405,9 @@ export function ProfileHub({
                   )}
                   {!isStaff && (
                     <p className="mt-3 text-center text-[10px] text-muted-foreground sm:text-xs">
-                      Paiement unique · tarif selon votre pays
+                      {PRICING_TEST_MODE
+                        ? "Phase test — tous les services sont gratuits"
+                        : "Paiement unique · tarif selon votre pays"}
                     </p>
                   )}
                 </div>

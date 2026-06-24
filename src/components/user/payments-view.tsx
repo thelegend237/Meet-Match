@@ -16,19 +16,23 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   currencyRegionLabel,
+  formatDisplayPrice,
   getMatchingFee,
   getRegistrationFee,
+  isFreeFee,
   MATCHING_BENEFITS,
   MATCHING_FEATURES,
+  MONTHLY_FREE_MATCHES,
+  PRICING_TEST_MODE,
   REGISTRATION_BENEFITS,
   REGISTRATION_FEATURES,
 } from "@/lib/pricing";
+import { PricingBetaBanner } from "@/components/pricing/pricing-beta-banner";
 import { RegistrationPaymentButton } from "@/components/user/registration-payment-button";
 import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
-import { MONTHLY_FREE_MATCHES } from "@/lib/pricing";
 import type { Payment, Profile } from "@/lib/types/database";
 
 const STATUS_LABELS: Record<
@@ -118,14 +122,16 @@ function PlanCard({
 
         <div className="mt-5 flex flex-wrap items-end gap-2">
           <p className="font-sans text-4xl font-bold tracking-tight text-primary">
-            {formatCurrency(amount, currency)}
+            {formatDisplayPrice(amount, currency)}
           </p>
           <span className="mb-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
             {regionLabel}
           </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          Paiement unique · TVA incluse selon votre pays
+          {isFreeFee(amount)
+            ? "Aucun paiement requis pendant la phase test"
+            : "Paiement unique · TVA incluse selon votre pays"}
         </p>
 
         <ul className="mt-6 space-y-2.5">
@@ -177,6 +183,8 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
 
   return (
     <div className="space-y-8">
+      <PricingBetaBanner />
+
       {/* Statut & parcours */}
       <section className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg">
         <div className="relative p-5 sm:p-6">
@@ -195,14 +203,18 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
               <h2 className="mt-2 font-sans text-2xl font-bold sm:text-3xl">
                 {registrationPaid
                   ? "Vous êtes prêt à rencontrer"
-                  : "Activez votre accès"}
+                  : PRICING_TEST_MODE
+                    ? "Activez votre accès gratuitement"
+                    : "Activez votre accès"}
               </h2>
               <p className="mt-2 max-w-md text-sm leading-relaxed text-primary-foreground/85">
                 {registrationPaid
                   ? registrationFree
-                    ? "Accès gratuit accordé par l'équipe — profitez de toutes les fonctionnalités de découverte."
+                    ? "Accès gratuit — profitez de toutes les fonctionnalités pendant la phase test."
                     : "Inscription réglée : explorez les profils, likez et attendez une proposition de match personnalisée."
-                  : "Un seul paiement pour débloquer la plateforme. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre."}
+                  : PRICING_TEST_MODE
+                    ? "Pendant la phase test, l'activation est gratuite. Aucun paiement n'est demandé pour liker ou être mis en relation."
+                    : "Un seul paiement pour débloquer la plateforme. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre."}
               </p>
             </div>
             <Badge
@@ -280,7 +292,7 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
         ))}
       </div>
 
-      {hasPaidMatching && (
+      {hasPaidMatching && !PRICING_TEST_MODE && (
         <section className="rounded-2xl border border-secondary/25 bg-gradient-to-br from-[#fce7f3]/30 to-white p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -317,8 +329,9 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
             Nos offres
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Deux étapes transparentes : rejoindre la communauté, puis être mis en
-            relation lorsqu&apos;un profil vous correspond vraiment.
+            {PRICING_TEST_MODE
+              ? "Phase test : inscription et matching sont gratuits. Les tarifs définitifs seront activés avec Stripe."
+              : "Deux étapes transparentes : rejoindre la communauté, puis être mis en relation lorsqu'un profil vous correspond vraiment."}
           </p>
         </div>
 
@@ -382,7 +395,9 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
                   />
                   <p className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Zap className="h-3.5 w-3.5 text-secondary" />
-                    Activation immédiate après paiement (mode test pour l&apos;instant).
+                    {PRICING_TEST_MODE
+                      ? "Activation immédiate et gratuite pendant la phase test."
+                      : "Activation immédiate après paiement (mode test pour l'instant)."}
                   </p>
                 </div>
               )
@@ -391,7 +406,11 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
 
           <PlanCard
             title="Frais de matching"
-            subtitle="1er match payant, puis 3 mises en relation gratuites par mois après votre premier paiement."
+            subtitle={
+              PRICING_TEST_MODE
+                ? "Gratuit pendant la phase test — chaque mise en relation proposée par l'équipe est offerte."
+                : "1er match payant, puis 3 mises en relation gratuites par mois après votre premier paiement."
+            }
             amount={matchFee.amount}
             currency={matchFee.currency}
             regionLabel={currencyRegionLabel(matchFee.currency)}
@@ -421,8 +440,12 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
                 <p className="text-sm text-muted-foreground">
                   {registrationPaid
                     ? hasPaidMatching
-                      ? `Vous avez ${matchingCredits.remainingThisMonth} crédit(s) gratuit(s) ce mois. Au-delà, les frais de matching s'appliquent à nouveau.`
-                      : "Votre premier match proposé nécessitera le paiement des frais de matching."
+                      ? PRICING_TEST_MODE
+                        ? "Tous les matchs sont gratuits pendant la phase test."
+                        : `Vous avez ${matchingCredits.remainingThisMonth} crédit(s) gratuit(s) ce mois. Au-delà, les frais de matching s'appliquent à nouveau.`
+                      : PRICING_TEST_MODE
+                        ? "Chaque match proposé par l'équipe est gratuit pendant la phase test."
+                        : "Votre premier match proposé nécessitera le paiement des frais de matching."
                     : "Disponible après activation de votre inscription."}
                 </p>
                 <Button
@@ -531,7 +554,7 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
                   </div>
                   <div className="text-right">
                     <p className="font-semibold tabular-nums text-primary">
-                      {formatCurrency(Number(p.amount), p.currency)}
+                      {formatDisplayPrice(Number(p.amount), p.currency)}
                     </p>
                     <Badge variant={st.variant} className="mt-1">
                       {st.label}

@@ -18,6 +18,7 @@ import { PublicPage } from "@/components/layout/public-page";
 import { UserFaqSection } from "@/components/public/user-faq-section";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PRICING_TEST_MODE } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Fonctionnement",
@@ -45,8 +46,9 @@ const steps: {
   {
     icon: CreditCard,
     title: "Activez votre compte pour liker",
-    description:
-      "Quand vous souhaitez interagir, réglez les frais d'inscription depuis la page Paiements. Cela débloque les likes, les passes et la consultation de vos likes envoyés.",
+    description: PRICING_TEST_MODE
+      ? "Quand vous souhaitez interagir, activez gratuitement votre compte depuis la page Paiements. Pendant la phase test, aucun frais n'est demandé."
+      : "Quand vous souhaitez interagir, réglez les frais d'inscription depuis la page Paiements. Cela débloque les likes, les passes et la consultation de vos likes envoyés.",
   },
   {
     icon: Heart,
@@ -62,15 +64,17 @@ const steps: {
   },
   {
     icon: CreditCard,
-    title: "Paiement du matching",
-    description:
-      "Le premier match est payant. Ensuite, 3 mises en relation gratuites par mois (renouvelées chaque mois). Au-delà, les frais de matching s'appliquent à nouveau.",
+    title: PRICING_TEST_MODE ? "Mise en relation gratuite" : "Paiement du matching",
+    description: PRICING_TEST_MODE
+      ? "Pendant la phase test, chaque match proposé par l'équipe est entièrement gratuit. Les tarifs définitifs seront communiqués avant l'intégration des paiements réels."
+      : "Le premier match est payant. Ensuite, 3 mises en relation gratuites par mois (renouvelées chaque mois). Au-delà, les frais de matching s'appliquent à nouveau.",
   },
   {
     icon: MessageSquare,
     title: "Discussion groupée encadrée",
-    description:
-      "Si les deux personnes ont payé (ou bénéficié d'un accès gratuit), une discussion groupée est ouverte avec un administrateur présent. Ce n'est pas un chat libre : chaque échange est accompagné.",
+    description: PRICING_TEST_MODE
+      ? "Dès que le match est confirmé, une discussion groupée s'ouvre avec un administrateur présent. Ce n'est pas un chat libre : chaque échange est accompagné."
+      : "Si les deux personnes ont payé (ou bénéficié d'un accès gratuit), une discussion groupée est ouverte avec un administrateur présent. Ce n'est pas un chat libre : chaque échange est accompagné.",
   },
 ];
 

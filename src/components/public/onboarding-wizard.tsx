@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
-import { cn, formatCurrency } from "@/lib/utils";
-import { getRegistrationFee } from "@/lib/pricing";
+import { cn } from "@/lib/utils";
+import { formatDisplayPriceDetail, getRegistrationFee, PRICING_TEST_MODE } from "@/lib/pricing";
 import { calculateProfileCompletion } from "@/lib/profile/completion";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
@@ -770,11 +770,21 @@ export function OnboardingWizard({
               </div>
 
               <RegisterHint tone="accent">
-                Inscription :{" "}
-                <strong className="text-primary">
-                  {formatCurrency(regFee.amount, regFee.currency)}
-                </strong>{" "}
-                après création — les étapes suivantes sont facultatives.
+                {PRICING_TEST_MODE ? (
+                  <>
+                    <strong className="text-primary">Gratuit</strong> pendant la
+                    phase test — activez votre compte sur la page Paiements après
+                    création. Les étapes suivantes sont facultatives.
+                  </>
+                ) : (
+                  <>
+                    Inscription :{" "}
+                    <strong className="text-primary">
+                      {formatDisplayPriceDetail(regFee.amount, regFee.currency)}
+                    </strong>{" "}
+                    après création — les étapes suivantes sont facultatives.
+                  </>
+                )}
               </RegisterHint>
 
               <div className="space-y-4 border-t border-border/40 pt-5">

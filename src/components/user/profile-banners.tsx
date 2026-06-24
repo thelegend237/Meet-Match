@@ -8,6 +8,7 @@ import {
   PROFILE_PHOTO_REQUIRED_TITLE,
 } from "@/lib/photos/copy";
 import type { Profile } from "@/lib/types/database";
+import { PRICING_TEST_MODE } from "@/lib/pricing";
 
 export function ProfileCompletionBanner({ profile }: { profile: Profile }) {
   if (profile.profile_completion >= 100) return null;
@@ -76,10 +77,15 @@ export function PaymentRequiredBanner({ profile }: { profile: Profile }) {
             <AlertCircle className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="font-medium text-primary">Activez votre abonnement</p>
+            <p className="font-medium text-primary">
+              {PRICING_TEST_MODE
+                ? "Activez votre compte gratuitement"
+                : "Activez votre abonnement"}
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Parcourez les profils gratuitement. Activez votre compte pour
-              envoyer des likes et interagir avec les membres.
+              {PRICING_TEST_MODE
+                ? "Parcourez les profils gratuitement. Activez votre compte sans payer pour envoyer des likes — phase test en cours."
+                : "Parcourez les profils gratuitement. Activez votre compte pour envoyer des likes et interagir avec les membres."}
             </p>
           </div>
         </div>

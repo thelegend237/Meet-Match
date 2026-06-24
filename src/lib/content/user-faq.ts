@@ -8,6 +8,12 @@ export type UserFaqItem = {
 
 export const USER_FAQ_ITEMS: UserFaqItem[] = [
   {
+    id: "beta-free",
+    question: "Est-ce que Meet & Match est payant en ce moment ?",
+    answer:
+      "Non. Nous sommes en phase de test : l'inscription, l'activation du compte, les likes et les mises en relation (matching) sont entièrement gratuits. Nous vous préviendrons avant d'activer les tarifs définitifs et l'intégration des paiements réels (Stripe).",
+  },
+  {
     id: "what-is",
     question: "En quoi Meet & Match est différent des autres apps de rencontre ?",
     answer:
@@ -23,19 +29,19 @@ export const USER_FAQ_ITEMS: UserFaqItem[] = [
     id: "when-pay",
     question: "Quand dois-je payer ?",
     answer:
-      "Deux paiements distincts existent. Les frais d'inscription débloquent les interactions (likes, passes, mes likes). Les frais de matching ne sont dus que lorsqu'un administrateur vous propose une mise en relation — jamais avant.",
+      "Pendant la phase test, tout est gratuit : activez votre compte sans payer pour liker. Après le lancement officiel, les frais d'inscription débloqueront les interactions et les frais de matching ne seront dus que lorsqu'un administrateur vous propose une mise en relation.",
   },
   {
     id: "registration-fee",
     question: "À quoi servent les frais d'inscription ?",
     answer:
-      "Ils activent votre compte sur la plateforme : envoyer des likes, passer des profils, consulter vos likes envoyés et être pris en compte par l'équipe pour une future mise en relation. Le contact avec l'équipe Meet & Match reste gratuit.",
+      "Pendant la phase test, l'activation est gratuite et débloque les likes, les passes et vos likes envoyés. À terme, ce paiement unique activera votre compte sur la plateforme. Le contact avec l'équipe Meet & Match reste toujours gratuit.",
   },
   {
     id: "matching-fee",
     question: "À quoi servent les frais de matching ?",
     answer:
-      "Le premier match proposé nécessite le paiement des frais de matching. Ensuite, vous bénéficiez de 3 mises en relation gratuites par mois (renouvelées chaque mois). Au-delà, les frais de matching s'appliquent à nouveau. Chaque match ouvre une discussion encadrée avec un administrateur.",
+      "En phase test, chaque match proposé par l'équipe est gratuit. Après le lancement, le premier match nécessitera les frais de matching, puis 3 mises en relation gratuites par mois. Chaque match ouvre une discussion encadrée avec un administrateur.",
   },
   {
     id: "matching-credits",
@@ -96,10 +102,10 @@ Meet & Match est une plateforme de rencontre **sérieuse et encadrée** : pas de
 
 1. **Complétez votre profil** — photo, bio, attentes et préférences.
 2. **Parcourez gratuitement** — allez dans *Découvrir* ou *Rencontres* pour voir les profils des membres actifs.
-3. **Activez votre compte** quand vous souhaitez liker — frais d'inscription sur la page *Paiements*.
+3. **Activez votre compte** quand vous souhaitez liker — gratuit pendant la phase test, sur la page *Paiements*.
 4. **Likez les profils** qui vous intéressent — notre équipe analyse les compatibilités.
-5. **Match proposé** — si nous vous suggérons une rencontre, les frais de matching s'appliquent alors (uniquement à ce moment-là).
-6. **Discussion encadrée** — après paiement des deux côtés, une conversation s'ouvre avec l'autre membre et un administrateur.
+5. **Match proposé** — si nous vous suggérons une rencontre, c'est gratuit en phase test (les tarifs définitifs seront communiqués plus tard).
+6. **Discussion encadrée** — une conversation s'ouvre avec l'autre membre et un administrateur dès que le match est confirmé.
 
 ## À retenir
 

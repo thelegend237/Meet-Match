@@ -14,20 +14,25 @@ import { PublicPage } from "@/components/layout/public-page";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import {
+  formatDisplayPrice,
+  formatDisplayPriceDetail,
+  futurePricingFootnote,
   getMatchingFee,
   getRegistrationFee,
   MATCHING_BENEFITS,
   MATCHING_FEATURES,
   PLAN_COMPARISON_ROWS,
+  PRICING_TEST_MODE,
   REGISTRATION_BENEFITS,
   REGISTRATION_FEATURES,
 } from "@/lib/pricing";
+import { PricingBetaBanner } from "@/components/pricing/pricing-beta-banner";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Frais d'inscription et de matching Meet & Match. Contact administrateur gratuit. Accès gratuit possible sur décision de l'administration.",
+    "Phase test Meet & Match : tous les services sont gratuits. Frais d'inscription et de matching à 0 $ pour les testeurs.",
 };
 
 const regFee = getRegistrationFee(null);
@@ -75,17 +80,23 @@ const paymentSteps = [
   {
     step: "02",
     title: "Activation",
-    text: "Activez votre compte pour envoyer des likes ; l'équipe étudie les compatibilités.",
+    text: PRICING_TEST_MODE
+      ? "Activez votre compte gratuitement pour envoyer des likes — aucun paiement requis pendant la phase test."
+      : "Activez votre compte pour envoyer des likes ; l'équipe étudie les compatibilités.",
   },
   {
     step: "03",
     title: "Match proposé",
-    text: "Un admin vous propose une mise en relation — les frais de matching s'appliquent alors.",
+    text: PRICING_TEST_MODE
+      ? "Un admin vous propose une mise en relation — gratuit pendant la phase test."
+      : "Un admin vous propose une mise en relation — les frais de matching s'appliquent alors.",
   },
   {
     step: "04",
     title: "Discussion",
-    text: "Après paiement (ou crédit gratuit mensuel), la conversation encadrée s'ouvre.",
+    text: PRICING_TEST_MODE
+      ? "La conversation encadrée s'ouvre dès que le match est confirmé."
+      : "Après paiement (ou crédit gratuit mensuel), la conversation encadrée s'ouvre.",
   },
 ] as const;
 
@@ -93,11 +104,16 @@ export default function TarifsPage() {
   return (
     <PublicPage
       variant="landing"
-      eyebrow="Tarifs transparents"
-      title="Nos tarifs"
-      description="Deux paiements clairs, sans surprise : l'inscription pour rejoindre la plateforme, le matching uniquement quand un administrateur vous propose une rencontre."
+      eyebrow={PRICING_TEST_MODE ? "Phase test" : "Tarifs transparents"}
+      title={PRICING_TEST_MODE ? "Tout est gratuit pour l'instant" : "Nos tarifs"}
+      description={
+        PRICING_TEST_MODE
+          ? "Meet & Match est en version test : inscription, matching et accompagnement sont offerts à tous les testeurs. Les tarifs définitifs seront activés plus tard."
+          : "Deux paiements clairs, sans surprise : l'inscription pour rejoindre la plateforme, le matching uniquement quand un administrateur vous propose une rencontre."
+      }
       wide
     >
+      <PricingBetaBanner className="mb-8" />
       <div className="mm-landing-panel mb-10 overflow-hidden">
         <div className="flex flex-col gap-4 bg-gradient-to-br from-[#fce7f3]/40 via-white to-[#ede9fe]/30 p-6 sm:flex-row sm:items-center sm:gap-6 sm:p-8">
           <div className="mm-landing-icon-purple h-14 w-14 shrink-0">
@@ -108,10 +124,24 @@ export default function TarifsPage() {
               Pas de frais cachés
             </p>
             <p className="mt-2 text-sm leading-relaxed text-[#6b5f7a] sm:text-base">
-              Le matching n&apos;est <strong className="font-semibold text-[#2e1a47]">jamais</strong>{" "}
-              facturé à l&apos;avance. Vous ne payez les frais de matching que
-              lorsqu&apos;un administrateur vous propose une mise en relation
-              compatible.
+              {PRICING_TEST_MODE ? (
+                <>
+                  Pendant la phase test,{" "}
+                  <strong className="font-semibold text-[#2e1a47]">
+                    aucun frais n&apos;est facturé
+                  </strong>
+                  . Le matching ne sera facturé qu&apos;après le lancement des
+                  paiements réels.
+                </>
+              ) : (
+                <>
+                  Le matching n&apos;est{" "}
+                  <strong className="font-semibold text-[#2e1a47]">jamais</strong>{" "}
+                  facturé à l&apos;avance. Vous ne payez les frais de matching que
+                  lorsqu&apos;un administrateur vous propose une mise en relation
+                  compatible.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -153,11 +183,13 @@ export default function TarifsPage() {
                 {plan.description}
               </p>
 
-              <div className="mt-6 flex items-baseline gap-2">
+              <div className="mt-6 flex flex-wrap items-baseline gap-2">
                 <p className="font-sans text-4xl font-bold text-[#2e1a47] sm:text-[2.75rem]">
-                  {formatCurrency(plan.amount, plan.currency)}
+                  {formatDisplayPrice(plan.amount, plan.currency)}
                 </p>
-                <span className="text-sm text-[#9b8fa8]">paiement unique</span>
+                <span className="text-sm text-[#9b8fa8]">
+                  {formatDisplayPriceDetail(plan.amount, plan.currency)}
+                </span>
               </div>
 
               <ul className="mt-6 space-y-3">
@@ -382,9 +414,8 @@ export default function TarifsPage() {
       </div>
 
       <p className="mt-8 text-center text-sm text-[#9b8fa8]">
-        Tarifs affichés en dollars canadiens (CAD). Membres aux États-Unis : tarif
-        en USD ({formatCurrency(32, "USD")} inscription,{" "}
-        {formatCurrency(55, "USD")} matching).
+        {futurePricingFootnote() ??
+          `Tarifs affichés en dollars canadiens (CAD). Membres aux États-Unis : tarif en USD (${formatCurrency(32, "USD")} inscription, ${formatCurrency(55, "USD")} matching).`}
       </p>
     </PublicPage>
   );

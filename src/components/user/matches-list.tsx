@@ -18,11 +18,10 @@ import { confirmMatchingPayment } from "@/lib/actions/matches";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { matchStatusLabels } from "@/lib/admin/labels";
-import { formatCurrency } from "@/lib/utils";
+import { formatDisplayPrice, isFreeFee, MONTHLY_FREE_MATCHES, PRICING_TEST_MODE } from "@/lib/pricing";
+import { cn } from "@/lib/utils";
 import type { UserMatch } from "@/lib/types/database";
 import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
-import { MONTHLY_FREE_MATCHES } from "@/lib/pricing";
-import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
 interface MatchesListProps {
@@ -67,11 +66,14 @@ function MatchCard({
 
   function handlePay() {
     if (!match.myPayment) return;
-    if (
-      !confirm(
-        `Confirmer le paiement de ${formatCurrency(match.myPayment.amount, match.myPayment.currency)} pour ce match ?\n\n(Mode test — Stripe à l'étape 8)`
-      )
-    ) {
+    const { amount, currency } = match.myPayment;
+    const priceLabel = formatDisplayPrice(amount, currency);
+    const free = isFreeFee(amount);
+    const message = free
+      ? "Confirmer ce match gratuitement ?\n\nAucun paiement ne sera demandé pendant la phase test."
+      : `Confirmer le paiement de ${priceLabel} pour ce match ?\n\n(Mode test — Stripe à l'étape 8)`;
+
+    if (!confirm(message)) {
       return;
     }
     startTransition(async () => {
@@ -84,9 +86,10 @@ function MatchCard({
         });
       } else {
         toast({
-          title: "Paiement enregistré",
-          description:
-            "Votre paiement a été pris en compte. Le match sera activé lorsque les deux parties auront payé.",
+          title: free ? "Match confirmé gratuitement" : "Paiement enregistré",
+          description: free
+            ? "Votre match sera activé lorsque les deux parties auront confirmé."
+            : "Votre paiement a été pris en compte. Le match sera activé lorsque les deux parties auront payé.",
         });
         setLocalPaymentDone(true);
       }
@@ -163,8 +166,9 @@ function MatchCard({
         {match.status === "pending_payment" && needsPaymentLocal && match.myPayment && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Un administrateur vous propose ce match. Payez les frais de mise en
-              relation pour continuer.
+              {PRICING_TEST_MODE && match.myPayment && isFreeFee(match.myPayment.amount)
+                ? "Un administrateur vous propose ce match. Confirmez gratuitement pour continuer — aucun paiement en phase test."
+                : "Un administrateur vous propose ce match. Payez les frais de mise en relation pour continuer."}
             </p>
             <Button
               variant="secondary"
@@ -177,7 +181,9 @@ function MatchCard({
               ) : (
                 <CreditCard className="mr-2 h-4 w-4" />
               )}
-              Payer {formatCurrency(match.myPayment.amount, match.myPayment.currency)}
+              {match.myPayment && isFreeFee(match.myPayment.amount)
+                ? "Confirmer gratuitement"
+                : `Payer ${formatDisplayPrice(match.myPayment!.amount, match.myPayment!.currency)}`}
             </Button>
           </div>
         )}

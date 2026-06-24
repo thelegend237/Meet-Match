@@ -23,6 +23,7 @@ import {
   markMemberTourCompleted,
 } from "@/lib/user/member-tour";
 import { cn } from "@/lib/utils";
+import { PRICING_TEST_MODE } from "@/lib/pricing";
 
 type TourStep = {
   id: string;
@@ -74,8 +75,9 @@ const TOUR_STEPS: TourStep[] = [
     id: "match",
     icon: Sparkles,
     title: "Votre match encadré",
-    description:
-      "Quand nous validons une compatibilité, vous recevez une notification. Vous payez les frais de matching uniquement à ce moment-là.",
+    description: PRICING_TEST_MODE
+      ? "Quand nous validons une compatibilité, vous recevez une notification. Pendant la phase test, chaque match est gratuit."
+      : "Quand nous validons une compatibilité, vous recevez une notification. Vous payez les frais de matching uniquement à ce moment-là.",
     href: "/matchs",
     hrefLabel: "Mon match",
   },

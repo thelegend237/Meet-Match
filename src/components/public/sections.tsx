@@ -15,8 +15,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RegisterForm } from "@/components/public/register-form";
-import { formatCurrency } from "@/lib/utils";
-import { getRegistrationFee, REGISTRATION_FEATURES } from "@/lib/pricing";
+import {
+  formatDisplayPrice,
+  getRegistrationFee,
+  PRICING_TEST_MODE,
+  REGISTRATION_FEATURES,
+} from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { Reveal, Float } from "@/components/motion/motion";
 
@@ -372,13 +376,14 @@ export function PricingTeaserSection({ variant = "default" }: { variant?: Sectio
                 Tarifs transparents
               </p>
               <h2 className={cn("mt-2 font-sans text-2xl font-bold sm:text-3xl", isLanding ? "text-[#2e1a47]" : "text-primary")}>
-                Commencez pour{" "}
-                {formatCurrency(regFee.amount, regFee.currency)}
+                {PRICING_TEST_MODE
+                  ? "Tout est gratuit en phase test"
+                  : `Commencez pour ${formatDisplayPrice(regFee.amount, regFee.currency)}`}
               </h2>
               <p className={cn("mt-3 text-sm leading-relaxed sm:text-base", isLanding ? "text-[#6b5f7a]" : "text-muted-foreground")}>
-                Un paiement unique pour rejoindre la communauté. Les frais de
-                matching ne sont dus que lorsqu&apos;un administrateur vous propose
-                une rencontre compatible.
+                {PRICING_TEST_MODE
+                  ? "Inscription, likes et matching sont offerts pendant que nous testons la plateforme avec vous. Les tarifs définitifs seront communiqués avant tout paiement réel."
+                  : "Un paiement unique pour rejoindre la communauté. Les frais de matching ne sont dus que lorsqu'un administrateur vous propose une rencontre compatible."}
               </p>
               <ul className="mt-5 space-y-2">
                 {REGISTRATION_FEATURES.slice(0, 4).map((f) => (
