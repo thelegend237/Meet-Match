@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { MessageCircle, Search, SquarePen } from "lucide-react";
+import { MessageCircle, MessageSquarePlus, Search } from "lucide-react";
+import { AdminNewConversationButton } from "@/components/admin/admin-new-conversation-button";
+import { AdminNewConversationPanel } from "@/components/admin/admin-new-conversation-panel";
 import { ChatListAvatar } from "@/components/user/chat-list-avatar";
 import { formatChatListTime } from "@/lib/chat/format";
 import { isProfileOnline } from "@/lib/discover/profile-status";
@@ -53,11 +55,17 @@ function previewText(chat: ChatSummary, isAdmin: boolean): string {
   if (chat.status === "closed") {
     return `Discussion fermée · ${content}`;
   }
-  if (isAdmin) {
-    const prefix = chat.type === "match_group" ? "Match · " : "Contact · ";
-    return `${prefix}${content}`;
-  }
   return content;
+}
+
+function chatTypeBadgeLabel(chat: ChatSummary, isAdmin: boolean): string {
+  if (chat.type === "match_group") return "Match";
+  return isAdmin ? "Contact" : "Équipe";
+}
+
+function chatTypeBadgeClass(chat: ChatSummary, isAdmin: boolean): string {
+  if (chat.type === "match_group") return "mm-chat-type-badge-match";
+  return isAdmin ? "mm-chat-type-badge-contact" : "mm-chat-type-badge-team";
 }
 
 function isOnline(chat: ChatSummary) {
@@ -77,14 +85,17 @@ export function ChatsList({
   const isAdmin = variant === "admin";
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterId>("all");
+  const [newDiscussionOpen, setNewDiscussionOpen] = useState(false);
 
   const hrefFor =
     getHref ??
     ((chat: ChatSummary) =>
       isAdmin ? `/admin/conversations/${chat.id}` : `/messages/${chat.id}`);
-  const newChatHref = isAdmin ? "/admin/conversations" : "/contact";
+  const newChatHref = "/contact";
   const emptyCtaHref = isAdmin ? "/admin/utilisateurs" : "/contact";
-  const emptyCtaLabel = isAdmin ? "Voir les membres" : "Contacter l'admin";
+  const emptyCtaLabel = isAdmin
+    ? "Démarrer une nouvelle conversation"
+    : "Contacter l'équipe";
   const footerVisible = showFooter === true;
   const allHref = isAdmin ? "/admin/conversations" : "/messages";
   const filters = isAdmin ? FILTERS_ADMIN : FILTERS_USER;
@@ -119,25 +130,37 @@ export function ChatsList({
     return counts;
   }, [chats]);
 
+  if (isAdmin && newDiscussionOpen) {
+    return (
+      <AdminNewConversationPanel onClose={() => setNewDiscussionOpen(false)} />
+    );
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-[#f8f6fc]">
       <div className="mm-chat-list-header">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-[#2e1a47]">Conversations</h2>
+            <h2 className="font-sans text-lg font-bold text-[#2e1a47]">Conversations</h2>
             {totalUnread > 0 && (
               <span className="rounded-full bg-[#e91e8c] px-2 py-0.5 text-[10px] font-bold text-white">
                 {totalUnread}
               </span>
             )}
           </div>
-          {!isAdmin && (
+          {isAdmin ? (
+            <AdminNewConversationButton
+              variant="compact"
+              onOpen={() => setNewDiscussionOpen(true)}
+            />
+          ) : (
             <Link
               href={newChatHref}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-[#7b3d8f] transition-colors hover:bg-[#f3eef8]"
-              aria-label="Nouvelle conversation"
+              aria-label="Contacter l'équipe"
+              title="Contacter l'équipe Meet & Match"
             >
-              <SquarePen className="h-[1.15rem] w-[1.15rem] stroke-[1.75]" />
+              <MessageSquarePlus className="h-[1.15rem] w-[1.15rem] stroke-[1.75]" />
             </Link>
           )}
         </div>
@@ -175,13 +198,28 @@ export function ChatsList({
       {chats.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
           <MessageCircle className="h-12 w-12 text-[#e91e8c]/30" />
-          <p className="mt-4 font-semibold text-primary">Aucune discussion</p>
-          <Link
-            href={emptyCtaHref}
-            className="mt-4 text-sm font-semibold text-[#e91e8c] hover:underline"
-          >
-            {emptyCtaLabel}
-          </Link>
+          <p className="mt-4 font-semibold text-primary">
+            Aucune conversation ouverte
+          </p>
+          <p className="mt-2 max-w-xs text-sm text-[#6b5f7a]">
+            {isAdmin
+              ? "Les fils avec au moins un message s'affichent ici. Utilisez le bouton ci-dessus pour écrire à un membre."
+              : "Vos échanges avec l'équipe et vos matchs apparaîtront ici après le premier message."}
+          </p>
+          {isAdmin ? (
+            <AdminNewConversationButton
+              variant="button"
+              onOpen={() => setNewDiscussionOpen(true)}
+            />
+          ) : (
+            <Link
+              href={emptyCtaHref}
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7b3d8f] to-[#e91e8c] px-5 py-2.5 text-sm font-semibold text-white shadow-md"
+            >
+              <MessageSquarePlus className="h-4 w-4" />
+              {emptyCtaLabel}
+            </Link>
+          )}
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
@@ -236,12 +274,10 @@ export function ChatsList({
                           <span
                             className={cn(
                               "mm-chat-type-badge",
-                              chat.type === "match_group"
-                                ? "mm-chat-type-badge-match"
-                                : "mm-chat-type-badge-team"
+                              chatTypeBadgeClass(chat, isAdmin)
                             )}
                           >
-                            {chat.type === "match_group" ? "Match" : "Équipe"}
+                            {chatTypeBadgeLabel(chat, isAdmin)}
                           </span>
                           {online && (
                             <span

@@ -75,8 +75,12 @@
   .mm-chat-messages {
     background-color: #f8f6fc;
     background-image:
-      radial-gradient(circle at 15% 20%, rgb(233 30 140 / 0.04) 0%, transparent 40%),
-      radial-gradient(circle at 85% 80%, rgb(123 61 143 / 0.05) 0%, transparent 45%);
+      radial-gradient(circle at 15% 20%, rgb(233 30 140 / 0.05) 0%, transparent 42%),
+      radial-gradient(circle at 85% 80%, rgb(123 61 143 / 0.06) 0%, transparent 45%);
+  }
+
+  .mm-chat-thread-header {
+    @apply border-b border-[#ebe6f0] bg-white;
   }
 
   .mm-messages-layout {
@@ -88,7 +92,7 @@
   }
 
   .mm-chat-list-col {
-    @apply flex h-full w-full shrink-0 flex-col border-r border-[#e8e0f0] bg-[#f8f6fc] md:w-[clamp(300px,34%,400px)];
+    @apply flex h-full w-full shrink-0 flex-col border-r border-[#ebe6f0] bg-[#f8f6fc] md:w-[clamp(300px,34%,400px)];
   }
 
   .mm-chat-thread-col {
@@ -96,20 +100,19 @@
   }
 
   .mm-chat-list-scroll {
-    @apply flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-4 sm:gap-3 sm:px-4;
+    @apply flex min-h-0 flex-1 flex-col overflow-y-auto;
   }
 
-  /* Hauteur fixe calibrée sur la carte match (2 avatars empilés) */
   .mm-chat-list-card {
-    @apply flex h-[6.25rem] items-center gap-3 rounded-2xl border border-transparent bg-white px-3.5 shadow-[0_2px_14px_rgba(46,26,71,0.07)] transition-all sm:px-4;
+    @apply flex h-[4.5rem] items-center gap-3 border-b border-[#ebe6f0]/80 bg-white px-3 transition-colors sm:px-4;
   }
 
   .mm-chat-list-card:hover {
-    @apply border-[#ebe6f0] shadow-[0_4px_18px_rgba(46,26,71,0.1)];
+    @apply bg-[#faf8fc];
   }
 
   .mm-chat-list-card-active {
-    @apply border-[#f0c4dc] bg-[#fce8f3] shadow-[0_4px_18px_rgba(233,30,140,0.12)] hover:border-[#f0c4dc];
+    @apply border-l-[3px] border-l-[#e91e8c] bg-[#fce8f3]/50 pl-[calc(0.75rem-3px)] hover:bg-[#fce8f3]/50 sm:pl-[calc(1rem-3px)];
   }
 
   .mm-chat-list-avatar-slot {
@@ -145,7 +148,7 @@
   }
 
   .mm-chat-list-preview {
-    @apply mt-1.5 line-clamp-2 h-[2.125rem] text-[12px] leading-[1.125rem] text-[#6b5f7a] sm:text-[13px] sm:leading-[1.1875rem];
+    @apply mt-0.5 line-clamp-1 text-[13px] leading-snug text-[#6b5f7a];
   }
 
   .mm-chat-list-preview-unread {
@@ -161,7 +164,7 @@
   }
 
   .mm-chat-list-header {
-    @apply shrink-0 border-b border-[#ebe6f0]/70 bg-white px-4 pb-3 pt-4 sm:px-5 sm:pt-5;
+    @apply shrink-0 border-b border-[#ebe6f0] bg-[#f8f6fc] px-3 pb-3 pt-3 sm:px-4 sm:pt-4;
   }
 
   .mm-chat-list-footer {
@@ -198,7 +201,7 @@
   }
 
   .mm-chat-closed-banner {
-    @apply flex shrink-0 items-center justify-center gap-2 border-t border-[#ebe6f0] bg-[#faf8fc] px-4 py-3.5 text-sm text-[#6b5f7a];
+    @apply flex shrink-0 items-center justify-center gap-2 border-t border-[#ebe6f0] bg-[#faf8fc] px-4 py-2.5 text-[13px] text-[#6b5f7a];
   }
 
   .mm-chat-admin-badge {
@@ -206,7 +209,7 @@
   }
 
   .mm-chat-bubble-out {
-    @apply rounded-2xl rounded-br-md bg-gradient-to-br from-[#fce8f3] to-[#f8d4ea] text-[#2e1a47];
+    @apply rounded-2xl rounded-br-md bg-gradient-to-br from-[#fce8f3] to-[#f8d4ea] text-[#2e1a47] shadow-[0_1px_2px_rgba(46,26,71,0.08)];
   }
 
   .mm-chat-bubble-out-tail {
@@ -214,7 +217,7 @@
   }
 
   .mm-chat-bubble-in {
-    @apply rounded-2xl rounded-bl-md border border-[#e8e0f0]/90 bg-white text-[#2e1a47];
+    @apply rounded-2xl rounded-bl-md border border-[#e8e0f0]/90 bg-white text-[#2e1a47] shadow-[0_1px_2px_rgba(46,26,71,0.06)];
   }
 
   .mm-chat-bubble-in-tail {
@@ -222,7 +225,7 @@
   }
 
   .mm-chat-bubble-admin {
-    @apply rounded-2xl rounded-bl-md border border-[#ddd6fe]/80 bg-gradient-to-br from-[#faf8fc] to-[#ede9fe] text-[#2e1a47];
+    @apply rounded-2xl rounded-bl-md border border-[#ddd6fe]/80 bg-gradient-to-br from-[#faf8fc] to-[#ede9fe] text-[#2e1a47] shadow-[0_1px_2px_rgba(46,26,71,0.06)];
   }
 
   .mm-chat-bubble-admin-tail {
@@ -251,19 +254,19 @@
   }
 
   .mm-chat-input-bar {
-    @apply flex shrink-0 items-end gap-2 border-t border-[#ebe6f0] bg-white/95 px-3 py-3 backdrop-blur-sm sm:gap-2.5 sm:px-4 sm:py-3.5;
+    @apply flex shrink-0 items-end gap-2 border-t border-[#ebe6f0] bg-[#faf8fc] px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3;
   }
 
   .mm-chat-input-field {
-    @apply flex min-h-[44px] flex-1 items-center rounded-2xl border border-[#e8e0f0] bg-[#faf8fc] px-3.5 transition-colors focus-within:border-[#7b3d8f]/35 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#7b3d8f]/10;
+    @apply flex min-h-[42px] flex-1 items-center rounded-2xl border border-[#e8e0f0] bg-white px-3.5 shadow-sm transition-colors focus-within:border-[#7b3d8f]/35 focus-within:ring-2 focus-within:ring-[#7b3d8f]/10;
   }
 
   .mm-chat-send-btn {
-    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all;
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all;
   }
 
   .mm-chat-send-btn-active {
-    @apply bg-gradient-to-br from-[#7b3d8f] to-[#e91e8c] text-white shadow-md shadow-[#e91e8c]/25 hover:shadow-lg hover:shadow-[#e91e8c]/30;
+    @apply bg-gradient-to-br from-[#7b3d8f] to-[#e91e8c] text-white shadow-md shadow-[#e91e8c]/20 hover:shadow-lg hover:shadow-[#e91e8c]/25;
   }
 
   .mm-chat-send-btn-idle {
@@ -280,6 +283,10 @@
 
   .mm-chat-type-badge-team {
     @apply bg-[#ede9fe] text-[#5b3d8f];
+  }
+
+  .mm-chat-type-badge-contact {
+    @apply bg-[#e0e7ff] text-[#4338ca];
   }
 
   .mm-chat-presence-pill-join {

@@ -19,6 +19,7 @@ export async function getAdminContactConversations(): Promise<
     .from("chats")
     .select("id, subject, contact_name, contact_email, status, created_at")
     .eq("type", "admin_contact")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (!chats?.length) return [];

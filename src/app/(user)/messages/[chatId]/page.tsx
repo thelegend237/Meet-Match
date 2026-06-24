@@ -4,6 +4,7 @@ import { markChatMessagesAsRead } from "@/lib/chat/mark-read";
 import { TEAM_AVATAR_URL, TEAM_DISPLAY_NAME } from "@/lib/chat/team";
 import { getChatThread } from "@/lib/user/chats";
 import { ChatThread } from "@/components/user/chat-thread";
+import { ChatHideButton } from "@/components/user/chat-hide-button";
 
 interface PageProps {
   params: Promise<{ chatId: string }>;
@@ -54,6 +55,7 @@ export default async function MessageThreadPage({ params }: PageProps) {
         isMatchGroup,
         matchId: thread.matchId,
         participants,
+        headerActions: <ChatHideButton chatId={chatId} />,
       }}
     />
   );

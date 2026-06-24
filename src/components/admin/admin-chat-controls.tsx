@@ -1,22 +1,43 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import {
+  adminSoftDeleteChatAction,
+  superadminHardDeleteChatAction,
+} from "@/lib/actions/chats";
 import { updateChatStatusAction } from "@/lib/actions/admin";
 import { useAdminAction } from "@/hooks/use-admin-action";
-import { Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Info,
+  Lock,
+  LockOpen,
+  Trash2,
+} from "lucide-react";
+import {
+  ChatOverflowMenu,
+  type ChatMenuItem,
+} from "@/components/user/chat-overflow-menu";
 
 interface AdminChatControlsProps {
   chatId: string;
   status: "open" | "closed";
-  className?: string;
+  actorRole: "admin" | "superadmin";
+  isDeleted?: boolean;
+  isMatchGroup?: boolean;
+  matchId?: string | null;
 }
 
 export function AdminChatControls({
   chatId,
   status,
-  className,
+  actorRole,
+  isDeleted = false,
+  isMatchGroup = false,
+  matchId,
 }: AdminChatControlsProps) {
+  const router = useRouter();
   const { pending, run } = useAdminAction();
+  const isSuperadmin = actorRole === "superadmin";
 
   function toggleStatus() {
     const next = status === "open" ? "closed" : "open";
@@ -26,18 +47,78 @@ export function AdminChatControls({
     });
   }
 
-  return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={toggleStatus}
-      className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#e8e0f0] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#2e1a47] transition-colors hover:bg-[#faf8fc] disabled:opacity-60 sm:px-3 sm:py-2 sm:text-sm",
-        className
-      )}
-    >
-      {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-      {status === "open" ? "Fermer la discussion" : "Rouvrir la discussion"}
-    </button>
-  );
+  function softDelete() {
+    const confirmed = window.confirm(
+      "Supprimer cette conversation ?\n\n" +
+        "Elle sera retirée des listes membres et administrateurs. " +
+        "Seul un super administrateur pourra la supprimer définitivement de la base."
+    );
+    if (!confirmed) return;
+
+    void run(() => adminSoftDeleteChatAction(chatId), {
+      success: "Conversation supprimée.",
+      onSuccess: () => {
+        router.push("/admin/conversations");
+        router.refresh();
+      },
+    });
+  }
+
+  function hardDelete() {
+    const confirmed = window.confirm(
+      "Supprimer DÉFINITIVEMENT cette conversation ?\n\n" +
+        "Tous les messages et participants seront effacés de la base. " +
+        "Cette action est irréversible."
+    );
+    if (!confirmed) return;
+
+    void run(() => superadminHardDeleteChatAction(chatId), {
+      success: "Conversation supprimée définitivement.",
+      onSuccess: () => {
+        router.push("/admin/conversations");
+        router.refresh();
+      },
+    });
+  }
+
+  const items: ChatMenuItem[] = [];
+
+  if (isMatchGroup && matchId) {
+    items.push({
+      id: "match-details",
+      label: "Détails du match",
+      icon: Info,
+      onClick: () => router.push("/admin/matchs"),
+    });
+  }
+
+  if (!isDeleted) {
+    items.push({
+      id: "toggle-status",
+      label: status === "open" ? "Fermer la discussion" : "Rouvrir la discussion",
+      icon: status === "open" ? Lock : LockOpen,
+      onClick: toggleStatus,
+    });
+
+    items.push({
+      id: "soft-delete",
+      label: "Supprimer la discussion",
+      icon: Trash2,
+      onClick: softDelete,
+    });
+  }
+
+  if (isSuperadmin) {
+    items.push({
+      id: "hard-delete",
+      label: isDeleted
+        ? "Effacer définitivement"
+        : "Supprimer définitivement",
+      icon: Trash2,
+      destructive: true,
+      onClick: hardDelete,
+    });
+  }
+
+  return <ChatOverflowMenu items={items} pending={pending} />;
 }

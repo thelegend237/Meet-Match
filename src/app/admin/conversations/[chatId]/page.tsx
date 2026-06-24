@@ -18,8 +18,7 @@ export default async function AdminConversationPage({ params }: PageProps) {
 
   await markChatMessagesAsRead(chatId, admin.id);
 
-  const { chat, messages, senderById, partnerName, canSend, matchId } =
-    supabaseChat;
+  const { chat, messages, senderById, canSend, matchId } = supabaseChat;
 
   const participants = [...supabaseChat.participants].sort((a, b) => {
     if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
@@ -31,11 +30,12 @@ export default async function AdminConversationPage({ params }: PageProps) {
   const memberPhoto = memberParticipant?.photo ?? null;
 
   const title =
-    chat.type === "match_group" && partnerName
-      ? partnerName
-      : chat.type === "match_group"
-        ? "Discussion match"
-        : memberName ?? "Contact visiteur";
+    chat.type === "match_group"
+      ? supabaseChat.participants
+          .filter((p) => !p.isAdmin)
+          .map((p) => p.name.trim().split(/\s+/)[0])
+          .join(" & ") || "Discussion match"
+      : memberName ?? "Contact visiteur";
 
   const subtitle =
     chat.type === "admin_contact"
@@ -66,7 +66,14 @@ export default async function AdminConversationPage({ params }: PageProps) {
         matchId,
         participants,
         headerActions: (
-          <AdminChatControls chatId={chatId} status={chat.status} />
+          <AdminChatControls
+            chatId={chatId}
+            status={chat.status}
+            actorRole={admin.role === "superadmin" ? "superadmin" : "admin"}
+            isDeleted={Boolean(supabaseChat.chat.deleted_at)}
+            isMatchGroup={chat.type === "match_group"}
+            matchId={matchId}
+          />
         ),
       }}
     />

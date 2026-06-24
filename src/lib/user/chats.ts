@@ -1,4 +1,5 @@
 import { TEAM_AVATAR_URL, TEAM_DISPLAY_NAME } from "@/lib/chat/team";
+import { filterSidebarChats } from "@/lib/chat/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import type {
   ChatSummary,
@@ -12,7 +13,8 @@ export async function getUserChats(userId: string): Promise<ChatSummary[]> {
   const { data: participations } = await supabase
     .from("chat_participants")
     .select("chat_id")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .is("hidden_at", null);
 
   const chatIds = (participations ?? []).map((p) => p.chat_id);
   if (!chatIds.length) return [];
@@ -21,6 +23,7 @@ export async function getUserChats(userId: string): Promise<ChatSummary[]> {
     .from("chats")
     .select("id, type, status, match_id, created_at")
     .in("id", chatIds)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (!chats?.length) return [];
@@ -85,7 +88,8 @@ export async function getUserChats(userId: string): Promise<ChatSummary[]> {
     (matches ?? []).filter((m) => m.chat_id).map((m) => [m.chat_id!, m])
   );
 
-  return chats
+  return filterSidebarChats(
+    chats
     .map((chat) => {
     const match = chat.match_id ? matchByChatId.get(chat.id) : null;
     let title = "Discussion";
@@ -141,7 +145,8 @@ export async function getUserChats(userId: string): Promise<ChatSummary[]> {
       if (aTime) return -1;
       if (bTime) return 1;
       return 0;
-    });
+    })
+  );
 }
 
 export async function getChatThread(chatId: string, userId: string) {
@@ -149,7 +154,7 @@ export async function getChatThread(chatId: string, userId: string) {
 
   const { data: chat } = await supabase
     .from("chats")
-    .select("id, type, status, match_id")
+    .select("id, type, status, match_id, deleted_at")
     .eq("id", chatId)
     .single();
 
@@ -157,7 +162,7 @@ export async function getChatThread(chatId: string, userId: string) {
 
   const { data: viewerParticipation } = await supabase
     .from("chat_participants")
-    .select("user_id")
+    .select("user_id, hidden_at")
     .eq("chat_id", chatId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -171,8 +176,11 @@ export async function getChatThread(chatId: string, userId: string) {
   const isStaff =
     viewerProfile?.role === "admin" ||
     viewerProfile?.role === "superadmin";
+  const isSuperadmin = viewerProfile?.role === "superadmin";
 
   if (!viewerParticipation && !isStaff) return null;
+  if (viewerParticipation?.hidden_at && !isStaff) return null;
+  if (chat.deleted_at && !isSuperadmin) return null;
 
   const [{ data: messages }, { data: participantRows }] = await Promise.all([
     supabase
@@ -315,7 +323,13 @@ export async function getChatThread(chatId: string, userId: string) {
   })) as ChatMessage[];
 
   return {
-    chat,
+    chat: {
+      id: chat.id,
+      type: chat.type,
+      status: chat.status,
+      match_id: chat.match_id,
+      deleted_at: chat.deleted_at ?? null,
+    },
     messages: messagesWithReactions,
     senderById: Object.fromEntries(senderById),
     participants: participantsList,
@@ -335,6 +349,7 @@ export async function getAdminMatchChats(): Promise<ChatSummary[]> {
     .from("chats")
     .select("id, type, status, match_id, created_at")
     .eq("type", "match_group")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (!chats?.length) return [];

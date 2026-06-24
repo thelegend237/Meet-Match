@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { ChatsList } from "@/components/user/chats-list";
 import type { ChatSummary } from "@/lib/types/database";
@@ -17,21 +16,9 @@ export function AdminConversationsShell({
   children,
 }: AdminConversationsShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const activeChatId =
     pathname.match(/\/admin\/conversations\/([^/]+)/)?.[1] ?? null;
   const showThread = Boolean(activeChatId);
-  const isIndex =
-    pathname === "/admin/conversations" ||
-    pathname.startsWith("/admin/conversations?");
-
-  useEffect(() => {
-    if (activeChatId || chats.length === 0 || !isIndex) return;
-    const mq = window.matchMedia("(min-width: 768px)");
-    if (mq.matches) {
-      router.replace(`/admin/conversations/${chats[0].id}`);
-    }
-  }, [activeChatId, chats, isIndex, router]);
 
   return (
     <div className="mm-messages-layout flex h-full min-h-0 w-full flex-1 p-2 sm:p-3">
@@ -60,8 +47,9 @@ export function AdminConversationsShell({
               <h2 className="mt-6 text-xl font-bold text-primary">
                 Sélectionnez une discussion
               </h2>
-              <p className="mt-2 max-w-xs text-sm text-[#6b5f7a]">
-                Choisissez une conversation à gauche pour accompagner vos membres.
+              <p className="mt-2 max-w-sm text-sm text-[#6b5f7a]">
+                Les conversations avec au moins un message s&apos;affichent à
+                gauche. Utilisez le bouton + pour écrire à un membre.
               </p>
             </div>
           )}

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { filterSidebarChats } from "@/lib/chat/sidebar";
 import { getAdminContactConversations } from "@/lib/admin/conversations";
 import type { ChatSummary } from "@/lib/types/database";
 
@@ -13,6 +14,7 @@ export async function getAdminConversationChats(
       .from("chats")
       .select("id, type, status, match_id, created_at")
       .eq("type", "match_group")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
   ]);
 
@@ -162,7 +164,8 @@ export async function getAdminConversationChats(
     unreadByChat.set(row.chat_id, (unreadByChat.get(row.chat_id) ?? 0) + 1);
   }
 
-  return allChats
+  return filterSidebarChats(
+    allChats
     .map((chat) => {
       const match = chat.match_id ? matchById.get(chat.match_id) : null;
       return {
@@ -186,7 +189,8 @@ export async function getAdminConversationChats(
       if (aTime) return -1;
       if (bTime) return 1;
       return 0;
-    });
+    })
+  );
 }
 
 export async function getOrCreateAdminUserChat(
@@ -209,6 +213,7 @@ export async function getOrCreateAdminUserChat(
       .select("id, status")
       .in("id", participantChatIds)
       .eq("type", "admin_contact")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     const existing =

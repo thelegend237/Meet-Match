@@ -768,11 +768,8 @@ export function ChatThread({
         </form>
       ) : (
         <div className="mm-chat-closed-banner">
-          <Lock className="h-4 w-4 shrink-0 text-[#9b8fa8]" />
-          <span>
-            Cette discussion est fermée — vous ne pouvez plus envoyer de
-            messages.
-          </span>
+          <Lock className="h-3.5 w-3.5 shrink-0" />
+          <span>Discussion fermée</span>
         </div>
       )}
     </div>
