@@ -1,4 +1,5 @@
-export const MAX_PROFILE_PHOTO_MB = 25;
+/** Taille max fichier photo profil (Mo). Aligner avec migration Storage + next.config serverActions.bodySizeLimit. */
+export const MAX_PROFILE_PHOTO_MB = 50;
 
 export const MAX_PROFILE_PHOTO_BYTES = MAX_PROFILE_PHOTO_MB * 1024 * 1024;
 

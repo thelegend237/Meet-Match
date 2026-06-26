@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { validateProfilePhotoFile } from "@/lib/photos/limits";
+import { validateProfilePhotoFile, MAX_PROFILE_PHOTO_MB } from "@/lib/photos/limits";
 
 export async function uploadProfilePhoto(formData: FormData) {
   const supabase = await createClient();
@@ -23,7 +23,12 @@ export async function uploadProfilePhoto(formData: FormData) {
     .from("profile-photos")
     .upload(path, file, { upsert: false });
 
-  if (uploadError) return { error: uploadError.message };
+  if (uploadError) {
+    const message = uploadError.message.toLowerCase().includes("size")
+      ? `Fichier trop volumineux (max ${MAX_PROFILE_PHOTO_MB} Mo). Essayez une photo moins lourde ou réduisez sa résolution.`
+      : uploadError.message;
+    return { error: message };
+  }
 
   const {
     data: { publicUrl },
