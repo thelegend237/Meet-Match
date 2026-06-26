@@ -165,6 +165,35 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...   # webhooks Stripe uniquement, jamais côté client
 ```
 
+## Notifications email & push (migration 033)
+
+Après application de **`033_notification_delivery.sql`**, configurez l’envoi hors application :
+
+### Variables Vercel / `.env.local`
+
+| Variable | Rôle |
+|----------|------|
+| `RESEND_API_KEY` | Envoi des emails transactionnels |
+| `RESEND_FROM_EMAIL` | Expéditeur (domaine vérifié chez Resend) |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Push navigateur (`npx web-push generate-vapid-keys`) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Même clé publique (côté client) |
+| `NOTIFICATION_WEBHOOK_SECRET` | Secret du webhook Supabase |
+| `CRON_SECRET` | Secret du cron Vercel (file d’attente) |
+
+### Webhook Supabase (livraison immédiate)
+
+1. **Database → Webhooks → Create**
+2. Table : `notification_outbox`, événement : **Insert**
+3. URL : `https://votre-app.vercel.app/api/webhooks/notifications`
+4. Header : `x-webhook-secret` = valeur de `NOTIFICATION_WEBHOOK_SECRET`
+
+Le cron Vercel (`/api/cron/notification-delivery`, chaque minute) traite les lignes restantes si le webhook échoue.
+
+### Côté utilisateur
+
+- Préférences : **Notifications** (email / push)
+- Bouton **Activer les notifications push** pour autoriser le navigateur
+
 ## Schéma visuel
 
 ```

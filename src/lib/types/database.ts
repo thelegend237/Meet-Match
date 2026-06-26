@@ -80,6 +80,8 @@ export interface Profile {
   profile_completion: number;
   registration_payment_status: PaymentStatus;
   role: "user" | "admin" | "superadmin";
+  notify_email: boolean;
+  notify_push: boolean;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
