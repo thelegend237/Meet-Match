@@ -9,6 +9,29 @@ import {
   getPushSubscription,
 } from "@/lib/push/client";
 
+function pushPermissionDeniedHelp() {
+  return (
+    "Les notifications sont bloquées pour meet-and-match.vercel.app. " +
+    "Cliquez sur l’icône à gauche de l’adresse (cadenas ou réglages) → Notifications → Autoriser, " +
+    "puis rechargez la page (Ctrl+F5) et réessayez."
+  );
+}
+
+function mapPushError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  if (/permission denied|not allowed|registration failed/i.test(message)) {
+    return pushPermissionDeniedHelp();
+  }
+  return message || "Erreur inconnue";
+}
+
+function isPushEnvironmentSupported() {
+  if (typeof window === "undefined") return false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  if (!window.isSecureContext) return false;
+  return true;
+}
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -35,7 +58,13 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!("serviceWorker" in navigator) || !notifyPush) return;
+    if ("Notification" in window) {
+      setPermission(Notification.permission);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isPushEnvironmentSupported() || !notifyPush) return;
 
     let cancelled = false;
 
@@ -55,8 +84,16 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
   }, [notifyPush]);
 
   async function enablePush() {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setError("Les notifications push ne sont pas supportées sur cet appareil.");
+    if (!isPushEnvironmentSupported()) {
+      setError(
+        "Les notifications push ne sont pas disponibles ici. Utilisez Chrome ou Edge en fenêtre normale (pas le mode mobile des outils développeur) et une connexion HTTPS."
+      );
+      return;
+    }
+
+    if (Notification.permission === "denied") {
+      setPermission("denied");
+      setError(pushPermissionDeniedHelp());
       return;
     }
 
@@ -70,13 +107,20 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
       }
       const { publicKey } = (await keyRes.json()) as { publicKey: string };
 
-      const permissionResult = await Notification.requestPermission();
-      setPermission(permissionResult);
-      if (permissionResult !== "granted") {
-        throw new Error("Permission refusée. Activez les notifications dans les paramètres du navigateur.");
+      if (Notification.permission !== "granted") {
+        const permissionResult = await Notification.requestPermission();
+        setPermission(permissionResult);
+        if (permissionResult !== "granted") {
+          throw new Error(pushPermissionDeniedHelp());
+        }
       }
 
       const registration = await ensurePushServiceWorker();
+
+      if (Notification.permission !== "granted") {
+        throw new Error(pushPermissionDeniedHelp());
+      }
+
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
@@ -98,8 +142,12 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
       }
 
       setSubscribed(true);
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      setError(mapPushError(err));
+      if ("Notification" in window) {
+        setPermission(Notification.permission);
+      }
     } finally {
       setLoading(false);
     }
@@ -158,9 +206,13 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
             (likes, matchs, messages…).
           </p>
           {permission === "denied" ? (
-            <p className="mt-2 text-sm text-amber-700">
-              Les notifications sont bloquées. Autorisez-les dans les paramètres de votre navigateur.
-            </p>
+            <div className="mt-2 space-y-1 text-sm text-amber-800">
+              <p className="font-medium">Notifications bloquées par le navigateur</p>
+              <p>{pushPermissionDeniedHelp()}</p>
+              <p className="text-xs text-amber-700/90">
+                Astuce : testez en fenêtre pleine largeur (pas le mode mobile des outils développeur F12).
+              </p>
+            </div>
           ) : null}
           {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
         </div>
