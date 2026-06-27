@@ -6,7 +6,7 @@ import { getUnreadMessageCount } from "@/lib/user/messages";
 import { getUserMatches, countPendingMatchActions } from "@/lib/user/matches";
 import { touchLastSeen } from "@/lib/user/touch-last-seen";
 import { LastSeenHeartbeat } from "@/components/user/last-seen-heartbeat";
-import { NotificationLiveListener } from "@/components/user/notification-live-listener";
+import { NotificationRealtimeProvider } from "@/components/user/notification-realtime-provider";
 import { PushBootstrap } from "@/components/user/push-bootstrap";
 import { UserShell } from "@/components/user/user-shell";
 import { UserContentArea } from "@/components/user/user-content-area";
@@ -44,9 +44,13 @@ export async function MemberChrome({
     <>
       <LastSeenHeartbeat />
       <PushBootstrap />
-      <NotificationLiveListener userId={profile.id} isAdmin={isStaffProfile(profile)} />
-      <UserShell
-        unreadCount={unreadCount}
+      <NotificationRealtimeProvider
+        userId={profile.id}
+        initialUnreadCount={unreadCount}
+        isAdmin={isStaffProfile(profile)}
+      >
+        <UserShell
+          unreadCount={unreadCount}
         unreadMessageCount={unreadMessageCount}
         pendingMatchCount={pendingMatchCount}
         likedCount={likedCount}
@@ -57,6 +61,7 @@ export async function MemberChrome({
       >
         <UserContentArea>{children}</UserContentArea>
       </UserShell>
+      </NotificationRealtimeProvider>
     </>
   );
 }

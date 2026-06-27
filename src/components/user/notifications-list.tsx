@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
@@ -16,6 +16,7 @@ import {
   getNotificationHref,
   NOTIFICATION_TYPE_LABELS,
 } from "@/lib/notifications/display";
+import { onNotificationInsert } from "@/lib/notifications/realtime-events";
 import type { Notification } from "@/lib/types/database";
 
 interface NotificationsListProps {
@@ -32,6 +33,19 @@ export function NotificationsList({
   const [items, setItems] = useState(notifications);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const unread = items.filter((n) => !n.is_read);
+
+  useEffect(() => {
+    setItems(notifications);
+  }, [notifications]);
+
+  useEffect(() => {
+    return onNotificationInsert((notification) => {
+      setItems((prev) => {
+        if (prev.some((n) => n.id === notification.id)) return prev;
+        return [notification, ...prev];
+      });
+    });
+  }, []);
 
   function handleMarkAll() {
     setItems((prev) => prev.map((n) => ({ ...n, is_read: true })));

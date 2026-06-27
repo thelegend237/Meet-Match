@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_HOME } from "@/lib/auth/routes";
+import { useNotificationRealtime } from "@/components/user/notification-realtime-provider";
 
 type NavLink = {
   href: string;
@@ -110,6 +111,8 @@ export function UserShell({
 }: UserShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const realtime = useNotificationRealtime();
+  const badgeUnreadCount = realtime?.unreadCount ?? unreadCount;
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
@@ -216,9 +219,9 @@ export function UserShell({
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
+              {badgeUnreadCount > 0 && (
                 <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3d6e] px-1 text-[9px] font-bold text-white">
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {badgeUnreadCount > 9 ? "9+" : badgeUnreadCount}
                 </span>
               )}
             </Link>

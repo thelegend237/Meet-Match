@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth/session";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { NotificationLiveListener } from "@/components/user/notification-live-listener";
+import { NotificationRealtimeProvider } from "@/components/user/notification-realtime-provider";
 import { getAdminNotificationCount } from "@/lib/admin/notifications";
 
 export const metadata = {
@@ -16,8 +16,11 @@ export default async function AdminLayout({
   const notificationCount = await getAdminNotificationCount();
 
   return (
-    <>
-      <NotificationLiveListener userId={profile.id} isAdmin />
+    <NotificationRealtimeProvider
+      userId={profile.id}
+      initialUnreadCount={notificationCount}
+      isAdmin
+    >
       <AdminShell
         displayName={profile.display_name || profile.email}
         role={profile.role}
@@ -27,6 +30,6 @@ export default async function AdminLayout({
       >
         <div className="mm-admin-page-container">{children}</div>
       </AdminShell>
-    </>
+    </NotificationRealtimeProvider>
   );
 }

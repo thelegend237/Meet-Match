@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_HOME } from "@/lib/auth/routes";
+import { useNotificationRealtime } from "@/components/user/notification-realtime-provider";
 
 type NavLink = {
   id: string;
@@ -143,6 +144,8 @@ export function AdminShell({
 }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const realtime = useNotificationRealtime();
+  const badgeNotificationCount = realtime?.unreadCount ?? notificationCount;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -321,9 +324,9 @@ export function AdminShell({
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
-            {notificationCount > 0 && (
+            {badgeNotificationCount > 0 && (
               <span className="mm-badge-count absolute -right-0.5 -top-0.5">
-                {notificationCount > 99 ? "99+" : notificationCount}
+                {badgeNotificationCount > 99 ? "99+" : badgeNotificationCount}
               </span>
             )}
           </Link>
