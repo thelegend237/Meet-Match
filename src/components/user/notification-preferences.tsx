@@ -1,36 +1,18 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { Bell, BellOff, Loader2, Mail } from "lucide-react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { Bell, BellOff, CheckCircle2, Loader2, Mail, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateNotificationPreferences } from "@/lib/actions/notification-preferences";
 import {
   ensurePushServiceWorker,
-  getPushSubscription,
+  getPushDiagnostics,
+  isDevToolsMobileEmulation,
+  isPushEnvironmentSupported,
 } from "@/lib/push/client";
 
-function pushPermissionDeniedHelp() {
-  return (
-    "Les notifications sont bloquées pour meet-and-match.vercel.app. " +
-    "Cliquez sur l’icône à gauche de l’adresse (cadenas ou réglages) → Notifications → Autoriser, " +
-    "puis rechargez la page (Ctrl+F5) et réessayez."
-  );
-}
-
-function mapPushError(err: unknown): string {
-  const message = err instanceof Error ? err.message : String(err);
-  if (/permission denied|not allowed|registration failed/i.test(message)) {
-    return pushPermissionDeniedHelp();
-  }
-  return message || "Erreur inconnue";
-}
-
-function isPushEnvironmentSupported() {
-  if (typeof window === "undefined") return false;
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
-  if (!window.isSecureContext) return false;
-  return true;
-}
+const SITE_ORIGIN =
+  typeof window !== "undefined" ? window.location.origin : "https://meet-and-match.vercel.app";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -41,6 +23,13 @@ function urlBase64ToUint8Array(base64String: string) {
     output[i] = raw.charCodeAt(i);
   }
   return output;
+}
+
+function permissionLabel(permission: NotificationPermission | "unsupported") {
+  if (permission === "granted") return "Autorisées";
+  if (permission === "denied") return "Bloquées";
+  if (permission === "default") return "Pas encore demandées";
+  return "Non supportées";
 }
 
 interface PushNotificationManagerProps {
@@ -56,71 +45,85 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [devToolsWarning, setDevToolsWarning] = useState(false);
+  const [vapidOk, setVapidOk] = useState<boolean | null>(null);
+  const [swState, setSwState] = useState<string | null>(null);
 
-  useEffect(() => {
+  const refreshStatus = useCallback(async () => {
     if ("Notification" in window) {
       setPermission(Notification.permission);
     }
+    setDevToolsWarning(isDevToolsMobileEmulation());
+
+    if (!isPushEnvironmentSupported()) return;
+
+    const diag = await getPushDiagnostics();
+    setVapidOk(diag.vapidOk);
+    setSwState(diag.serviceWorkerState);
+    setSubscribed(diag.subscribed);
+    setPermission(diag.permission);
+    setDevToolsWarning(diag.devToolsMobile);
   }, []);
 
   useEffect(() => {
-    if (!isPushEnvironmentSupported() || !notifyPush) return;
+    void refreshStatus();
+  }, [refreshStatus, notifyPush]);
 
-    let cancelled = false;
-
-    (async () => {
-      try {
-        await ensurePushServiceWorker();
-        const sub = await getPushSubscription();
-        if (!cancelled) setSubscribed(Boolean(sub));
-      } catch {
-        /* ignore — l'utilisateur activera manuellement */
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [notifyPush]);
-
-  async function enablePush() {
-    if (!isPushEnvironmentSupported()) {
-      setError(
-        "Les notifications push ne sont pas disponibles ici. Utilisez Chrome ou Edge en fenêtre normale (pas le mode mobile des outils développeur) et une connexion HTTPS."
-      );
-      return;
-    }
-
-    if (Notification.permission === "denied") {
-      setPermission("denied");
-      setError(pushPermissionDeniedHelp());
-      return;
-    }
-
-    setLoading(true);
+  async function requestBrowserPermission() {
     setError(null);
+    setLoading(true);
 
     try {
+      if (!isPushEnvironmentSupported()) {
+        throw new Error(
+          "Utilisez Chrome ou Edge sur ordinateur, en fenêtre normale (fermez le mode mobile F12)."
+        );
+      }
+      if (isDevToolsMobileEmulation()) {
+        throw new Error(
+          "Fermez le mode mobile des outils développeur (F12), rechargez la page, puis réessayez."
+        );
+      }
+
+      const result = await Notification.requestPermission();
+      setPermission(result);
+
+      if (result === "denied") {
+        throw new Error("blocked");
+      }
+      if (result !== "granted") {
+        throw new Error("Autorisation refusée.");
+      }
+
+      await ensurePushServiceWorker();
+      await refreshStatus();
+    } catch (err) {
+      if (err instanceof Error && err.message === "blocked") {
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function activatePushSubscription() {
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (Notification.permission !== "granted") {
+        throw new Error("Autorisez d'abord les notifications du navigateur (étape 1).");
+      }
+
       const keyRes = await fetch("/api/push/vapid-key");
       if (!keyRes.ok) {
-        throw new Error("Notifications push non configurées sur le serveur.");
+        throw new Error("Serveur push non configuré. Contactez le support.");
       }
       const { publicKey } = (await keyRes.json()) as { publicKey: string };
 
-      if (Notification.permission !== "granted") {
-        const permissionResult = await Notification.requestPermission();
-        setPermission(permissionResult);
-        if (permissionResult !== "granted") {
-          throw new Error(pushPermissionDeniedHelp());
-        }
-      }
-
       const registration = await ensurePushServiceWorker();
-
-      if (Notification.permission !== "granted") {
-        throw new Error(pushPermissionDeniedHelp());
-      }
-
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
@@ -138,26 +141,41 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || "Impossible d'enregistrer l'abonnement push.");
+        const msg = data.error || "Enregistrement impossible.";
+        if (/relation.*does not exist|push_subscriptions/i.test(msg)) {
+          throw new Error(
+            "La base de données n'est pas à jour. Appliquez la migration 033 sur Supabase."
+          );
+        }
+        throw new Error(msg);
       }
 
       setSubscribed(true);
-      setError(null);
+      await refreshStatus();
     } catch (err) {
-      setError(mapPushError(err));
-      if ("Notification" in window) {
-        setPermission(Notification.permission);
+      const message = err instanceof Error ? err.message : "Erreur inconnue";
+      if (/permission denied|registration failed/i.test(message)) {
+        setPermission("denied");
+        setError(null);
+      } else {
+        setError(message);
       }
     } finally {
       setLoading(false);
     }
   }
 
+  async function testBrowserNotification() {
+    if (Notification.permission !== "granted") return;
+    new Notification("Meet & Match — test", {
+      body: "Si vous voyez ceci, les notifications navigateur fonctionnent.",
+      icon: "/logo-icon.png",
+    });
+  }
+
   async function disablePush() {
-    if (!("serviceWorker" in navigator)) return;
     setLoading(true);
     setError(null);
-
     try {
       const registration = await ensurePushServiceWorker();
       const subscription = await registration.pushManager.getSubscription();
@@ -170,6 +188,7 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
         await subscription.unsubscribe();
       }
       setSubscribed(false);
+      await refreshStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -193,8 +212,11 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
     );
   }
 
+  const permissionGranted = permission === "granted";
+  const permissionDenied = permission === "denied";
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fce7f3]/70 text-[#e91e8c]">
           {subscribed ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
@@ -202,35 +224,108 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[#2e1a47]">Notifications navigateur</p>
           <p className="mt-1 text-sm text-[#6b5f7a]">
-            Recevez une alerte sur votre appareil même lorsque l&apos;application est fermée
-            (likes, matchs, messages…).
+            Alertes sur votre appareil même application fermée. Les popups dans l&apos;app
+            fonctionnent déjà sans cette étape.
           </p>
-          {permission === "denied" ? (
-            <div className="mt-2 space-y-1 text-sm text-amber-800">
-              <p className="font-medium">Notifications bloquées par le navigateur</p>
-              <p>{pushPermissionDeniedHelp()}</p>
-              <p className="text-xs text-amber-700/90">
-                Astuce : testez en fenêtre pleine largeur (pas le mode mobile des outils développeur F12).
-              </p>
-            </div>
-          ) : null}
-          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {!subscribed ? (
-          <Button type="button" onClick={enablePush} disabled={loading || permission === "denied"}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Activer les notifications push
-          </Button>
-        ) : (
-          <Button type="button" variant="outline" onClick={disablePush} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Désactiver sur cet appareil
-          </Button>
-        )}
+      {devToolsWarning ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <strong>Mode test mobile détecté (F12).</strong> Fermez les outils développeur ou
+          désactivez l&apos;émulation mobile, puis rechargez la page.
+        </div>
+      ) : null}
+
+      <div className="rounded-xl border border-[#ebe6f0]/90 bg-[#faf8fc]/80 px-3 py-3 text-xs text-[#6b5f7a] space-y-1">
+        <p>
+          <strong>Permission :</strong> {permissionLabel(permission)}
+        </p>
+        <p>
+          <strong>Service worker :</strong> {swState ?? "—"}
+        </p>
+        <p>
+          <strong>Serveur push :</strong>{" "}
+          {vapidOk === null ? "—" : vapidOk ? "OK" : "Non configuré"}
+        </p>
+        <p>
+          <strong>Abonnement :</strong> {subscribed ? "Actif" : "Inactif"}
+        </p>
       </div>
+
+      {permissionDenied ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 space-y-2">
+          <p className="font-semibold">Notifications bloquées — procédure Chrome / Edge</p>
+          <ol className="list-decimal space-y-1 pl-4">
+            <li>
+              Ouvrez{" "}
+              <a
+                className="font-medium text-[#e91e8c] underline"
+                href={`chrome://settings/content/siteDetails?site=${encodeURIComponent(SITE_ORIGIN)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                les paramètres du site
+              </a>{" "}
+              (ou cliquez le cadenas à gauche de l&apos;URL → Paramètres du site)
+            </li>
+            <li>
+              <strong>Notifications</strong> → choisissez <strong>Autoriser</strong>
+            </li>
+            <li>Rechargez cette page (Ctrl+F5)</li>
+            <li>Cliquez <strong>Étape 1 — Autoriser le navigateur</strong></li>
+          </ol>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-[#2e1a47]">Activation en 2 étapes</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {!permissionGranted ? (
+              <Button type="button" onClick={requestBrowserPermission} disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Étape 1 — Autoriser le navigateur
+              </Button>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-sm text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" />
+                Étape 1 OK
+              </span>
+            )}
+
+            {permissionGranted && !subscribed ? (
+              <Button type="button" onClick={activatePushSubscription} disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Étape 2 — Activer les alertes push
+              </Button>
+            ) : null}
+
+            {permissionGranted ? (
+              <Button type="button" variant="outline" size="sm" onClick={testBrowserNotification}>
+                Tester une notification
+              </Button>
+            ) : null}
+
+            {subscribed ? (
+              <Button type="button" variant="outline" onClick={disablePush} disabled={loading}>
+                Désactiver sur cet appareil
+              </Button>
+            ) : null}
+
+            <Button type="button" variant="ghost" size="sm" onClick={() => void refreshStatus()}>
+              <RefreshCw className="mr-1 h-4 w-4" />
+              Actualiser
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      {subscribed ? (
+        <p className="text-sm text-emerald-700">
+          Notifications push activées sur cet appareil.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -298,7 +393,7 @@ export function NotificationPreferencesForm({
               Notifications push
             </span>
             <span className="mt-1 block text-sm text-[#6b5f7a]">
-              Alertes instantanées sur votre téléphone ou ordinateur, même hors de l&apos;application.
+              Alertes sur téléphone ou ordinateur, même hors de l&apos;application.
             </span>
           </span>
         </label>
