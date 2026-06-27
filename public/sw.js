@@ -1,4 +1,13 @@
 /* Service worker — notifications push Meet & Match */
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("push", (event) => {
   let payload = { title: "Meet & Match", body: "Nouvelle activité", url: "/notifications" };
 

@@ -4,6 +4,10 @@ import { useEffect, useState, useTransition } from "react";
 import { Bell, BellOff, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateNotificationPreferences } from "@/lib/actions/notification-preferences";
+import {
+  ensurePushServiceWorker,
+  getPushSubscription,
+} from "@/lib/push/client";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -33,12 +37,21 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !notifyPush) return;
 
-    navigator.serviceWorker.getRegistration("/sw.js").then((registration) => {
-      if (!registration) return;
-      registration.pushManager.getSubscription().then((sub) => {
-        setSubscribed(Boolean(sub));
-      });
-    });
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await ensurePushServiceWorker();
+        const sub = await getPushSubscription();
+        if (!cancelled) setSubscribed(Boolean(sub));
+      } catch {
+        /* ignore — l'utilisateur activera manuellement */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [notifyPush]);
 
   async function enablePush() {
@@ -63,7 +76,7 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
         throw new Error("Permission refusée. Activez les notifications dans les paramètres du navigateur.");
       }
 
-      const registration = await navigator.serviceWorker.register("/sw.js");
+      const registration = await ensurePushServiceWorker();
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicKey),
@@ -98,8 +111,8 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
     setError(null);
 
     try {
-      const registration = await navigator.serviceWorker.getRegistration("/sw.js");
-      const subscription = await registration?.pushManager.getSubscription();
+      const registration = await ensurePushServiceWorker();
+      const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
         await fetch("/api/push/subscribe", {
           method: "DELETE",
