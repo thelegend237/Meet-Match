@@ -139,10 +139,10 @@ async function loadDiscoveryProfilesFallback(
   const withLanguages = await supabase
     .from("profiles")
     .select(`${DISCOVERY_SELECT}, languages`)
-    .eq("status", "active")
+    .in("status", ["active", "pending"])
     .eq("is_deleted", false)
     .eq("role", "user")
-    .in("registration_payment_status", ["paid", "free"])
+    .in("registration_payment_status", ["paid", "free", "unpaid"])
     .order("created_at", { ascending: false })
     .limit(DISCOVERY_LIMIT);
 
@@ -152,10 +152,10 @@ async function loadDiscoveryProfilesFallback(
       ? await supabase
           .from("profiles")
           .select(DISCOVERY_SELECT)
-          .eq("status", "active")
+          .in("status", ["active", "pending"])
           .eq("is_deleted", false)
           .eq("role", "user")
-          .in("registration_payment_status", ["paid", "free"])
+          .in("registration_payment_status", ["paid", "free", "unpaid"])
           .order("created_at", { ascending: false })
           .limit(DISCOVERY_LIMIT)
       : withLanguages;

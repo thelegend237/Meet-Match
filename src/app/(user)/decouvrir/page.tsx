@@ -14,9 +14,8 @@ import {
 import { PageStack } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
-import { splitRecommendedProfiles } from "@/lib/discover/recommendations";
+import { createProximityContext, getViewerLocation } from "@/lib/discover/geo";
 import { loadDiscoveryProfiles } from "@/lib/discover/load-profiles";
-import { getViewerLocation } from "@/lib/discover/geo";
 import { touchLastSeen } from "@/lib/actions/discover";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
 import { viewerHasDiscoveryPhoto } from "@/lib/discover/eligibility";
@@ -49,10 +48,15 @@ export default async function DecouvrirPage() {
     excludedUserIds,
     profile.id
   );
-  const { others } = splitRecommendedProfiles(profile, discoveryProfiles, likedIds);
+
+  const liked = new Set(likedIds);
+  const viewerLocation = getViewerLocation(profile);
+  const proximity = createProximityContext(viewerLocation);
+  const allProfiles = proximity.sortByDistance(
+    discoveryProfiles.filter((p) => !liked.has(p.id))
+  );
 
   const genderPreference: GenderPreference = profile.preferred_gender ?? "both";
-  const viewerLocation = getViewerLocation(profile);
 
   return (
     <PageStack className="gap-4">
@@ -62,11 +66,11 @@ export default async function DecouvrirPage() {
         <ProfileCompletionBanner profile={profile} />
       )}
 
-      {others.length === 0 ? (
+      {allProfiles.length === 0 ? (
         <EmptyState
           icon={Compass}
           title="Aucun profil pour le moment"
-          description="Il n'y a pas encore d'autres membres actifs avec une photo. Revenez plus tard ou invitez des personnes à rejoindre la plateforme."
+          description="Aucun autre membre avec une photo pour le moment. Ajoutez votre photo de profil et revenez plus tard — les nouveaux membres apparaissent ici dès qu'ils ont complété leur profil."
           action={
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button variant="secondary" className="rounded-full" asChild>
@@ -87,7 +91,7 @@ export default async function DecouvrirPage() {
         />
       ) : (
         <DiscoverFeed
-          profiles={others}
+          profiles={allProfiles}
           likedIds={likedIds}
           passedIds={passedIds}
           genderPreference={genderPreference}
