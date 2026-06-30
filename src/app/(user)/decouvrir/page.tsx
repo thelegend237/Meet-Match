@@ -49,12 +49,9 @@ export default async function DecouvrirPage() {
     profile.id
   );
 
-  const liked = new Set(likedIds);
   const viewerLocation = getViewerLocation(profile);
   const proximity = createProximityContext(viewerLocation);
-  const allProfiles = proximity.sortByDistance(
-    discoveryProfiles.filter((p) => !liked.has(p.id))
-  );
+  const allProfiles = proximity.sortByDistance(discoveryProfiles);
 
   const genderPreference: GenderPreference = profile.preferred_gender ?? "both";
 

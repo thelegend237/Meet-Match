@@ -29,7 +29,7 @@ export function filterProfilesByGender<T extends { gender: string | null }>(
   preference: GenderPreference
 ): T[] {
   if (preference === "both") {
-    return profiles.filter((p) => p.gender != null);
+    return profiles;
   }
   return profiles.filter((p) => p.gender === preference);
 }

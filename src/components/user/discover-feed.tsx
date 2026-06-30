@@ -164,16 +164,33 @@ export function DiscoverFeed({
           onViewModeChange={setViewMode}
           browseGender={browseGender}
           onBrowseGenderChange={setBrowseGender}
-          profileCount={filteredProfiles.length}
+          profileCount={
+            viewMode === "swipe" ? swipeDeck.length : filteredProfiles.length
+          }
+          totalCount={
+            viewMode === "swipe" && swipeDeck.length !== filteredProfiles.length
+              ? filteredProfiles.length
+              : undefined
+          }
         />
 
         <p className="text-xs text-muted-foreground">
           {viewMode === "swipe" ? (
             <>
-              Glissez à droite pour liker, à gauche pour passer · suggestions du jour dans{" "}
+              Glissez à droite pour liker, à gauche pour passer · catalogue complet en mode{" "}
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className="font-medium text-secondary hover:underline"
+              >
+                Grille
+              </button>
+              {" · suggestions du jour dans "}
             </>
           ) : (
-            <>Suggestions du jour dans </>
+            <>
+              Catalogue complet des membres éligibles · suggestions du jour dans{" "}
+            </>
           )}
           <Link href="/rencontres" className="font-medium text-secondary hover:underline">
             Rencontres

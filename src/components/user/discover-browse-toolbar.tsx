@@ -13,12 +13,14 @@ export function DiscoverBrowseToolbar({
   browseGender,
   onBrowseGenderChange,
   profileCount,
+  totalCount,
 }: {
   viewMode: DiscoverViewMode;
   onViewModeChange: (mode: DiscoverViewMode) => void;
   browseGender: GenderPreference;
   onBrowseGenderChange: (gender: GenderPreference) => void;
   profileCount: number;
+  totalCount?: number;
 }) {
   return (
     <div className="mm-card flex flex-wrap items-center gap-3 p-4">
@@ -72,7 +74,9 @@ export function DiscoverBrowseToolbar({
       <div className="ml-auto flex w-full sm:w-auto">
         <span className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-secondary/10 px-4 py-2 text-sm font-medium text-secondary sm:w-auto">
           <Filter className="h-4 w-4 shrink-0" />
-          {profileCount} profil{profileCount !== 1 ? "s" : ""}
+          {totalCount != null
+            ? `${profileCount} à swiper sur ${totalCount}`
+            : `${profileCount} profil${profileCount !== 1 ? "s" : ""}`}
         </span>
       </div>
     </div>
