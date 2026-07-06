@@ -55,6 +55,13 @@ Dans **Project → Settings → Environment Variables**, ajouter pour **Producti
 | `SUPABASE_SERVICE_ROLE_KEY` | Recommandé | Clé **service_role** (scripts / admin, jamais côté client) |
 | `GEOCODE_USER_AGENT` | Optionnel | `MeetAndMatch/1.0 (contact@votre-email.com)` |
 
+Notifications email (Resend) :
+
+| Variable | Obligatoire | Exemple / source |
+|----------|-------------|------------------|
+| `RESEND_API_KEY` | Pour les emails | Clé `re_...` — [resend.com/api-keys](https://resend.com/api-keys) |
+| `RESEND_FROM_EMAIL` | Recommandé | Dev : `Meet & Match <onboarding@resend.dev>` · Prod : domaine vérifié |
+
 Stripe (si paiements activés plus tard) :
 
 | Variable | |

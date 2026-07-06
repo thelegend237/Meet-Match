@@ -11,7 +11,8 @@
     "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit",
     "seed:geo": "node scripts/seed-geo-cities.mjs",
     "storage:empty-photos": "node scripts/empty-profile-photos.mjs",
-    "diagnose:discovery": "node scripts/diagnose-discovery.mjs"
+    "diagnose:discovery": "node scripts/diagnose-discovery.mjs",
+    "test:resend": "node scripts/test-resend.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
