@@ -58,6 +58,17 @@ export function groupMessagesByDate<T extends { created_at: string }>(
   return groups;
 }
 
+export function formatFullDateTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function getInitials(name: string): string {
   return name
     .split(/\s+/)

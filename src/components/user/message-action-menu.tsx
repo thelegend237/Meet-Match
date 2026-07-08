@@ -3,6 +3,7 @@
 import {
   CheckSquare,
   Copy,
+  Info,
   Pencil,
   Pin,
   PinOff,
@@ -26,6 +27,7 @@ interface MessageActionMenuProps {
   onSelect: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onInfo: () => void;
   onQuickReact: (emoji: string) => void;
   onMoreEmojis: () => void;
 }
@@ -43,6 +45,7 @@ export function MessageActionMenu({
   onSelect,
   onDelete,
   onEdit,
+  onInfo,
   onQuickReact,
   onMoreEmojis,
 }: MessageActionMenuProps) {
@@ -104,6 +107,11 @@ export function MessageActionMenu({
         icon={<CheckSquare className="h-[18px] w-[18px] text-[#5b3d8f]" />}
         label="Sélectionner"
         onClick={onSelect}
+      />
+      <MenuItem
+        icon={<Info className="h-[18px] w-[18px] text-[#5b3d8f]" />}
+        label="Infos du message"
+        onClick={onInfo}
       />
       {canDelete ? (
         <MenuItem

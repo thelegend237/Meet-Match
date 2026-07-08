@@ -42,6 +42,7 @@ import { MessageReactionPicker } from "@/components/user/message-reaction-picker
 import { MessageReactions } from "@/components/user/message-reactions";
 import { MessageActionMenu } from "@/components/user/message-action-menu";
 import { MessageSelectionBar } from "@/components/user/message-selection-bar";
+import { MessageInfoDialog } from "@/components/user/message-info-dialog";
 import { MessageQuote } from "@/components/user/message-quote";
 import {
   MessageReplyBar,
@@ -177,6 +178,7 @@ function MessageBubble({
   onSelect,
   onDelete,
   onEdit,
+  onInfo,
   onScrollToQuoted,
 }: {
   msg: ChatMessage;
@@ -207,6 +209,7 @@ function MessageBubble({
   onSelect: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onInfo: () => void;
   onScrollToQuoted: (messageId: string) => void;
 }) {
   const isRead = Boolean(msg.read_at);
@@ -313,6 +316,7 @@ function MessageBubble({
               onSelect={onSelect}
               onDelete={onDelete}
               onEdit={onEdit}
+              onInfo={onInfo}
               onQuickReact={(emoji) => onReact(msg.id, emoji)}
               onMoreEmojis={onToggleReactionEmojiPicker}
             />
@@ -492,6 +496,7 @@ export function ChatThread({
     id: string;
     original: string;
   } | null>(null);
+  const [messageInfoId, setMessageInfoId] = useState<string | null>(null);
   const [activeActionMessageId, setActiveActionMessageId] = useState<
     string | null
   >(null);
@@ -932,6 +937,15 @@ export function ChatThread({
     [currentUserId]
   );
 
+  function handleInfo(messageId: string) {
+    setActiveActionMessageId(null);
+    setMessageInfoId(messageId);
+  }
+
+  const infoMessage = messageInfoId
+    ? messages.find((m) => m.id === messageInfoId) ?? null
+    : null;
+
   function handleEdit(message: ChatMessage) {
     setActiveActionMessageId(null);
     setActiveReactionMessageId(null);
@@ -1326,6 +1340,7 @@ export function ChatThread({
                           onSelect={() => enterSelection(msg.id)}
                           onDelete={() => handleDelete(msg.id)}
                           onEdit={() => handleEdit(msg)}
+                          onInfo={() => handleInfo(msg.id)}
                           onScrollToQuoted={scrollToMessage}
                         />
                       );
@@ -1467,6 +1482,14 @@ export function ChatThread({
           <span>Discussion fermée</span>
         </div>
       )}
+
+      {infoMessage && !infoMessage.deleted_at ? (
+        <MessageInfoDialog
+          message={infoMessage}
+          currentUserId={currentUserId}
+          onClose={() => setMessageInfoId(null)}
+        />
+      ) : null}
     </div>
   );
 }
