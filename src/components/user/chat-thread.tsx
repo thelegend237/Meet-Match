@@ -11,6 +11,7 @@ import Image from "next/image";
 import {
   ArrowDown,
   CheckCheck,
+  ChevronDown,
   Loader2,
   Lock,
   Paperclip,
@@ -146,8 +147,7 @@ function MessageBubble({
   showReactionEmojiPicker,
   isActionMenuOpen,
   replySenderName,
-  onOpenActionMenu,
-  onCloseActionMenu,
+  onToggleActionMenu,
   onOpenReactionPicker,
   onCloseReactionPicker,
   onToggleReactionEmojiPicker,
@@ -168,8 +168,7 @@ function MessageBubble({
   showReactionEmojiPicker: boolean;
   isActionMenuOpen: boolean;
   replySenderName?: string | null;
-  onOpenActionMenu: () => void;
-  onCloseActionMenu: () => void;
+  onToggleActionMenu: () => void;
   onOpenReactionPicker: () => void;
   onCloseReactionPicker: () => void;
   onToggleReactionEmojiPicker: () => void;
@@ -195,8 +194,8 @@ function MessageBubble({
     if (!canInteract) return;
     clearLongPress();
     longPressTimer.current = window.setTimeout(() => {
-      onOpenActionMenu();
-    }, 500);
+      onToggleActionMenu();
+    }, 450);
   };
 
   const inBubbleClass = isMine
@@ -210,44 +209,63 @@ function MessageBubble({
       id={`message-${msg.id}`}
       data-message-id={msg.id}
       className={cn("group relative", isMine ? "flex justify-end" : "flex justify-start")}
-      onMouseEnter={() => canInteract && onOpenActionMenu()}
-      onMouseLeave={() => {
-        if (!showReactionEmojiPicker) {
-          onCloseActionMenu();
-          onCloseReactionPicker();
-        }
-      }}
       onDoubleClick={() => canInteract && onReact(msg.id, "❤️")}
       onTouchStart={handleTouchStart}
       onTouchEnd={clearLongPress}
       onTouchMove={clearLongPress}
     >
-      {canInteract && (
-        <MessageActionMenu
-          visible={isActionMenuOpen && !isReactionPickerOpen}
-          isMine={isMine}
-          isPinned={isPinned}
-          onReply={onReply}
-          onTogglePin={onTogglePin}
-          onReact={onOpenReactionPicker}
-        />
-      )}
+      <div className="relative flex max-w-[82%] items-start gap-1 sm:max-w-[74%]">
+        {canInteract && (
+          <div
+            className={cn(
+              "relative shrink-0 self-center",
+              isMine ? "order-1" : "order-2"
+            )}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleActionMenu();
+              }}
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-full border border-[#e8e0f0] bg-white/90 text-[#7b3d8f] shadow-sm transition-all hover:bg-[#f3eef8] hover:text-[#e91e8c]",
+                "opacity-60 group-hover:opacity-100 sm:opacity-0",
+                isActionMenuOpen && "opacity-100"
+              )}
+              aria-label="Actions du message"
+              aria-haspopup="menu"
+              aria-expanded={isActionMenuOpen}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
 
-      {canInteract && (
-        <MessageReactionPicker
-          visible={isReactionPickerOpen}
-          isMine={isMine}
-          showEmojiPicker={showReactionEmojiPicker}
-          onReact={(emoji) => onReact(msg.id, emoji)}
-          onToggleEmojiPicker={onToggleReactionEmojiPicker}
-          onCloseEmojiPicker={onCloseReactionPicker}
-        />
-      )}
+            <MessageActionMenu
+              visible={isActionMenuOpen && !isReactionPickerOpen}
+              isMine={isMine}
+              isPinned={isPinned}
+              onReply={onReply}
+              onTogglePin={onTogglePin}
+              onReact={onOpenReactionPicker}
+              onQuickReact={(emoji) => onReact(msg.id, emoji)}
+              onMoreEmojis={onToggleReactionEmojiPicker}
+            />
+          </div>
+        )}
+
+        {canInteract && (
+          <MessageReactionPicker
+            visible={isReactionPickerOpen}
+            isMine={isMine}
+            showEmojiPicker={showReactionEmojiPicker}
+            onReact={(emoji) => onReact(msg.id, emoji)}
+            onToggleEmojiPicker={onToggleReactionEmojiPicker}
+            onCloseEmojiPicker={onCloseReactionPicker}
+          />
+        )}
 
       {isMine ? (
-        <div className="flex max-w-[82%] flex-row-reverse items-end gap-2 sm:max-w-[70%]">
-          <div className="w-8 shrink-0" aria-hidden />
-          <div className="flex min-w-0 flex-col items-end">
+        <div className="order-2 flex min-w-0 flex-col items-end">
             <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm", isPinned && "ring-1 ring-[#f5d08a]/80")}>
               {msg.reply_to ? (
                 <MessageQuote
@@ -284,10 +302,9 @@ function MessageBubble({
               isMine
               onToggle={(emoji) => onReact(msg.id, emoji)}
             />
-          </div>
         </div>
       ) : (
-        <div className="flex max-w-[82%] items-end gap-2 sm:max-w-[70%]">
+        <div className="order-1 flex items-end gap-2">
           {showAvatar ? (
             <SenderAvatar sender={sender} />
           ) : (
@@ -336,6 +353,7 @@ function MessageBubble({
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -883,11 +901,10 @@ export function ChatThread({
                               ? resolveReplySenderName(msg.reply_to.sender_id)
                               : null
                           }
-                          onOpenActionMenu={() =>
-                            setActiveActionMessageId(msg.id)
-                          }
-                          onCloseActionMenu={() =>
-                            setActiveActionMessageId(null)
+                          onToggleActionMenu={() =>
+                            setActiveActionMessageId((current) =>
+                              current === msg.id ? null : msg.id
+                            )
                           }
                           onOpenReactionPicker={() => {
                             setActiveActionMessageId(null);
