@@ -1021,6 +1021,16 @@ export function ChatThread({
     (m) => selectedIds.has(m.id) && canDeleteMessage(m)
   ).length;
 
+  const typingNames = Object.values(typingUsers);
+  const typingLabel =
+    typingNames.length === 0
+      ? null
+      : typingNames.length === 1
+        ? `${typingNames[0]} est en train d'écrire…`
+        : typingNames.length === 2
+          ? `${typingNames[0]} et ${typingNames[1]} écrivent…`
+          : "Plusieurs personnes écrivent…";
+
   function handleSend(e?: React.FormEvent) {
     e?.preventDefault();
     const content = input.trim();
@@ -1114,6 +1124,7 @@ export function ChatThread({
           currentUserId={currentUserId}
           participants={header.participants}
           presenceTracker={presenceTracker}
+          typingLabel={typingLabel}
           headerActions={header.headerActions}
         />
       )}

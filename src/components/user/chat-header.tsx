@@ -27,6 +27,7 @@ interface ChatHeaderProps {
     photo: string | null;
     isAdmin: boolean;
   };
+  typingLabel?: string | null;
   headerActions?: React.ReactNode;
   className?: string;
 }
@@ -44,6 +45,7 @@ export function ChatHeader({
   currentUserId,
   participants = [],
   presenceTracker,
+  typingLabel,
   headerActions,
   className,
 }: ChatHeaderProps) {
@@ -120,15 +122,26 @@ export function ChatHeader({
             <h1 className="truncate text-[16px] font-semibold text-[#2e1a47] sm:text-[17px]">
               {isMatchGroup ? matchDisplayTitle : title}
             </h1>
-            {statusLine && (
-              <p
-                className={cn(
-                  "truncate text-[13px]",
-                  !isOpen ? "text-[#e91e8c]" : "text-[#6b5f7a]"
-                )}
-              >
-                {statusLine}
+            {typingLabel ? (
+              <p className="flex items-center gap-1.5 truncate text-[13px] italic text-[#e91e8c]">
+                <span className="flex items-center gap-0.5">
+                  <span className="mm-typing-dot" />
+                  <span className="mm-typing-dot mm-typing-dot-2" />
+                  <span className="mm-typing-dot mm-typing-dot-3" />
+                </span>
+                {typingLabel}
               </p>
+            ) : (
+              statusLine && (
+                <p
+                  className={cn(
+                    "truncate text-[13px]",
+                    !isOpen ? "text-[#e91e8c]" : "text-[#6b5f7a]"
+                  )}
+                >
+                  {statusLine}
+                </p>
+              )
             )}
           </div>
         </div>
