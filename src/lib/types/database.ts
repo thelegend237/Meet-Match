@@ -293,6 +293,8 @@ export interface ChatMessage {
   is_pinned?: boolean;
   pinned_at?: string | null;
   pinned_by?: string | null;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
   reply_to?: {
     id: string;
     content: string;

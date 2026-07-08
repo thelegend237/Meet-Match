@@ -46,6 +46,66 @@ export async function sendMessage(
   return { success: true };
 }
 
+export async function deleteMessage(messageId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Non authentifié" };
+
+  const { data: message } = await supabase
+    .from("messages")
+    .select("id, chat_id, sender_id, deleted_at")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (!message) return { error: "Message introuvable" };
+  if (message.deleted_at) return { success: true };
+
+  const isOwner = message.sender_id === user.id;
+
+  if (!isOwner) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    const isAdmin =
+      profile?.role === "admin" || profile?.role === "superadmin";
+    if (!isAdmin) {
+      return { error: "Vous ne pouvez supprimer que vos propres messages" };
+    }
+  }
+
+  const { error } = await supabase
+    .from("messages")
+    .update({
+      content: "Ce message a été supprimé",
+      deleted_at: new Date().toISOString(),
+      deleted_by: user.id,
+      is_pinned: false,
+      pinned_at: null,
+      pinned_by: null,
+    })
+    .eq("id", messageId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/messages/${message.chat_id}`);
+  revalidatePath("/messages");
+  revalidatePath(`/admin/conversations/${message.chat_id}`);
+  return { success: true };
+}
+
+export async function deleteMessages(messageIds: string[]) {
+  const results = await Promise.all(
+    messageIds.map((id) => deleteMessage(id))
+  );
+  const firstError = results.find((r) => "error" in r && r.error);
+  if (firstError && "error" in firstError) return { error: firstError.error };
+  return { success: true };
+}
+
 export async function toggleMessagePin(messageId: string) {
   const supabase = await createClient();
   const {

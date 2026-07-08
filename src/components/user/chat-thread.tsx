@@ -10,6 +10,8 @@ import {
 import Image from "next/image";
 import {
   ArrowDown,
+  Ban,
+  Check,
   CheckCheck,
   ChevronDown,
   Loader2,
@@ -21,7 +23,12 @@ import {
   Pin,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { sendMessage, toggleMessagePin } from "@/lib/actions/messages";
+import {
+  sendMessage,
+  toggleMessagePin,
+  deleteMessage,
+  deleteMessages,
+} from "@/lib/actions/messages";
 import { toggleMessageReaction } from "@/lib/actions/reactions";
 import { ChatHeader } from "@/components/user/chat-header";
 import type { ChatParticipant } from "@/components/user/chat-participants-bar";
@@ -29,6 +36,7 @@ import { EmojiPicker } from "@/components/user/emoji-picker";
 import { MessageReactionPicker } from "@/components/user/message-reaction-picker";
 import { MessageReactions } from "@/components/user/message-reactions";
 import { MessageActionMenu } from "@/components/user/message-action-menu";
+import { MessageSelectionBar } from "@/components/user/message-selection-bar";
 import { MessageQuote } from "@/components/user/message-quote";
 import {
   MessageReplyBar,
@@ -147,6 +155,10 @@ function MessageBubble({
   showReactionEmojiPicker,
   isActionMenuOpen,
   replySenderName,
+  canDelete,
+  selectionMode,
+  isSelected,
+  onToggleSelect,
   onToggleActionMenu,
   onOpenReactionPicker,
   onCloseReactionPicker,
@@ -154,6 +166,9 @@ function MessageBubble({
   onReact,
   onReply,
   onTogglePin,
+  onCopy,
+  onSelect,
+  onDelete,
   onScrollToQuoted,
 }: {
   msg: ChatMessage;
@@ -168,6 +183,10 @@ function MessageBubble({
   showReactionEmojiPicker: boolean;
   isActionMenuOpen: boolean;
   replySenderName?: string | null;
+  canDelete: boolean;
+  selectionMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: () => void;
   onToggleActionMenu: () => void;
   onOpenReactionPicker: () => void;
   onCloseReactionPicker: () => void;
@@ -175,11 +194,15 @@ function MessageBubble({
   onReact: (messageId: string, emoji: string) => void;
   onReply: () => void;
   onTogglePin: () => void;
+  onCopy: () => void;
+  onSelect: () => void;
+  onDelete: () => void;
   onScrollToQuoted: (messageId: string) => void;
 }) {
   const isRead = Boolean(msg.read_at);
   const reactions = msg.reactions ?? [];
   const isAdmin = Boolean(sender?.isAdmin);
+  const isDeleted = Boolean(msg.deleted_at);
   const isPinned = Boolean(msg.is_pinned);
   const longPressTimer = useRef<number | null>(null);
 
@@ -190,8 +213,10 @@ function MessageBubble({
     }
   };
 
+  const interactive = canInteract && !isDeleted && !selectionMode;
+
   const handleTouchStart = () => {
-    if (!canInteract) return;
+    if (!interactive) return;
     clearLongPress();
     longPressTimer.current = window.setTimeout(() => {
       onToggleActionMenu();
@@ -208,14 +233,39 @@ function MessageBubble({
     <div
       id={`message-${msg.id}`}
       data-message-id={msg.id}
-      className={cn("group relative", isMine ? "flex justify-end" : "flex justify-start")}
-      onDoubleClick={() => canInteract && onReact(msg.id, "❤️")}
+      className={cn(
+        "group relative -mx-3 rounded-lg px-3 transition-colors sm:-mx-5 sm:px-5",
+        isMine ? "flex justify-end" : "flex justify-start",
+        selectionMode && "cursor-pointer",
+        isSelected && "bg-[#f3eef8]"
+      )}
+      onClick={selectionMode ? onToggleSelect : undefined}
+      onDoubleClick={() => interactive && onReact(msg.id, "❤️")}
       onTouchStart={handleTouchStart}
       onTouchEnd={clearLongPress}
       onTouchMove={clearLongPress}
     >
+      {selectionMode && (
+        <div
+          className={cn(
+            "flex shrink-0 items-center self-center",
+            isMine ? "order-2 pl-2" : "order-1 pr-2"
+          )}
+        >
+          <span
+            className={cn(
+              "flex h-5 w-5 items-center justify-center rounded-full border",
+              isSelected
+                ? "border-[#e91e8c] bg-[#e91e8c] text-white"
+                : "border-[#c4b5d0] bg-white"
+            )}
+          >
+            {isSelected ? <Check className="h-3.5 w-3.5" /> : null}
+          </span>
+        </div>
+      )}
       <div className="relative flex max-w-[82%] items-start gap-1 sm:max-w-[74%]">
-        {canInteract && (
+        {interactive && (
           <div
             className={cn(
               "relative shrink-0 self-center",
@@ -244,16 +294,20 @@ function MessageBubble({
               visible={isActionMenuOpen && !isReactionPickerOpen}
               isMine={isMine}
               isPinned={isPinned}
+              canDelete={canDelete}
               onReply={onReply}
               onTogglePin={onTogglePin}
               onReact={onOpenReactionPicker}
+              onCopy={onCopy}
+              onSelect={onSelect}
+              onDelete={onDelete}
               onQuickReact={(emoji) => onReact(msg.id, emoji)}
               onMoreEmojis={onToggleReactionEmojiPicker}
             />
           </div>
         )}
 
-        {canInteract && (
+        {interactive && (
           <MessageReactionPicker
             visible={isReactionPickerOpen}
             isMine={isMine}
@@ -266,8 +320,8 @@ function MessageBubble({
 
       {isMine ? (
         <div className="order-2 flex min-w-0 flex-col items-end">
-            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm", isPinned && "ring-1 ring-[#f5d08a]/80")}>
-              {msg.reply_to ? (
+            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm", isPinned && !isDeleted && "ring-1 ring-[#f5d08a]/80")}>
+              {msg.reply_to && !isDeleted ? (
                 <MessageQuote
                   senderName={replySenderName ?? "Message"}
                   content={msg.reply_to.content}
@@ -275,12 +329,19 @@ function MessageBubble({
                   onClick={() => onScrollToQuoted(msg.reply_to!.id)}
                 />
               ) : null}
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                {msg.content}
-              </p>
+              {isDeleted ? (
+                <p className="flex items-center gap-1.5 text-[15px] italic leading-relaxed text-white/70">
+                  <Ban className="h-3.5 w-3.5" />
+                  Vous avez supprimé ce message
+                </p>
+              ) : (
+                <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                  {msg.content}
+                </p>
+              )}
               {isLastInCluster && (
                 <div className="mt-1 flex items-center justify-end gap-1">
-                  {isPinned ? (
+                  {isPinned && !isDeleted ? (
                     <Pin className="h-3 w-3 text-white/80" aria-label="Épinglé" />
                   ) : null}
                   <span className="text-[10px] text-[#9b8fa8]">
@@ -296,12 +357,14 @@ function MessageBubble({
                 </div>
               )}
             </div>
-            <MessageReactions
-              reactions={reactions}
-              currentUserId={currentUserId}
-              isMine
-              onToggle={(emoji) => onReact(msg.id, emoji)}
-            />
+            {!isDeleted && (
+              <MessageReactions
+                reactions={reactions}
+                currentUserId={currentUserId}
+                isMine
+                onToggle={(emoji) => onReact(msg.id, emoji)}
+              />
+            )}
         </div>
       ) : (
         <div className="order-1 flex items-end gap-2">
@@ -321,8 +384,8 @@ function MessageBubble({
                 </p>
               </div>
             )}
-            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm", isPinned && "ring-1 ring-[#f5d08a]/80")}>
-              {msg.reply_to ? (
+            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm", isPinned && !isDeleted && "ring-1 ring-[#f5d08a]/80")}>
+              {msg.reply_to && !isDeleted ? (
                 <MessageQuote
                   senderName={replySenderName ?? "Message"}
                   content={msg.reply_to.content}
@@ -330,12 +393,19 @@ function MessageBubble({
                   onClick={() => onScrollToQuoted(msg.reply_to!.id)}
                 />
               ) : null}
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                {msg.content}
-              </p>
+              {isDeleted ? (
+                <p className="flex items-center gap-1.5 text-[15px] italic leading-relaxed text-[#9b8fa8]">
+                  <Ban className="h-3.5 w-3.5" />
+                  Ce message a été supprimé
+                </p>
+              ) : (
+                <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                  {msg.content}
+                </p>
+              )}
               {isLastInCluster && (
                 <div className="mt-1 flex items-center justify-end gap-1">
-                  {isPinned ? (
+                  {isPinned && !isDeleted ? (
                     <Pin className="h-3 w-3 text-[#e91e8c]" aria-label="Épinglé" />
                   ) : null}
                   <span className="text-[10px] text-[#9b8fa8]">
@@ -344,12 +414,14 @@ function MessageBubble({
                 </div>
               )}
             </div>
-            <MessageReactions
-              reactions={reactions}
-              currentUserId={currentUserId}
-              isMine={false}
-              onToggle={(emoji) => onReact(msg.id, emoji)}
-            />
+            {!isDeleted && (
+              <MessageReactions
+                reactions={reactions}
+                currentUserId={currentUserId}
+                isMine={false}
+                onToggle={(emoji) => onReact(msg.id, emoji)}
+              />
+            )}
           </div>
         </div>
       )}
@@ -407,6 +479,8 @@ export function ChatThread({
   const [reactionEmojiPickerId, setReactionEmojiPickerId] = useState<
     string | null
   >(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -730,6 +804,134 @@ export function ChatThread({
     });
   }
 
+  const isStaffView = Boolean(header?.isStaffView);
+
+  const canDeleteMessage = useCallback(
+    (message: ChatMessage) =>
+      !message.deleted_at &&
+      (message.sender_id === currentUserId || isStaffView),
+    [currentUserId, isStaffView]
+  );
+
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: "Copié", description: "Message copié dans le presse-papiers." });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Copie impossible sur cet appareil.",
+      });
+    }
+  }
+
+  function handleCopy(message: ChatMessage) {
+    setActiveActionMessageId(null);
+    void copyToClipboard(message.content);
+  }
+
+  function handleDelete(messageId: string) {
+    setActiveActionMessageId(null);
+
+    setMessages((prev) =>
+      prev.map((message) =>
+        message.id === messageId
+          ? {
+              ...message,
+              content: "Ce message a été supprimé",
+              deleted_at: new Date().toISOString(),
+              deleted_by: currentUserId,
+              is_pinned: false,
+              reactions: [],
+            }
+          : message
+      )
+    );
+
+    void deleteMessage(messageId).then((result) => {
+      if ("error" in result && result.error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: result.error,
+        });
+      }
+    });
+  }
+
+  function enterSelection(messageId: string) {
+    setActiveActionMessageId(null);
+    setActiveReactionMessageId(null);
+    setSelectionMode(true);
+    setSelectedIds(new Set([messageId]));
+  }
+
+  function toggleSelect(messageId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(messageId)) {
+        next.delete(messageId);
+      } else {
+        next.add(messageId);
+      }
+      return next;
+    });
+  }
+
+  function cancelSelection() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function handleCopySelected() {
+    const selected = messages
+      .filter((m) => selectedIds.has(m.id) && !m.deleted_at)
+      .map((m) => m.content);
+    if (!selected.length) return;
+    void copyToClipboard(selected.join("\n"));
+    cancelSelection();
+  }
+
+  function handleDeleteSelected() {
+    const deletable = messages.filter(
+      (m) => selectedIds.has(m.id) && canDeleteMessage(m)
+    );
+    if (!deletable.length) return;
+    const ids = deletable.map((m) => m.id);
+
+    setMessages((prev) =>
+      prev.map((message) =>
+        ids.includes(message.id)
+          ? {
+              ...message,
+              content: "Ce message a été supprimé",
+              deleted_at: new Date().toISOString(),
+              deleted_by: currentUserId,
+              is_pinned: false,
+              reactions: [],
+            }
+          : message
+      )
+    );
+    cancelSelection();
+
+    void deleteMessages(ids).then((result) => {
+      if ("error" in result && result.error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: result.error,
+        });
+      }
+    });
+  }
+
+  const selectedCount = selectedIds.size;
+  const selectedDeletableCount = messages.filter(
+    (m) => selectedIds.has(m.id) && canDeleteMessage(m)
+  ).length;
+
   function handleSend(e?: React.FormEvent) {
     e?.preventDefault();
     const content = input.trim();
@@ -826,6 +1028,16 @@ export function ChatThread({
         />
       )}
 
+      {selectionMode && (
+        <MessageSelectionBar
+          count={selectedCount}
+          canDelete={selectedDeletableCount > 0}
+          onCopy={handleCopySelected}
+          onDelete={handleDeleteSelected}
+          onCancel={cancelSelection}
+        />
+      )}
+
       <div className="relative min-h-0 flex-1">
         <div
           ref={scrollRef}
@@ -901,6 +1113,10 @@ export function ChatThread({
                               ? resolveReplySenderName(msg.reply_to.sender_id)
                               : null
                           }
+                          canDelete={canDeleteMessage(msg)}
+                          selectionMode={selectionMode}
+                          isSelected={selectedIds.has(msg.id)}
+                          onToggleSelect={() => toggleSelect(msg.id)}
                           onToggleActionMenu={() =>
                             setActiveActionMessageId((current) =>
                               current === msg.id ? null : msg.id
@@ -922,6 +1138,9 @@ export function ChatThread({
                           onReact={handleReact}
                           onReply={() => handleReply(msg)}
                           onTogglePin={() => handleTogglePin(msg.id)}
+                          onCopy={() => handleCopy(msg)}
+                          onSelect={() => enterSelection(msg.id)}
+                          onDelete={() => handleDelete(msg.id)}
                           onScrollToQuoted={scrollToMessage}
                         />
                       );
@@ -954,7 +1173,7 @@ export function ChatThread({
         )}
       </div>
 
-      {canSend ? (
+      {selectionMode ? null : canSend ? (
         <form
           onSubmit={handleSend}
           className="mm-chat-input-bar pb-[max(0.75rem,env(safe-area-inset-bottom))]"

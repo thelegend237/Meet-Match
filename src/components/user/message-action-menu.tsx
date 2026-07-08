@@ -1,6 +1,14 @@
 "use client";
 
-import { Pin, PinOff, Reply, Smile } from "lucide-react";
+import {
+  CheckSquare,
+  Copy,
+  Pin,
+  PinOff,
+  Reply,
+  Smile,
+  Trash2,
+} from "lucide-react";
 import { QUICK_REACTIONS } from "@/lib/chat/emojis";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +16,13 @@ interface MessageActionMenuProps {
   visible: boolean;
   isMine: boolean;
   isPinned: boolean;
+  canDelete: boolean;
   onReply: () => void;
   onTogglePin: () => void;
   onReact: () => void;
+  onCopy: () => void;
+  onSelect: () => void;
+  onDelete: () => void;
   onQuickReact: (emoji: string) => void;
   onMoreEmojis: () => void;
 }
@@ -19,9 +31,13 @@ export function MessageActionMenu({
   visible,
   isMine,
   isPinned,
+  canDelete,
   onReply,
   onTogglePin,
   onReact,
+  onCopy,
+  onSelect,
+  onDelete,
   onQuickReact,
   onMoreEmojis,
 }: MessageActionMenuProps) {
@@ -58,34 +74,59 @@ export function MessageActionMenu({
         </button>
       </div>
 
-      <button
-        type="button"
-        onClick={onReply}
-        className="flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-[#2e1a47] transition-colors hover:bg-[#f7f4fb]"
-      >
-        <Reply className="h-[18px] w-[18px] text-[#5b3d8f]" />
-        Répondre
-      </button>
-      <button
-        type="button"
-        onClick={onReact}
-        className="flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-[#2e1a47] transition-colors hover:bg-[#f7f4fb]"
-      >
-        <Smile className="h-[18px] w-[18px] text-[#5b3d8f]" />
-        Réagir
-      </button>
-      <button
-        type="button"
+      <MenuItem icon={<Reply className="h-[18px] w-[18px] text-[#5b3d8f]" />} label="Répondre" onClick={onReply} />
+      <MenuItem icon={<Smile className="h-[18px] w-[18px] text-[#5b3d8f]" />} label="Réagir" onClick={onReact} />
+      <MenuItem icon={<Copy className="h-[18px] w-[18px] text-[#5b3d8f]" />} label="Copier" onClick={onCopy} />
+      <MenuItem
+        icon={
+          isPinned ? (
+            <PinOff className="h-[18px] w-[18px] text-[#e91e8c]" />
+          ) : (
+            <Pin className="h-[18px] w-[18px] text-[#5b3d8f]" />
+          )
+        }
+        label={isPinned ? "Désépingler" : "Épingler"}
         onClick={onTogglePin}
-        className="flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-medium text-[#2e1a47] transition-colors hover:bg-[#f7f4fb]"
-      >
-        {isPinned ? (
-          <PinOff className="h-[18px] w-[18px] text-[#e91e8c]" />
-        ) : (
-          <Pin className="h-[18px] w-[18px] text-[#5b3d8f]" />
-        )}
-        {isPinned ? "Désépingler" : "Épingler"}
-      </button>
+      />
+      <MenuItem
+        icon={<CheckSquare className="h-[18px] w-[18px] text-[#5b3d8f]" />}
+        label="Sélectionner"
+        onClick={onSelect}
+      />
+      {canDelete ? (
+        <MenuItem
+          icon={<Trash2 className="h-[18px] w-[18px] text-[#dc2626]" />}
+          label="Supprimer"
+          onClick={onDelete}
+          danger
+        />
+      ) : null}
     </div>
+  );
+}
+
+function MenuItem({
+  icon,
+  label,
+  onClick,
+  danger,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-3 px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f7f4fb]",
+        danger ? "text-[#dc2626] hover:bg-[#fef2f2]" : "text-[#2e1a47]"
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
