@@ -237,7 +237,7 @@
   }
 
   .mm-chat-scroll-fab {
-    @apply absolute bottom-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#e8e0f0] bg-white text-[#5b3d8f] shadow-lg transition-all hover:bg-[#faf8fc] hover:shadow-xl;
+    @apply absolute bottom-4 right-4 z-10 flex h-10 min-w-10 items-center justify-center rounded-full border border-[#e8e0f0] bg-white px-2 text-[#5b3d8f] shadow-lg transition-all hover:bg-[#faf8fc] hover:shadow-xl;
   }
 
   .mm-chat-match-welcome {
@@ -254,7 +254,21 @@
   }
 
   .mm-chat-input-bar {
-    @apply flex shrink-0 items-end gap-2 border-t border-[#ebe6f0] bg-[#faf8fc] px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3;
+    @apply flex shrink-0 flex-col gap-2 border-t border-[#ebe6f0] bg-[#faf8fc] px-3 py-2.5 sm:px-4 sm:py-3;
+  }
+
+  .mm-chat-message-highlight {
+    animation: mm-chat-flash 1.6s ease-out;
+  }
+
+  @keyframes mm-chat-flash {
+    0%,
+    100% {
+      background-color: transparent;
+    }
+    20% {
+      background-color: rgba(233, 30, 140, 0.1);
+    }
   }
 
   .mm-chat-input-field {

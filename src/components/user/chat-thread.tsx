@@ -17,21 +17,30 @@ import {
   Send,
   Smile,
   Sparkles,
+  Pin,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { sendMessage } from "@/lib/actions/messages";
+import { sendMessage, toggleMessagePin } from "@/lib/actions/messages";
 import { toggleMessageReaction } from "@/lib/actions/reactions";
 import { ChatHeader } from "@/components/user/chat-header";
 import type { ChatParticipant } from "@/components/user/chat-participants-bar";
 import { EmojiPicker } from "@/components/user/emoji-picker";
 import { MessageReactionPicker } from "@/components/user/message-reaction-picker";
 import { MessageReactions } from "@/components/user/message-reactions";
+import { MessageActionMenu } from "@/components/user/message-action-menu";
+import { MessageQuote } from "@/components/user/message-quote";
+import {
+  MessageReplyBar,
+  type ReplyTarget,
+} from "@/components/user/message-reply-bar";
+import { PinnedMessagesBar } from "@/components/user/pinned-messages-bar";
 import {
   formatDateSeparator,
   formatMessageTime,
   getInitials,
   groupMessagesByDate,
 } from "@/lib/chat/format";
+import { mergeChatMessages } from "@/lib/chat/merge-messages";
 import {
   applyReactionToggle,
   mergeReactionFromRealtime,
@@ -132,13 +141,20 @@ function MessageBubble({
   isLastInCluster,
   showAvatar,
   currentUserId,
-  canReact,
+  canInteract,
   isReactionPickerOpen,
   showReactionEmojiPicker,
+  isActionMenuOpen,
+  replySenderName,
+  onOpenActionMenu,
+  onCloseActionMenu,
   onOpenReactionPicker,
   onCloseReactionPicker,
   onToggleReactionEmojiPicker,
   onReact,
+  onReply,
+  onTogglePin,
+  onScrollToQuoted,
 }: {
   msg: ChatMessage;
   isMine: boolean;
@@ -147,17 +163,25 @@ function MessageBubble({
   isLastInCluster: boolean;
   showAvatar: boolean;
   currentUserId: string;
-  canReact: boolean;
+  canInteract: boolean;
   isReactionPickerOpen: boolean;
   showReactionEmojiPicker: boolean;
+  isActionMenuOpen: boolean;
+  replySenderName?: string | null;
+  onOpenActionMenu: () => void;
+  onCloseActionMenu: () => void;
   onOpenReactionPicker: () => void;
   onCloseReactionPicker: () => void;
   onToggleReactionEmojiPicker: () => void;
   onReact: (messageId: string, emoji: string) => void;
+  onReply: () => void;
+  onTogglePin: () => void;
+  onScrollToQuoted: (messageId: string) => void;
 }) {
   const isRead = Boolean(msg.read_at);
   const reactions = msg.reactions ?? [];
   const isAdmin = Boolean(sender?.isAdmin);
+  const isPinned = Boolean(msg.is_pinned);
   const longPressTimer = useRef<number | null>(null);
 
   const clearLongPress = () => {
@@ -168,10 +192,10 @@ function MessageBubble({
   };
 
   const handleTouchStart = () => {
-    if (!canReact) return;
+    if (!canInteract) return;
     clearLongPress();
     longPressTimer.current = window.setTimeout(() => {
-      onOpenReactionPicker();
+      onOpenActionMenu();
     }, 500);
   };
 
@@ -183,17 +207,33 @@ function MessageBubble({
 
   return (
     <div
+      id={`message-${msg.id}`}
+      data-message-id={msg.id}
       className={cn("group relative", isMine ? "flex justify-end" : "flex justify-start")}
-      onMouseEnter={() => canReact && onOpenReactionPicker()}
+      onMouseEnter={() => canInteract && onOpenActionMenu()}
       onMouseLeave={() => {
-        if (!showReactionEmojiPicker) onCloseReactionPicker();
+        if (!showReactionEmojiPicker) {
+          onCloseActionMenu();
+          onCloseReactionPicker();
+        }
       }}
-      onDoubleClick={() => canReact && onReact(msg.id, "❤️")}
+      onDoubleClick={() => canInteract && onReact(msg.id, "❤️")}
       onTouchStart={handleTouchStart}
       onTouchEnd={clearLongPress}
       onTouchMove={clearLongPress}
     >
-      {canReact && (
+      {canInteract && (
+        <MessageActionMenu
+          visible={isActionMenuOpen && !isReactionPickerOpen}
+          isMine={isMine}
+          isPinned={isPinned}
+          onReply={onReply}
+          onTogglePin={onTogglePin}
+          onReact={onOpenReactionPicker}
+        />
+      )}
+
+      {canInteract && (
         <MessageReactionPicker
           visible={isReactionPickerOpen}
           isMine={isMine}
@@ -208,12 +248,23 @@ function MessageBubble({
         <div className="flex max-w-[82%] flex-row-reverse items-end gap-2 sm:max-w-[70%]">
           <div className="w-8 shrink-0" aria-hidden />
           <div className="flex min-w-0 flex-col items-end">
-            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm")}>
+            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm", isPinned && "ring-1 ring-[#f5d08a]/80")}>
+              {msg.reply_to ? (
+                <MessageQuote
+                  senderName={replySenderName ?? "Message"}
+                  content={msg.reply_to.content}
+                  isMine
+                  onClick={() => onScrollToQuoted(msg.reply_to!.id)}
+                />
+              ) : null}
               <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
                 {msg.content}
               </p>
               {isLastInCluster && (
                 <div className="mt-1 flex items-center justify-end gap-1">
+                  {isPinned ? (
+                    <Pin className="h-3 w-3 text-white/80" aria-label="Épinglé" />
+                  ) : null}
                   <span className="text-[10px] text-[#9b8fa8]">
                     {formatMessageTime(msg.created_at)}
                   </span>
@@ -227,14 +278,12 @@ function MessageBubble({
                 </div>
               )}
             </div>
-            {isLastInCluster && (
-              <MessageReactions
-                reactions={reactions}
-                currentUserId={currentUserId}
-                isMine
-                onToggle={(emoji) => onReact(msg.id, emoji)}
-              />
-            )}
+            <MessageReactions
+              reactions={reactions}
+              currentUserId={currentUserId}
+              isMine
+              onToggle={(emoji) => onReact(msg.id, emoji)}
+            />
           </div>
         </div>
       ) : (
@@ -255,24 +304,35 @@ function MessageBubble({
                 </p>
               </div>
             )}
-            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm")}>
+            <div className={cn(inBubbleClass, "px-3.5 py-2 shadow-sm", isPinned && "ring-1 ring-[#f5d08a]/80")}>
+              {msg.reply_to ? (
+                <MessageQuote
+                  senderName={replySenderName ?? "Message"}
+                  content={msg.reply_to.content}
+                  isMine={false}
+                  onClick={() => onScrollToQuoted(msg.reply_to!.id)}
+                />
+              ) : null}
               <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
                 {msg.content}
               </p>
               {isLastInCluster && (
-                <p className="mt-1 text-right text-[10px] text-[#9b8fa8]">
-                  {formatMessageTime(msg.created_at)}
-                </p>
+                <div className="mt-1 flex items-center justify-end gap-1">
+                  {isPinned ? (
+                    <Pin className="h-3 w-3 text-[#e91e8c]" aria-label="Épinglé" />
+                  ) : null}
+                  <span className="text-[10px] text-[#9b8fa8]">
+                    {formatMessageTime(msg.created_at)}
+                  </span>
+                </div>
               )}
             </div>
-            {isLastInCluster && (
-              <MessageReactions
-                reactions={reactions}
-                currentUserId={currentUserId}
-                isMine={false}
-                onToggle={(emoji) => onReact(msg.id, emoji)}
-              />
-            )}
+            <MessageReactions
+              reactions={reactions}
+              currentUserId={currentUserId}
+              isMine={false}
+              onToggle={(emoji) => onReact(msg.id, emoji)}
+            />
           </div>
         </div>
       )}
@@ -318,6 +378,11 @@ export function ChatThread({
   const [pending, startTransition] = useTransition();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [showScrollFab, setShowScrollFab] = useState(false);
+  const [newMessagesBelow, setNewMessagesBelow] = useState(0);
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  const [activeActionMessageId, setActiveActionMessageId] = useState<
+    string | null
+  >(null);
   const [activeReactionMessageId, setActiveReactionMessageId] = useState<
     string | null
   >(null);
@@ -329,6 +394,8 @@ export function ChatThread({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messageIdsRef = useRef(new Set<string>());
   const isNearBottomRef = useRef(true);
+  const prevLastMessageIdRef = useRef<string | null>(null);
+  const chatIdRef = useRef(chatId);
 
   const resizeTextarea = useCallback(() => {
     const el = textareaRef.current;
@@ -341,6 +408,17 @@ export function ChatThread({
     bottomRef.current?.scrollIntoView({ behavior });
     isNearBottomRef.current = true;
     setShowScrollFab(false);
+    setNewMessagesBelow(0);
+  }, []);
+
+  const scrollToMessage = useCallback((messageId: string) => {
+    const el = document.getElementById(`message-${messageId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("mm-chat-message-highlight");
+    window.setTimeout(() => {
+      el.classList.remove("mm-chat-message-highlight");
+    }, 1600);
   }, []);
 
   useEffect(() => {
@@ -348,9 +426,19 @@ export function ChatThread({
   }, [input, resizeTextarea]);
 
   useEffect(() => {
-    setMessages(initialMessages);
-    isNearBottomRef.current = true;
-    requestAnimationFrame(() => scrollToBottom("auto"));
+    if (chatIdRef.current !== chatId) {
+      chatIdRef.current = chatId;
+      setMessages(initialMessages);
+      setReplyTo(null);
+      setNewMessagesBelow(0);
+      isNearBottomRef.current = true;
+      prevLastMessageIdRef.current =
+        initialMessages[initialMessages.length - 1]?.id ?? null;
+      requestAnimationFrame(() => scrollToBottom("auto"));
+      return;
+    }
+
+    setMessages((prev) => mergeChatMessages(prev, initialMessages));
   }, [initialMessages, chatId, scrollToBottom]);
 
   useEffect(() => {
@@ -364,9 +452,12 @@ export function ChatThread({
     function onScroll() {
       if (!el) return;
       const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
-      const nearBottom = distance < 100;
+      const nearBottom = distance < 120;
       isNearBottomRef.current = nearBottom;
       setShowScrollFab(!nearBottom && messages.length > 0);
+      if (nearBottom) {
+        setNewMessagesBelow(0);
+      }
     }
 
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -374,10 +465,27 @@ export function ChatThread({
   }, [messages.length]);
 
   useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    const lastId = lastMessage?.id ?? null;
+    const prevLastId = prevLastMessageIdRef.current;
+
+    if (!lastId || lastId === prevLastId) return;
+
+    const isNewAppend = Boolean(prevLastId);
+    prevLastMessageIdRef.current = lastId;
+
+    if (!isNewAppend) return;
+
     if (isNearBottomRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      requestAnimationFrame(() => scrollToBottom("smooth"));
+      return;
     }
-  }, [messages]);
+
+    if (lastMessage.sender_id !== currentUserId) {
+      setNewMessagesBelow((count) => count + 1);
+      setShowScrollFab(true);
+    }
+  }, [messages, currentUserId, scrollToBottom]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -395,8 +503,52 @@ export function ChatThread({
           const msg = payload.new as ChatMessage;
           setMessages((prev) => {
             if (prev.some((m) => m.id === msg.id)) return prev;
-            return [...prev, { ...msg, reactions: [] }];
+
+            let replyToPreview = msg.reply_to ?? null;
+            if (!replyToPreview && msg.reply_to_id) {
+              const parent = prev.find((m) => m.id === msg.reply_to_id);
+              if (parent) {
+                replyToPreview = {
+                  id: parent.id,
+                  content: parent.content,
+                  sender_id: parent.sender_id,
+                };
+              }
+            }
+
+            return [
+              ...prev,
+              {
+                ...msg,
+                reactions: msg.reactions ?? [],
+                reply_to: replyToPreview,
+              },
+            ];
           });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `chat_id=eq.${chatId}`,
+        },
+        (payload) => {
+          const updated = payload.new as ChatMessage;
+          setMessages((prev) =>
+            prev.map((message) =>
+              message.id === updated.id
+                ? {
+                    ...message,
+                    ...updated,
+                    reactions: message.reactions,
+                    reply_to: message.reply_to ?? updated.reply_to,
+                  }
+                : message
+            )
+          );
         }
       )
       .on(
@@ -490,6 +642,7 @@ export function ChatThread({
   }
 
   function handleReact(messageId: string, emoji: string) {
+    setActiveActionMessageId(null);
     setActiveReactionMessageId(null);
     setReactionEmojiPickerId(null);
 
@@ -520,13 +673,54 @@ export function ChatThread({
     });
   }
 
+  function handleReply(message: ChatMessage) {
+    const sender = message.sender_id ? senderById[message.sender_id] : null;
+    setReplyTo({
+      id: message.id,
+      content: message.content,
+      senderName: sender?.name ?? "Équipe",
+    });
+    setActiveActionMessageId(null);
+    setActiveReactionMessageId(null);
+    textareaRef.current?.focus();
+  }
+
+  function handleTogglePin(messageId: string) {
+    setActiveActionMessageId(null);
+
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (message.id !== messageId) return message;
+        const nextPinned = !message.is_pinned;
+        return {
+          ...message,
+          is_pinned: nextPinned,
+          pinned_at: nextPinned ? new Date().toISOString() : null,
+          pinned_by: nextPinned ? currentUserId : null,
+        };
+      })
+    );
+
+    void toggleMessagePin(messageId).then((result) => {
+      if (result.error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: result.error,
+        });
+      }
+    });
+  }
+
   function handleSend(e?: React.FormEvent) {
     e?.preventDefault();
     const content = input.trim();
     if (!content || !canSend || pending) return;
 
+    const replyToId = replyTo?.id ?? null;
+
     startTransition(async () => {
-      const result = await sendMessage(chatId, content);
+      const result = await sendMessage(chatId, content, replyToId);
       if (result.error) {
         toast({
           variant: "destructive",
@@ -535,6 +729,7 @@ export function ChatThread({
         });
       } else {
         setInput("");
+        setReplyTo(null);
         setEmojiPickerOpen(false);
         requestAnimationFrame(() => {
           resizeTextarea();
@@ -542,6 +737,19 @@ export function ChatThread({
         });
       }
     });
+  }
+
+  const pinnedMessages = [...messages]
+    .filter((message) => message.is_pinned)
+    .sort((a, b) => (b.pinned_at ?? "").localeCompare(a.pinned_at ?? ""));
+
+  const senderNameById = Object.fromEntries(
+    Object.entries(senderById).map(([id, info]) => [id, info.name])
+  );
+
+  function resolveReplySenderName(senderId: string | null | undefined) {
+    if (!senderId) return "Équipe";
+    return senderById[senderId]?.name ?? "Membre";
   }
 
   const groups = groupMessagesByDate(messages);
@@ -605,10 +813,17 @@ export function ChatThread({
           ref={scrollRef}
           className="mm-chat-messages h-full space-y-4 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5"
           onClick={() => {
+            setActiveActionMessageId(null);
             setActiveReactionMessageId(null);
             setReactionEmojiPickerId(null);
           }}
         >
+          <PinnedMessagesBar
+            pinnedMessages={pinnedMessages}
+            senderNameById={senderNameById}
+            onScrollTo={scrollToMessage}
+            onUnpin={handleTogglePin}
+          />
           {showMatchWelcome && (
             <MatchWelcomeBanner partnerName={matchPartnerName} />
           )}
@@ -655,16 +870,29 @@ export function ChatThread({
                           isLastInCluster={isLastInCluster}
                           showAvatar={showAvatar}
                           currentUserId={currentUserId}
-                          canReact
+                          canInteract
                           isReactionPickerOpen={
                             activeReactionMessageId === msg.id
                           }
                           showReactionEmojiPicker={
                             reactionEmojiPickerId === msg.id
                           }
-                          onOpenReactionPicker={() =>
-                            setActiveReactionMessageId(msg.id)
+                          isActionMenuOpen={activeActionMessageId === msg.id}
+                          replySenderName={
+                            msg.reply_to
+                              ? resolveReplySenderName(msg.reply_to.sender_id)
+                              : null
                           }
+                          onOpenActionMenu={() =>
+                            setActiveActionMessageId(msg.id)
+                          }
+                          onCloseActionMenu={() =>
+                            setActiveActionMessageId(null)
+                          }
+                          onOpenReactionPicker={() => {
+                            setActiveActionMessageId(null);
+                            setActiveReactionMessageId(msg.id);
+                          }}
                           onCloseReactionPicker={() => {
                             setActiveReactionMessageId(null);
                             setReactionEmojiPickerId(null);
@@ -675,6 +903,9 @@ export function ChatThread({
                             )
                           }
                           onReact={handleReact}
+                          onReply={() => handleReply(msg)}
+                          onTogglePin={() => handleTogglePin(msg.id)}
+                          onScrollToQuoted={scrollToMessage}
                         />
                       );
                     })}
@@ -691,9 +922,17 @@ export function ChatThread({
             type="button"
             onClick={() => scrollToBottom()}
             className="mm-chat-scroll-fab"
-            aria-label="Aller aux derniers messages"
+            aria-label={
+              newMessagesBelow > 0
+                ? `${newMessagesBelow} nouveau${newMessagesBelow > 1 ? "x" : ""} message${newMessagesBelow > 1 ? "s" : ""}`
+                : "Aller aux derniers messages"
+            }
           >
-            <ArrowDown className="h-5 w-5" />
+            {newMessagesBelow > 0 ? (
+              <span className="text-xs font-bold">{newMessagesBelow}</span>
+            ) : (
+              <ArrowDown className="h-5 w-5" />
+            )}
           </button>
         )}
       </div>
@@ -701,8 +940,12 @@ export function ChatThread({
       {canSend ? (
         <form
           onSubmit={handleSend}
-          className="relative mm-chat-input-bar pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          className="mm-chat-input-bar pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         >
+          {replyTo ? (
+            <MessageReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />
+          ) : null}
+          <div className="relative flex w-full items-end gap-2 sm:gap-2.5">
           {emojiPickerOpen && (
             <div className="absolute bottom-full left-3 mb-2 sm:left-4">
               <EmojiPicker
@@ -765,6 +1008,7 @@ export function ChatThread({
               <Send className="h-[18px] w-[18px] stroke-[2]" />
             )}
           </button>
+          </div>
         </form>
       ) : (
         <div className="mm-chat-closed-banner">

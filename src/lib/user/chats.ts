@@ -185,7 +185,9 @@ export async function getChatThread(chatId: string, userId: string) {
   const [{ data: messages }, { data: participantRows }] = await Promise.all([
     supabase
       .from("messages")
-      .select("id, chat_id, sender_id, content, created_at, read_at")
+      .select(
+        "id, chat_id, sender_id, content, created_at, read_at, reply_to_id, is_pinned, pinned_at, pinned_by, reply_to:reply_to_id(id, content, sender_id)"
+      )
       .eq("chat_id", chatId)
       .order("created_at", { ascending: true }),
     supabase
@@ -317,10 +319,20 @@ export async function getChatThread(chatId: string, userId: string) {
     reactionsByMessage.set(reaction.message_id, list);
   }
 
-  const messagesWithReactions = (messages ?? []).map((message) => ({
-    ...message,
-    reactions: reactionsByMessage.get(message.id) ?? [],
-  })) as ChatMessage[];
+  const messagesWithReactions = (messages ?? []).map((message) => {
+    const replyRaw = message.reply_to as
+      | { id: string; content: string; sender_id: string | null }
+      | { id: string; content: string; sender_id: string | null }[]
+      | null;
+
+    const replyTo = Array.isArray(replyRaw) ? replyRaw[0] ?? null : replyRaw;
+
+    return {
+      ...message,
+      reply_to: replyTo,
+      reactions: reactionsByMessage.get(message.id) ?? [],
+    };
+  }) as ChatMessage[];
 
   return {
     chat: {

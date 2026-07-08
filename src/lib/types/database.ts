@@ -289,6 +289,15 @@ export interface ChatMessage {
   content: string;
   created_at: string;
   read_at?: string | null;
+  reply_to_id?: string | null;
+  is_pinned?: boolean;
+  pinned_at?: string | null;
+  pinned_by?: string | null;
+  reply_to?: {
+    id: string;
+    content: string;
+    sender_id: string | null;
+  } | null;
   reactions?: MessageReaction[];
 }
 
