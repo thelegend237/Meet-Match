@@ -32,8 +32,8 @@ import {
   toggleMessagePin,
   deleteMessage,
   deleteMessages,
-  MESSAGE_EDIT_WINDOW_MS,
 } from "@/lib/actions/messages";
+import { MESSAGE_EDIT_WINDOW_MS } from "@/lib/chat/message-edit";
 import { toggleMessageReaction } from "@/lib/actions/reactions";
 import { ChatHeader } from "@/components/user/chat-header";
 import type { ChatParticipant } from "@/components/user/chat-participants-bar";

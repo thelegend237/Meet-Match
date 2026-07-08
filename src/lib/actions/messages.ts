@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { MESSAGE_EDIT_WINDOW_MS } from "@/lib/chat/message-edit";
 import { markChatMessagesAsRead as markChatMessagesAsReadInDb } from "@/lib/chat/mark-read";
+import { createClient } from "@/lib/supabase/server";
 
 export async function sendMessage(
   chatId: string,
@@ -45,8 +46,6 @@ export async function sendMessage(
   revalidatePath("/admin/conversations");
   return { success: true };
 }
-
-export const MESSAGE_EDIT_WINDOW_MS = 30 * 60 * 1000;
 
 export async function editMessage(messageId: string, content: string) {
   const supabase = await createClient();

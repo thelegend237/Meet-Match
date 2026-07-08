@@ -58,6 +58,7 @@ export function NotificationRealtimeProvider({
   const reconnectAttemptRef = useRef(0);
   const warnedRealtimeRef = useRef(false);
   const pollSeededRef = useRef(false);
+  const setupInFlightRef = useRef(false);
 
   useEffect(() => {
     setUnreadCount(initialUnreadCount);
@@ -156,77 +157,85 @@ export function NotificationRealtimeProvider({
     };
 
     const setupChannel = async () => {
-      if (cancelled) return;
+      if (cancelled || setupInFlightRef.current) return;
+      setupInFlightRef.current = true;
 
-      if (channel) {
-        await supabase.removeChannel(channel);
-        channel = null;
-      }
+      try {
+        if (channel) {
+          await supabase.removeChannel(channel);
+          channel = null;
+        }
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!session || cancelled) return;
+        if (!session || cancelled) return;
 
-      await supabase.realtime.setAuth(session.access_token);
+        await supabase.realtime.setAuth(session.access_token);
 
-      channel = supabase
-        .channel(`notifications-live:${userId}`, {
-          config: { broadcast: { self: false } },
-        })
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "notifications",
-            filter: `user_id=eq.${userId}`,
-          },
-          (payload) => {
-            handleInsert(payload.new as Notification);
-          }
-        )
-        .subscribe((status, err) => {
-          if (cancelled) return;
+        const nextChannel = supabase
+          .channel(`notifications-live:${userId}`, {
+            config: { broadcast: { self: false } },
+          })
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "notifications",
+              filter: `user_id=eq.${userId}`,
+            },
+            (payload) => {
+              handleInsert(payload.new as Notification);
+            }
+          )
+          .subscribe((status, err) => {
+            if (cancelled) return;
 
-          if (status === "SUBSCRIBED") {
-            realtimeOkRef.current = true;
-            reconnectAttemptRef.current = 0;
-            warnedRealtimeRef.current = false;
-            return;
-          }
-
-          if (
-            status === "CHANNEL_ERROR" ||
-            status === "TIMED_OUT" ||
-            status === "CLOSED"
-          ) {
-            realtimeOkRef.current = false;
-
-            if (!warnedRealtimeRef.current) {
-              warnedRealtimeRef.current = true;
-              console.warn(
-                "[notifications] Realtime indisponible — secours polling actif.",
-                err?.message ?? status
-              );
+            if (status === "SUBSCRIBED") {
+              realtimeOkRef.current = true;
+              reconnectAttemptRef.current = 0;
+              warnedRealtimeRef.current = false;
+              return;
             }
 
-            scheduleReconnect();
-          }
-        });
+            if (
+              status === "CHANNEL_ERROR" ||
+              status === "TIMED_OUT" ||
+              status === "CLOSED"
+            ) {
+              realtimeOkRef.current = false;
+
+              if (!warnedRealtimeRef.current) {
+                warnedRealtimeRef.current = true;
+                console.warn(
+                  "[notifications] Realtime indisponible — secours polling actif.",
+                  err?.message ?? status
+                );
+              }
+
+              scheduleReconnect();
+            }
+          });
+
+        channel = nextChannel;
+      } finally {
+        setupInFlightRef.current = false;
+      }
     };
 
     void setupChannel();
 
     const {
       data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.access_token) {
-        void supabase.realtime.setAuth(session.access_token);
-        reconnectAttemptRef.current = 0;
-        void setupChannel();
-      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session?.access_token) return;
+      if (event === "INITIAL_SESSION") return;
+
+      void supabase.realtime.setAuth(session.access_token);
+      reconnectAttemptRef.current = 0;
+      void setupChannel();
     });
 
     return () => {
