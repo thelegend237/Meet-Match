@@ -17,18 +17,22 @@ import {
   Loader2,
   Lock,
   Paperclip,
+  Pencil,
   Send,
   Smile,
   Sparkles,
   Pin,
+  X,
 } from "lucide-react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import {
   sendMessage,
+  editMessage,
   toggleMessagePin,
   deleteMessage,
   deleteMessages,
+  MESSAGE_EDIT_WINDOW_MS,
 } from "@/lib/actions/messages";
 import { toggleMessageReaction } from "@/lib/actions/reactions";
 import { ChatHeader } from "@/components/user/chat-header";
@@ -158,6 +162,7 @@ function MessageBubble({
   isActionMenuOpen,
   replySenderName,
   canDelete,
+  canEdit,
   selectionMode,
   isSelected,
   onToggleSelect,
@@ -171,6 +176,7 @@ function MessageBubble({
   onCopy,
   onSelect,
   onDelete,
+  onEdit,
   onScrollToQuoted,
 }: {
   msg: ChatMessage;
@@ -186,6 +192,7 @@ function MessageBubble({
   isActionMenuOpen: boolean;
   replySenderName?: string | null;
   canDelete: boolean;
+  canEdit: boolean;
   selectionMode: boolean;
   isSelected: boolean;
   onToggleSelect: () => void;
@@ -199,6 +206,7 @@ function MessageBubble({
   onCopy: () => void;
   onSelect: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onScrollToQuoted: (messageId: string) => void;
 }) {
   const isRead = Boolean(msg.read_at);
@@ -297,12 +305,14 @@ function MessageBubble({
               isMine={isMine}
               isPinned={isPinned}
               canDelete={canDelete}
+              canEdit={canEdit}
               onReply={onReply}
               onTogglePin={onTogglePin}
               onReact={onOpenReactionPicker}
               onCopy={onCopy}
               onSelect={onSelect}
               onDelete={onDelete}
+              onEdit={onEdit}
               onQuickReact={(emoji) => onReact(msg.id, emoji)}
               onMoreEmojis={onToggleReactionEmojiPicker}
             />
@@ -345,6 +355,9 @@ function MessageBubble({
                 <div className="mt-1 flex items-center justify-end gap-1">
                   {isPinned && !isDeleted ? (
                     <Pin className="h-3 w-3 text-white/80" aria-label="Épinglé" />
+                  ) : null}
+                  {msg.edited_at && !isDeleted ? (
+                    <span className="text-[10px] italic text-[#9b8fa8]">modifié</span>
                   ) : null}
                   <span className="text-[10px] text-[#9b8fa8]">
                     {formatMessageTime(msg.created_at)}
@@ -410,6 +423,9 @@ function MessageBubble({
                   {isPinned && !isDeleted ? (
                     <Pin className="h-3 w-3 text-[#e91e8c]" aria-label="Épinglé" />
                   ) : null}
+                  {msg.edited_at && !isDeleted ? (
+                    <span className="text-[10px] italic text-[#9b8fa8]">modifié</span>
+                  ) : null}
                   <span className="text-[10px] text-[#9b8fa8]">
                     {formatMessageTime(msg.created_at)}
                   </span>
@@ -472,6 +488,10 @@ export function ChatThread({
   const [showScrollFab, setShowScrollFab] = useState(false);
   const [newMessagesBelow, setNewMessagesBelow] = useState(0);
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
+  const [editingMessage, setEditingMessage] = useState<{
+    id: string;
+    original: string;
+  } | null>(null);
   const [activeActionMessageId, setActiveActionMessageId] = useState<
     string | null
   >(null);
@@ -528,6 +548,7 @@ export function ChatThread({
       chatIdRef.current = chatId;
       setMessages(initialMessages);
       setReplyTo(null);
+      setEditingMessage(null);
       setNewMessagesBelow(0);
       isNearBottomRef.current = true;
       prevLastMessageIdRef.current =
@@ -902,6 +923,33 @@ export function ChatThread({
     [currentUserId, isStaffView]
   );
 
+  const canEditMessage = useCallback(
+    (message: ChatMessage) =>
+      !message.deleted_at &&
+      message.sender_id === currentUserId &&
+      Date.now() - new Date(message.created_at).getTime() <
+        MESSAGE_EDIT_WINDOW_MS,
+    [currentUserId]
+  );
+
+  function handleEdit(message: ChatMessage) {
+    setActiveActionMessageId(null);
+    setActiveReactionMessageId(null);
+    setReplyTo(null);
+    setEditingMessage({ id: message.id, original: message.content });
+    setInput(message.content);
+    requestAnimationFrame(() => {
+      resizeTextarea();
+      textareaRef.current?.focus();
+    });
+  }
+
+  function cancelEdit() {
+    setEditingMessage(null);
+    setInput("");
+    requestAnimationFrame(() => resizeTextarea());
+  }
+
   async function copyToClipboard(text: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -1035,6 +1083,40 @@ export function ChatThread({
     e?.preventDefault();
     const content = input.trim();
     if (!content || !canSend || pending) return;
+
+    if (editingMessage) {
+      const editId = editingMessage.id;
+      if (content === editingMessage.original) {
+        cancelEdit();
+        return;
+      }
+
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === editId
+            ? { ...message, content, edited_at: new Date().toISOString() }
+            : message
+        )
+      );
+
+      startTransition(async () => {
+        const result = await editMessage(editId, content);
+        if (result.error) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: result.error,
+          });
+        } else {
+          setInput("");
+          setEditingMessage(null);
+          setEmojiPickerOpen(false);
+          broadcastStopTyping();
+          requestAnimationFrame(() => resizeTextarea());
+        }
+      });
+      return;
+    }
 
     const replyToId = replyTo?.id ?? null;
 
@@ -1215,6 +1297,7 @@ export function ChatThread({
                               : null
                           }
                           canDelete={canDeleteMessage(msg)}
+                          canEdit={canEditMessage(msg)}
                           selectionMode={selectionMode}
                           isSelected={selectedIds.has(msg.id)}
                           onToggleSelect={() => toggleSelect(msg.id)}
@@ -1242,6 +1325,7 @@ export function ChatThread({
                           onCopy={() => handleCopy(msg)}
                           onSelect={() => enterSelection(msg.id)}
                           onDelete={() => handleDelete(msg.id)}
+                          onEdit={() => handleEdit(msg)}
                           onScrollToQuoted={scrollToMessage}
                         />
                       );
@@ -1282,7 +1366,27 @@ export function ChatThread({
           onSubmit={handleSend}
           className="mm-chat-input-bar pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         >
-          {replyTo ? (
+          {editingMessage ? (
+            <div className="flex items-stretch gap-2 border-b border-[#ebe6f0]/90 bg-[#faf8fc] px-3 py-2 sm:px-4">
+              <div className="min-w-0 flex-1 border-l-[3px] border-[#e91e8c] pl-2">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-[#e91e8c]">
+                  <Pencil className="h-3.5 w-3.5" />
+                  Modifier le message
+                </p>
+                <p className="mt-0.5 line-clamp-2 text-xs text-[#6b5f7a]">
+                  {editingMessage.original}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#9b8fa8] hover:bg-[#f3eef8]"
+                aria-label="Annuler la modification"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : replyTo ? (
             <MessageReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />
           ) : null}
           <div className="relative flex w-full items-end gap-2 sm:gap-2.5">
@@ -1315,7 +1419,7 @@ export function ChatThread({
                   broadcastStopTyping();
                 }
               }}
-              placeholder="Écrire un message…"
+              placeholder={editingMessage ? "Modifier le message…" : "Écrire un message…"}
               rows={1}
               disabled={pending}
               className="max-h-[120px] min-h-[24px] w-full resize-none bg-transparent py-2.5 text-[15px] leading-snug text-[#2e1a47] outline-none placeholder:text-[#9b8fa8]"

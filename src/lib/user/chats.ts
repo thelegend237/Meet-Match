@@ -186,7 +186,7 @@ export async function getChatThread(chatId: string, userId: string) {
     supabase
       .from("messages")
       .select(
-        "id, chat_id, sender_id, content, created_at, read_at, reply_to_id, is_pinned, pinned_at, pinned_by, deleted_at, deleted_by, reply_to:reply_to_id(id, content, sender_id)"
+        "id, chat_id, sender_id, content, created_at, read_at, reply_to_id, is_pinned, pinned_at, pinned_by, deleted_at, deleted_by, edited_at, reply_to:reply_to_id(id, content, sender_id)"
       )
       .eq("chat_id", chatId)
       .order("created_at", { ascending: true }),

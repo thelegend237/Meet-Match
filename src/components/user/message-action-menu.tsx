@@ -3,6 +3,7 @@
 import {
   CheckSquare,
   Copy,
+  Pencil,
   Pin,
   PinOff,
   Reply,
@@ -17,12 +18,14 @@ interface MessageActionMenuProps {
   isMine: boolean;
   isPinned: boolean;
   canDelete: boolean;
+  canEdit: boolean;
   onReply: () => void;
   onTogglePin: () => void;
   onReact: () => void;
   onCopy: () => void;
   onSelect: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onQuickReact: (emoji: string) => void;
   onMoreEmojis: () => void;
 }
@@ -32,12 +35,14 @@ export function MessageActionMenu({
   isMine,
   isPinned,
   canDelete,
+  canEdit,
   onReply,
   onTogglePin,
   onReact,
   onCopy,
   onSelect,
   onDelete,
+  onEdit,
   onQuickReact,
   onMoreEmojis,
 }: MessageActionMenuProps) {
@@ -76,6 +81,13 @@ export function MessageActionMenu({
 
       <MenuItem icon={<Reply className="h-[18px] w-[18px] text-[#5b3d8f]" />} label="Répondre" onClick={onReply} />
       <MenuItem icon={<Smile className="h-[18px] w-[18px] text-[#5b3d8f]" />} label="Réagir" onClick={onReact} />
+      {canEdit ? (
+        <MenuItem
+          icon={<Pencil className="h-[18px] w-[18px] text-[#5b3d8f]" />}
+          label="Modifier"
+          onClick={onEdit}
+        />
+      ) : null}
       <MenuItem icon={<Copy className="h-[18px] w-[18px] text-[#5b3d8f]" />} label="Copier" onClick={onCopy} />
       <MenuItem
         icon={

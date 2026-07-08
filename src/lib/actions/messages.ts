@@ -46,6 +46,52 @@ export async function sendMessage(
   return { success: true };
 }
 
+export const MESSAGE_EDIT_WINDOW_MS = 30 * 60 * 1000;
+
+export async function editMessage(messageId: string, content: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Non authentifié" };
+
+  const trimmed = content.trim();
+  if (!trimmed) return { error: "Message vide" };
+
+  const { data: message } = await supabase
+    .from("messages")
+    .select("id, chat_id, sender_id, created_at, deleted_at")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (!message) return { error: "Message introuvable" };
+  if (message.sender_id !== user.id) {
+    return { error: "Vous ne pouvez modifier que vos propres messages" };
+  }
+  if (message.deleted_at) {
+    return { error: "Ce message a été supprimé" };
+  }
+
+  const age = Date.now() - new Date(message.created_at).getTime();
+  if (age > MESSAGE_EDIT_WINDOW_MS) {
+    return {
+      error: "La modification n'est possible que dans les 30 minutes suivant l'envoi",
+    };
+  }
+
+  const { error } = await supabase
+    .from("messages")
+    .update({ content: trimmed, edited_at: new Date().toISOString() })
+    .eq("id", messageId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/messages/${message.chat_id}`);
+  revalidatePath("/messages");
+  revalidatePath(`/admin/conversations/${message.chat_id}`);
+  return { success: true };
+}
+
 export async function deleteMessage(messageId: string) {
   const supabase = await createClient();
   const {
