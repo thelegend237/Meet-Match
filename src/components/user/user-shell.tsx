@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_HOME } from "@/lib/auth/routes";
 import { useNotificationRealtime } from "@/components/user/notification-realtime-provider";
+import { PushInviteBanner } from "@/components/user/push-invite-banner";
 
 type NavLink = {
   href: string;
@@ -95,6 +96,7 @@ interface UserShellProps {
   avatarUrl?: string | null;
   welcomeTourEligible?: boolean;
   showAdminLink?: boolean;
+  notifyPush?: boolean;
   children: React.ReactNode;
 }
 
@@ -107,6 +109,7 @@ export function UserShell({
   avatarUrl,
   welcomeTourEligible = false,
   showAdminLink = false,
+  notifyPush = true,
   children,
 }: UserShellProps) {
   const pathname = usePathname();
@@ -366,6 +369,7 @@ export function UserShell({
                 : "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
             )}
           >
+            <PushInviteBanner notifyPush={notifyPush} />
             {children}
           </main>
 

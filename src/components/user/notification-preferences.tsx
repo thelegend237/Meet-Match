@@ -9,21 +9,12 @@ import {
   getPushDiagnostics,
   isDevToolsMobileEmulation,
   isPushEnvironmentSupported,
+  requestPushPermission,
+  subscribeToPushNotifications,
 } from "@/lib/push/client";
 
 const SITE_ORIGIN =
   typeof window !== "undefined" ? window.location.origin : "https://meet-and-match.vercel.app";
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = window.atob(base64);
-  const output = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) {
-    output[i] = raw.charCodeAt(i);
-  }
-  return output;
-}
 
 function permissionLabel(permission: NotificationPermission | "unsupported") {
   if (permission === "granted") return "Autorisées";
@@ -74,32 +65,13 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
     setLoading(true);
 
     try {
-      if (!isPushEnvironmentSupported()) {
-        throw new Error(
-          "Utilisez Chrome ou Edge sur ordinateur, en fenêtre normale (fermez le mode mobile F12)."
-        );
-      }
-      if (isDevToolsMobileEmulation()) {
-        throw new Error(
-          "Fermez le mode mobile des outils développeur (F12), rechargez la page, puis réessayez."
-        );
-      }
-
-      const result = await Notification.requestPermission();
+      const result = await requestPushPermission();
       setPermission(result);
-
-      if (result === "denied") {
-        throw new Error("blocked");
-      }
-      if (result !== "granted") {
-        throw new Error("Autorisation refusée.");
-      }
-
-      await ensurePushServiceWorker();
       await refreshStatus();
     } catch (err) {
       if (err instanceof Error && err.message === "blocked") {
         setError(null);
+        setPermission("denied");
       } else {
         setError(err instanceof Error ? err.message : "Erreur inconnue");
       }
@@ -113,41 +85,15 @@ export function PushNotificationManager({ notifyPush }: PushNotificationManagerP
     setLoading(true);
 
     try {
-      if (Notification.permission !== "granted") {
-        throw new Error("Autorisez d'abord les notifications du navigateur (étape 1).");
-      }
-
-      const keyRes = await fetch("/api/push/vapid-key");
-      if (!keyRes.ok) {
-        throw new Error("Serveur push non configuré. Contactez le support.");
-      }
-      const { publicKey } = (await keyRes.json()) as { publicKey: string };
-
-      const registration = await ensurePushServiceWorker();
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
-
-      const json = subscription.toJSON();
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          endpoint: json.endpoint,
-          keys: json.keys,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        const msg = data.error || "Enregistrement impossible.";
-        if (/relation.*does not exist|push_subscriptions/i.test(msg)) {
-          throw new Error(
-            "La base de données n'est pas à jour. Appliquez la migration 033 sur Supabase."
-          );
+      const result = await subscribeToPushNotifications();
+      if (!result.ok) {
+        if (result.blocked) {
+          setPermission("denied");
+          setError(null);
+        } else {
+          setError(result.error);
         }
-        throw new Error(msg);
+        return;
       }
 
       setSubscribed(true);

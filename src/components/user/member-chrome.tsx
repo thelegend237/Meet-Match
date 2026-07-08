@@ -58,6 +58,7 @@ export async function MemberChrome({
         avatarUrl={profile.primary_photo_url}
         welcomeTourEligible={welcomeTourEligible}
         showAdminLink={isStaffProfile(profile)}
+        notifyPush={profile.notify_push ?? true}
       >
         <UserContentArea>{children}</UserContentArea>
       </UserShell>

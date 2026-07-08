@@ -1,5 +1,18 @@
 const SW_URL = "/sw.js";
 const SW_SCOPE = "/";
+const PUSH_INVITE_DISMISS_KEY = "mm:push-invite-dismissed-at";
+export const PUSH_INVITE_DISMISS_DAYS = 7;
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(base64);
+  const output = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) {
+    output[i] = raw.charCodeAt(i);
+  }
+  return output;
+}
 
 export function isPushEnvironmentSupported() {
   if (typeof window === "undefined") return false;
@@ -107,4 +120,96 @@ export async function getPushDiagnostics() {
     vapidOk,
     devToolsMobile,
   };
+}
+
+export function isPushInviteDismissed() {
+  if (typeof window === "undefined") return true;
+  const raw = localStorage.getItem(PUSH_INVITE_DISMISS_KEY);
+  if (!raw) return false;
+  const dismissedAt = Number(raw);
+  if (!Number.isFinite(dismissedAt)) return false;
+  const elapsedDays = (Date.now() - dismissedAt) / (1000 * 60 * 60 * 24);
+  return elapsedDays < PUSH_INVITE_DISMISS_DAYS;
+}
+
+export function dismissPushInvite() {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(PUSH_INVITE_DISMISS_KEY, String(Date.now()));
+}
+
+export async function requestPushPermission() {
+  if (!isPushEnvironmentSupported()) {
+    throw new Error(
+      "Utilisez Chrome ou Edge sur ordinateur, en fenêtre normale (fermez le mode mobile F12)."
+    );
+  }
+  if (isDevToolsMobileEmulation()) {
+    throw new Error(
+      "Fermez le mode mobile des outils développeur (F12), rechargez la page, puis réessayez."
+    );
+  }
+
+  const result = await Notification.requestPermission();
+  if (result === "denied") {
+    throw new Error("blocked");
+  }
+  if (result !== "granted") {
+    throw new Error("Autorisation refusée.");
+  }
+
+  await ensurePushServiceWorker();
+  return result;
+}
+
+export async function subscribeToPushNotifications(): Promise<
+  { ok: true } | { ok: false; error: string; blocked?: boolean }
+> {
+  try {
+    if (Notification.permission !== "granted") {
+      await requestPushPermission();
+    }
+
+    const keyRes = await fetch("/api/push/vapid-key");
+    if (!keyRes.ok) {
+      return { ok: false, error: "Serveur push non configuré. Contactez le support." };
+    }
+    const { publicKey } = (await keyRes.json()) as { publicKey: string };
+
+    const registration = await ensurePushServiceWorker();
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+
+    const json = subscription.toJSON();
+    const res = await fetch("/api/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint: json.endpoint,
+        keys: json.keys,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = (await res.json()) as { error?: string };
+      const msg = data.error || "Enregistrement impossible.";
+      if (/relation.*does not exist|push_subscriptions/i.test(msg)) {
+        return {
+          ok: false,
+          error:
+            "La base de données n'est pas à jour. Appliquez la migration 033 sur Supabase.",
+        };
+      }
+      return { ok: false, error: msg };
+    }
+
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erreur inconnue";
+    if (message === "blocked" || /permission denied|registration failed/i.test(message)) {
+      return { ok: false, error: message, blocked: true };
+    }
+    return { ok: false, error: message };
+  }
 }
