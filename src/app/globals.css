@@ -261,6 +261,32 @@
     animation: mm-chat-flash 1.6s ease-out;
   }
 
+  .mm-typing-dot {
+    @apply block h-2 w-2 rounded-full bg-[#c4b5d0];
+    animation: mm-typing-bounce 1.3s infinite ease-in-out;
+  }
+
+  .mm-typing-dot-2 {
+    animation-delay: 0.18s;
+  }
+
+  .mm-typing-dot-3 {
+    animation-delay: 0.36s;
+  }
+
+  @keyframes mm-typing-bounce {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    30% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
+  }
+
   @keyframes mm-chat-flash {
     0%,
     100% {

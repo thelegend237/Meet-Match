@@ -22,6 +22,7 @@ import {
   Sparkles,
   Pin,
 } from "lucide-react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import {
   sendMessage,
@@ -43,6 +44,7 @@ import {
   type ReplyTarget,
 } from "@/components/user/message-reply-bar";
 import { PinnedMessagesBar } from "@/components/user/pinned-messages-bar";
+import { TypingIndicator } from "@/components/user/typing-indicator";
 import {
   formatDateSeparator,
   formatMessageTime,
@@ -481,6 +483,10 @@ export function ChatThread({
   >(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
+  const typingChannelRef = useRef<RealtimeChannel | null>(null);
+  const typingTimeoutsRef = useRef<Record<string, number>>({});
+  const lastTypingSentRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -728,6 +734,89 @@ export function ChatThread({
     };
   }, [chatId]);
 
+  const currentUserName =
+    senderById[currentUserId]?.name ||
+    header?.participants?.find((p) => p.id === currentUserId)?.name ||
+    "Quelqu'un";
+
+  useEffect(() => {
+    const supabase = createClient();
+    const timeouts = typingTimeoutsRef.current;
+    const channel = supabase.channel(`chat-typing:${chatId}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    const clearUserTimeout = (userId: string) => {
+      if (timeouts[userId]) {
+        window.clearTimeout(timeouts[userId]);
+        delete timeouts[userId];
+      }
+    };
+
+    channel
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        const userId = payload?.userId as string | undefined;
+        const name = (payload?.name as string | undefined) ?? "Quelqu'un";
+        if (!userId || userId === currentUserId) return;
+
+        setTypingUsers((prev) => ({ ...prev, [userId]: name }));
+        clearUserTimeout(userId);
+        timeouts[userId] = window.setTimeout(() => {
+          setTypingUsers((prev) => {
+            const next = { ...prev };
+            delete next[userId];
+            return next;
+          });
+          delete timeouts[userId];
+        }, 3500);
+      })
+      .on("broadcast", { event: "stop_typing" }, ({ payload }) => {
+        const userId = payload?.userId as string | undefined;
+        if (!userId) return;
+        clearUserTimeout(userId);
+        setTypingUsers((prev) => {
+          const next = { ...prev };
+          delete next[userId];
+          return next;
+        });
+      })
+      .subscribe();
+
+    typingChannelRef.current = channel;
+
+    return () => {
+      Object.values(timeouts).forEach((t) => window.clearTimeout(t));
+      Object.keys(timeouts).forEach((k) => delete timeouts[k]);
+      setTypingUsers({});
+      typingChannelRef.current = null;
+      void supabase.removeChannel(channel);
+    };
+  }, [chatId, currentUserId]);
+
+  const broadcastTyping = useCallback(() => {
+    const channel = typingChannelRef.current;
+    if (!channel) return;
+    const now = Date.now();
+    if (now - lastTypingSentRef.current < 1500) return;
+    lastTypingSentRef.current = now;
+    void channel.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId: currentUserId, name: currentUserName },
+    });
+  }, [currentUserId, currentUserName]);
+
+  const broadcastStopTyping = useCallback(() => {
+    const channel = typingChannelRef.current;
+    if (!channel) return;
+    lastTypingSentRef.current = 0;
+    void channel.send({
+      type: "broadcast",
+      event: "stop_typing",
+      payload: { userId: currentUserId },
+    });
+  }, [currentUserId]);
+
   function insertEmoji(emoji: string) {
     setInput((prev) => `${prev}${emoji}`);
     textareaRef.current?.focus();
@@ -951,6 +1040,7 @@ export function ChatThread({
         setInput("");
         setReplyTo(null);
         setEmojiPickerOpen(false);
+        broadcastStopTyping();
         requestAnimationFrame(() => {
           resizeTextarea();
           scrollToBottom();
@@ -1150,6 +1240,9 @@ export function ChatThread({
               </div>
             ))
           )}
+          {Object.keys(typingUsers).length > 0 && (
+            <TypingIndicator names={Object.values(typingUsers)} />
+          )}
           <div ref={bottomRef} className="h-px shrink-0" />
         </div>
 
@@ -1203,7 +1296,14 @@ export function ChatThread({
             <textarea
               ref={textareaRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                if (e.target.value.trim()) {
+                  broadcastTyping();
+                } else {
+                  broadcastStopTyping();
+                }
+              }}
               placeholder="Écrire un message…"
               rows={1}
               disabled={pending}
