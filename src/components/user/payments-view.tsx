@@ -32,6 +32,7 @@ import {
 } from "@/lib/pricing";
 import { PricingBetaBanner } from "@/components/pricing/pricing-beta-banner";
 import { RegistrationPaymentButton } from "@/components/user/registration-payment-button";
+import { getPaymentRowStatusLabel } from "@/lib/admin/payment-display";
 import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
 import type { Payment, Profile } from "@/lib/types/database";
 
@@ -45,6 +46,12 @@ const STATUS_LABELS: Record<
   failed: { label: "Échoué", variant: "warning" },
   refunded: { label: "Remboursé", variant: "default" },
 };
+
+function paymentStatusForMember(payment: Payment) {
+  const label = getPaymentRowStatusLabel(payment);
+  const base = STATUS_LABELS[payment.status] ?? STATUS_LABELS.unpaid;
+  return { ...base, label };
+}
 
 const PAYMENT_TYPE_LABELS: Record<string, string> = {
   registration: "Frais d'inscription",
@@ -519,7 +526,7 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
         ) : (
           <ul className="mt-4 space-y-2">
             {payments.map((p) => {
-              const st = STATUS_LABELS[p.status] ?? STATUS_LABELS.unpaid;
+              const st = paymentStatusForMember(p);
               const isRegistration = p.type === "registration";
               return (
                 <li

@@ -16,6 +16,8 @@ export async function confirmRegistrationPayment() {
 
   revalidatePath("/paiements");
   revalidatePath("/decouvrir");
+  revalidatePath("/rencontres");
+  revalidatePath("/matchs");
   revalidatePath("/tableau-de-bord");
   revalidatePath("/profil");
   return { success: true };

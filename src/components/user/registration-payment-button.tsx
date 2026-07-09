@@ -45,9 +45,10 @@ export function RegistrationPaymentButton({
       } else {
         toast({
           title: free ? "Compte activé gratuitement" : "Compte activé",
-          description: "Vous pouvez maintenant découvrir les profils et liker.",
+          description:
+            "Vous pouvez liker des profils et consulter vos matchs dès qu'une mise en relation est proposée.",
         });
-        router.push("/decouvrir?welcome=1");
+        router.push("/decouvrir?activated=1");
         router.refresh();
       }
     });

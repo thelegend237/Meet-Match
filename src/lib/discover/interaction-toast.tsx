@@ -6,13 +6,15 @@ import {
   isSubscriptionRequiredError,
   SUBSCRIPTION_REQUIRED_ERROR,
 } from "@/lib/discover/subscription";
+import { PRICING_TEST_MODE } from "@/lib/pricing";
 
 export function showSubscriptionRequiredToast() {
   toast({
     variant: "destructive",
-    title: "Abonnement requis",
-    description:
-      "Vous pouvez parcourir les profils gratuitement. Activez votre compte pour liker et interagir.",
+    title: PRICING_TEST_MODE ? "Compte non activé" : "Abonnement requis",
+    description: PRICING_TEST_MODE
+      ? "Activez gratuitement votre compte pour envoyer des likes et accéder aux matchs."
+      : "Vous pouvez parcourir les profils gratuitement. Activez votre compte pour liker et interagir.",
     action: (
       <ToastAction
         altText="Activer mon compte"
@@ -20,7 +22,7 @@ export function showSubscriptionRequiredToast() {
           window.location.assign("/paiements");
         }}
       >
-        Activer mon compte
+        {PRICING_TEST_MODE ? "Activer gratuitement" : "Activer mon compte"}
       </ToastAction>
     ),
   });

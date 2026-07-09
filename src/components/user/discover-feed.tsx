@@ -20,7 +20,9 @@ import { passProfile } from "@/lib/actions/passes";
 import { toast } from "@/hooks/use-toast";
 import { showDiscoverActionError, showSubscriptionRequiredToast } from "@/lib/discover/interaction-toast";
 import { Reveal } from "@/components/motion/motion";
-import type { DiscoveryProfile } from "@/lib/types/database";
+import { PaymentActivationBanner } from "@/components/user/payment-activation-banner";
+import type { DiscoveryProfile, Profile } from "@/lib/types/database";
+import { cn } from "@/lib/utils";
 
 type ViewerLocation = Pick<DiscoveryProfile, "city" | "country_code">;
 type ViewMode = "swipe" | "grid";
@@ -32,6 +34,7 @@ interface DiscoverFeedProps {
   genderPreference: GenderPreference;
   viewerLocation: ViewerLocation;
   canInteract?: boolean;
+  viewerProfile?: Profile;
 }
 
 export function DiscoverFeed({
@@ -41,6 +44,7 @@ export function DiscoverFeed({
   genderPreference: initialPreference,
   viewerLocation,
   canInteract = true,
+  viewerProfile,
 }: DiscoverFeedProps) {
   const [selected, setSelected] = useState<DiscoveryProfile | null>(null);
   const [likedSet, setLikedSet] = useState(() => new Set(likedIds));
@@ -117,6 +121,7 @@ export function DiscoverFeed({
 
   return (
     <>
+      <div className={cn(!canInteract && "pb-24 md:pb-0")}>
       <Reveal as="header" className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -209,6 +214,7 @@ export function DiscoverFeed({
             profiles={swipeDeck}
             viewerLocation={viewerLocation}
             pending={isPending}
+            canInteract={canInteract}
             onPass={handlePass}
             onLike={handleQuickLike}
             onOpen={setSelected}
@@ -258,6 +264,11 @@ export function DiscoverFeed({
         </div>
       )}
       </Reveal>
+      </div>
+
+      {viewerProfile && !canInteract ? (
+        <PaymentActivationBanner profile={viewerProfile} variant="sticky" />
+      ) : null}
 
       <ProfileDetailModal
         profile={selected}

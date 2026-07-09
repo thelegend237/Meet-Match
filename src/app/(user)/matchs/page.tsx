@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/session";
 import { getUserMatches } from "@/lib/user/matches";
 import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
 import { MatchesList } from "@/components/user/matches-list";
+import { PaymentRequiredBanner } from "@/components/user/profile-banners";
 import { PageHeader, PageStack } from "@/components/layout/page-header";
 
 export const metadata = {
@@ -22,6 +23,7 @@ export default async function MatchsPage() {
         title="Mes matchs"
         description="Mises en relation proposées par notre équipe et suivi de vos rencontres."
       />
+      <PaymentRequiredBanner profile={profile} />
       <Suspense
         fallback={
           <div className="mm-card p-8 text-center text-muted-foreground">

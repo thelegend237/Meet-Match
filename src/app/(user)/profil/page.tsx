@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getUserMatches } from "@/lib/user/matches";
 import { ProfileHub } from "@/components/user/profile-hub";
+import { PaymentRequiredBanner } from "@/components/user/profile-banners";
 import type { Payment } from "@/lib/types/database";
 
 export const metadata = {
@@ -26,10 +27,13 @@ export default async function ProfilPage() {
   }
 
   return (
-    <ProfileHub
-      profile={profile}
-      payments={paymentsError ? [] : ((payments as Payment[]) ?? [])}
-      matchCount={matches.length}
-    />
+    <div className="space-y-4">
+      <PaymentRequiredBanner profile={profile} />
+      <ProfileHub
+        profile={profile}
+        payments={paymentsError ? [] : ((payments as Payment[]) ?? [])}
+        matchCount={matches.length}
+      />
+    </div>
   );
 }

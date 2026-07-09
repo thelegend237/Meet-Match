@@ -36,6 +36,7 @@ interface DiscoverCardStackProps {
   profiles: DiscoveryProfile[];
   viewerLocation: ViewerLocation;
   pending?: boolean;
+  canInteract?: boolean;
   onPass: (profile: DiscoveryProfile) => void;
   onLike: (profile: DiscoveryProfile) => void;
   onOpen: (profile: DiscoveryProfile) => void;
@@ -111,6 +112,7 @@ function SwipeableCard({
   nextProfile,
   viewerLocation,
   pending,
+  canInteract = true,
   onPass,
   onLike,
   onOpen,
@@ -119,6 +121,7 @@ function SwipeableCard({
   nextProfile?: DiscoveryProfile;
   viewerLocation: ViewerLocation;
   pending?: boolean;
+  canInteract?: boolean;
   onPass: () => void;
   onLike: () => void;
   onOpen: () => void;
@@ -202,11 +205,21 @@ function SwipeableCard({
     }
 
     if (offsetX > SWIPE_THRESHOLD) {
+      if (!canInteract) {
+        setOffsetX(0);
+        onLike();
+        return;
+      }
       finishExit("right");
       return;
     }
 
     if (offsetX < -SWIPE_THRESHOLD) {
+      if (!canInteract) {
+        setOffsetX(0);
+        onPass();
+        return;
+      }
       finishExit("left");
       return;
     }
@@ -221,11 +234,19 @@ function SwipeableCard({
 
   function triggerPass() {
     if (pending || exitDir) return;
+    if (!canInteract) {
+      onPass();
+      return;
+    }
     finishExit("left");
   }
 
   function triggerLike() {
     if (pending || exitDir) return;
+    if (!canInteract) {
+      onLike();
+      return;
+    }
     finishExit("right");
   }
 
@@ -416,7 +437,8 @@ function SwipeableCard({
           onClick={triggerLike}
           className={cn(
             "flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-gradient-to-br from-[#7b3d8f] to-[#e91e8c] shadow-xl shadow-[#e91e8c]/35 transition-transform hover:scale-105 active:scale-95 sm:h-20 sm:w-20",
-            (pending || exitDir) && "opacity-60"
+            (pending || exitDir) && "opacity-60",
+            !canInteract && "ring-2 ring-amber-300 ring-offset-2"
           )}
           aria-label="Montrer mon intérêt"
         >
@@ -427,6 +449,11 @@ function SwipeableCard({
           )}
         </button>
       </div>
+      {!canInteract ? (
+        <p className="relative z-30 -mt-1 pb-1 text-center text-xs font-medium text-amber-800">
+          Activez votre compte pour liker
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -435,6 +462,7 @@ export function DiscoverCardStack({
   profiles,
   viewerLocation,
   pending = false,
+  canInteract = true,
   onPass,
   onLike,
   onOpen,
@@ -500,6 +528,7 @@ export function DiscoverCardStack({
           nextProfile={next}
           viewerLocation={viewerLocation}
           pending={pending}
+          canInteract={canInteract}
           onPass={() => onPass(current)}
           onLike={() => onLike(current)}
           onOpen={() => onOpen(current)}

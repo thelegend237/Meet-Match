@@ -95,6 +95,7 @@ export default async function RencontresPage() {
           genderPreference={genderPreference}
           viewerLocation={viewerLocation}
           canInteract={canInteract}
+          viewerProfile={profile}
         />
       )}
     </PageStack>

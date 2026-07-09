@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { remindPaymentAction } from "@/lib/actions/admin";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { paymentStatusLabels } from "@/lib/admin/labels";
+import { getPaymentRowStatusLabel } from "@/lib/admin/payment-display";
 import type { Payment, PaymentStatus, PaymentType } from "@/lib/types/database";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -195,7 +195,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
           user?.name ?? "",
           user?.email ?? "",
           TYPE_LABELS[payment.type],
-          paymentStatusLabels[payment.status] ?? payment.status,
+          getPaymentRowStatusLabel(payment),
         ]
           .join(" ")
           .toLowerCase();
@@ -263,7 +263,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
         TYPE_LABELS[payment.type],
         String(Number(payment.amount)),
         payment.currency,
-        paymentStatusLabels[payment.status] ?? payment.status,
+        getPaymentRowStatusLabel(payment),
         payment.provider,
         formatPaymentDate(payment.created_at),
         payment.match_id ?? "",

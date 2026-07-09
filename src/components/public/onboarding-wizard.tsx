@@ -584,10 +584,12 @@ export function OnboardingWizard({
             break;
           case "done": {
             const refreshed = await getOnboardingProfile();
-            const pay =
+            const payStatus =
               refreshed.profile?.registration_payment_status ??
               initialProfile?.registration_payment_status;
-            router.push("/decouvrir?welcome=1");
+            router.push(
+              payStatus === "unpaid" ? "/paiements?welcome=1" : "/decouvrir?welcome=1"
+            );
             router.refresh();
             break;
           }

@@ -94,6 +94,7 @@ export default async function DecouvrirPage() {
           genderPreference={genderPreference}
           viewerLocation={viewerLocation}
           canInteract={canInteract}
+          viewerProfile={profile}
         />
       )}
     </PageStack>

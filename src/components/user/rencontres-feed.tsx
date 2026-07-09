@@ -13,12 +13,14 @@ import {
   type GenderPreference,
   filterProfilesByGender,
 } from "@/lib/discover/profile-status";
-import type { DiscoveryProfile } from "@/lib/types/database";
+import type { DiscoveryProfile, Profile } from "@/lib/types/database";
 import { toast } from "@/hooks/use-toast";
 import {
   showDiscoverActionError,
   showSubscriptionRequiredToast,
 } from "@/lib/discover/interaction-toast";
+import { PaymentActivationBanner } from "@/components/user/payment-activation-banner";
+import { cn } from "@/lib/utils";
 
 type ViewerLocation = Pick<DiscoveryProfile, "city" | "country_code">;
 type ViewMode = "swipe" | "grid";
@@ -30,6 +32,7 @@ interface RencontresFeedProps {
   genderPreference: GenderPreference;
   viewerLocation: ViewerLocation;
   canInteract?: boolean;
+  viewerProfile?: Profile;
 }
 
 export function RencontresFeed({
@@ -39,6 +42,7 @@ export function RencontresFeed({
   genderPreference: initialPreference,
   viewerLocation,
   canInteract = true,
+  viewerProfile,
 }: RencontresFeedProps) {
   const [selected, setSelected] = useState<DiscoveryProfile | null>(null);
   const [likedSet, setLikedSet] = useState(() => new Set(likedIds));
@@ -115,6 +119,7 @@ export function RencontresFeed({
 
   return (
     <>
+      <div className={cn(!canInteract && "pb-24 md:pb-0")}>
       <header className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -187,6 +192,7 @@ export function RencontresFeed({
             profiles={swipeDeck}
             viewerLocation={viewerLocation}
             pending={pending}
+            canInteract={canInteract}
             onPass={handlePass}
             onLike={handleQuickLike}
             onOpen={setSelected}
@@ -235,6 +241,12 @@ export function RencontresFeed({
           </button>
         </div>
       )}
+
+      </div>
+
+      {viewerProfile && !canInteract ? (
+        <PaymentActivationBanner profile={viewerProfile} variant="sticky" />
+      ) : null}
 
       <ProfileDetailModal
         profile={selected}
