@@ -4,6 +4,7 @@ import { Globe, MapPin } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { IconField } from "@/components/public/inscription/inscription-ui";
 import { CountrySelect } from "@/components/ui/country-select";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 import { GEO_COUNTRIES } from "@/lib/geo/countries-data";
 import type { GeoCityResult } from "@/lib/geo/types";
 import { cn } from "@/lib/utils";
@@ -90,15 +91,7 @@ export function LocationPicker({
     return () => window.clearTimeout(timer);
   }, [query, countryCode, open, fetchCities]);
 
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (!wrapperRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
+  useOnClickOutside(wrapperRef, () => setOpen(false), open);
 
   function selectCity(item: GeoCityResult) {
     setQuery(item.name);

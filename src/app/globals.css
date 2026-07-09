@@ -61,6 +61,10 @@
     padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
   }
 
+  .safe-area-pt {
+    padding-top: max(0.25rem, env(safe-area-inset-top));
+  }
+
   .font-brand {
     font-family: var(--font-playfair), ui-serif, Georgia, serif;
   }

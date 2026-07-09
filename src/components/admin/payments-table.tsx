@@ -383,7 +383,71 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="space-y-3 p-4 md:hidden">
+              {paginated.map((payment) => {
+                const user = usersById[payment.user_id];
+                return (
+                  <article
+                    key={payment.id}
+                    className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
+                  >
+                    <Link
+                      href={`/admin/utilisateurs/${payment.user_id}`}
+                      className="flex items-center gap-3"
+                    >
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted">
+                        {user?.photo ? (
+                          <Image
+                            src={user.photo}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-sm font-semibold text-primary">
+                            {(user?.name || "?")[0]}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-primary">
+                          {user?.name ?? "—"}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {user?.email ?? "—"}
+                        </p>
+                      </div>
+                    </Link>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
+                          payment.type === "registration"
+                            ? "bg-[#ede9fe] text-[#5b3d8f]"
+                            : "bg-[#fce7f3] text-[#be185d]"
+                        )}
+                      >
+                        {TYPE_LABELS[payment.type]}
+                      </span>
+                      <StatusBadge kind="payment" status={payment.status} />
+                    </div>
+
+                    <div className="mt-3 flex items-baseline justify-between gap-2">
+                      <p className="text-lg font-bold tabular-nums text-primary">
+                        {formatCurrency(Number(payment.amount), payment.currency)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatPaymentDate(payment.created_at)}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-border/60 bg-muted/20 text-xs uppercase tracking-wide text-muted-foreground">

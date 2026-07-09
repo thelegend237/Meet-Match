@@ -27,7 +27,7 @@ export function MessageReplyBar({ replyTo, onCancel }: MessageReplyBarProps) {
       <button
         type="button"
         onClick={onCancel}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#9b8fa8] hover:bg-[#f3eef8]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#9b8fa8] hover:bg-[#f3eef8]"
         aria-label="Annuler la réponse"
       >
         <X className="h-4 w-4" />

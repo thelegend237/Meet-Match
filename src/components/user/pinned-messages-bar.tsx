@@ -44,7 +44,7 @@ export function PinnedMessagesBar({
             <button
               type="button"
               onClick={() => onUnpin(message.id)}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[#9b8fa8] hover:bg-white/80"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#9b8fa8] hover:bg-white/80"
               aria-label="Désépingler"
             >
               <X className="h-3.5 w-3.5" />

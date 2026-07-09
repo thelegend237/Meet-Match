@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MoreVertical, type LucideIcon } from "lucide-react";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 import { cn } from "@/lib/utils";
 
 export type ChatMenuItem = {
@@ -27,25 +28,17 @@ export function ChatOverflowMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
+  useOnClickOutside(rootRef, () => setOpen(false), open);
+
   useEffect(() => {
     if (!open) return;
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") setOpen(false);
     }
 
-    document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [open]);
 
   if (items.length === 0) return null;
@@ -86,7 +79,7 @@ export function ChatOverflowMenu({
                   item.onClick();
                 }}
                 className={cn(
-                  "flex w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] transition-colors hover:bg-[#faf8fc] disabled:opacity-50",
+                  "flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left text-[14px] transition-colors hover:bg-[#faf8fc] disabled:opacity-50",
                   item.destructive
                     ? "text-[#be185d]"
                     : "text-[#2e1a47]"

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/public/logo";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 
 const ADMIN_LOGO = "/logo-admin.png";
 import { Button } from "@/components/ui/button";
@@ -157,16 +158,12 @@ export function AdminShell({
     setAccountOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    if (!accountOpen) return;
-    function onClickOutside(e: MouseEvent) {
-      if (!accountRef.current?.contains(e.target as Node)) {
-        setAccountOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [accountOpen]);
+  useOnClickOutside(accountRef, () => setAccountOpen(false), accountOpen);
+
+  const isAdminConversationThread = Boolean(
+    pathname.match(/^\/admin\/conversations\/[^/]+$/)
+  );
+  const hideMobileNav = isAdminConversationThread;
 
   useEffect(() => {
     if (!drawerOpen && !moreOpen) return;
@@ -390,13 +387,23 @@ export function AdminShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <main className="min-h-0 flex-1 overflow-auto bg-[#f8f6fc] pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+          <main
+            className={cn(
+              "min-h-0 flex-1 overflow-auto bg-[#f8f6fc] md:pb-0",
+              hideMobileNav
+                ? "pb-0"
+                : "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+            )}
+          >
             {children}
           </main>
 
           <nav
             aria-label="Navigation admin"
-            className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/80 bg-card shadow-[0_-4px_20px_rgba(46,26,71,0.06)] safe-area-pb md:hidden"
+            className={cn(
+              "fixed bottom-0 left-0 right-0 z-50 border-t border-border/80 bg-card shadow-[0_-4px_20px_rgba(46,26,71,0.06)] safe-area-pb md:hidden",
+              hideMobileNav && "hidden"
+            )}
           >
             <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 py-1">
               {mobilePrimary.map((link) => {
@@ -406,7 +413,7 @@ export function AdminShell({
                     key={link.id}
                     href={link.href}
                     className={cn(
-                      "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium transition-colors",
+                      "flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium transition-colors",
                       active ? "text-secondary" : "text-muted-foreground"
                     )}
                   >
@@ -419,7 +426,7 @@ export function AdminShell({
                 type="button"
                 onClick={() => setMoreOpen(true)}
                 className={cn(
-                  "flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium",
+                  "flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium",
                   isMoreActive ? "text-secondary" : "text-muted-foreground"
                 )}
               >

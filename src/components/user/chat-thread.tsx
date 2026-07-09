@@ -218,12 +218,25 @@ function MessageBubble({
   const isDeleted = Boolean(msg.deleted_at);
   const isPinned = Boolean(msg.is_pinned);
   const longPressTimer = useRef<number | null>(null);
+  const lastTapRef = useRef(0);
 
   const clearLongPress = () => {
     if (longPressTimer.current) {
       window.clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
+  };
+
+  const handleTouchEnd = () => {
+    clearLongPress();
+    if (!interactive) return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 350) {
+      onReact(msg.id, "❤️");
+      lastTapRef.current = 0;
+      return;
+    }
+    lastTapRef.current = now;
   };
 
   const interactive = canInteract && !isDeleted && !selectionMode;
@@ -255,7 +268,7 @@ function MessageBubble({
       onClick={selectionMode ? onToggleSelect : undefined}
       onDoubleClick={() => interactive && onReact(msg.id, "❤️")}
       onTouchStart={handleTouchStart}
-      onTouchEnd={clearLongPress}
+      onTouchEnd={handleTouchEnd}
       onTouchMove={clearLongPress}
     >
       {selectionMode && (
@@ -292,8 +305,8 @@ function MessageBubble({
                 onToggleActionMenu();
               }}
               className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full border border-[#e8e0f0] bg-white/90 text-[#7b3d8f] shadow-sm transition-all hover:bg-[#f3eef8] hover:text-[#e91e8c]",
-                "opacity-60 group-hover:opacity-100 sm:opacity-0",
+                "flex h-10 w-10 items-center justify-center rounded-full border border-[#e8e0f0] bg-white/90 text-[#7b3d8f] shadow-sm transition-all hover:bg-[#f3eef8] hover:text-[#e91e8c] sm:h-7 sm:w-7",
+                "opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
                 isActionMenuOpen && "opacity-100"
               )}
               aria-label="Actions du message"
@@ -309,6 +322,7 @@ function MessageBubble({
               isPinned={isPinned}
               canDelete={canDelete}
               canEdit={canEdit}
+              onDismiss={onToggleActionMenu}
               onReply={onReply}
               onTogglePin={onTogglePin}
               onReact={onOpenReactionPicker}
@@ -1395,7 +1409,7 @@ export function ChatThread({
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#9b8fa8] hover:bg-[#f3eef8]"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[#9b8fa8] hover:bg-[#f3eef8]"
                 aria-label="Annuler la modification"
               >
                 <X className="h-4 w-4" />
@@ -1405,14 +1419,33 @@ export function ChatThread({
             <MessageReplyBar replyTo={replyTo} onCancel={() => setReplyTo(null)} />
           ) : null}
           <div className="relative flex w-full items-end gap-2 sm:gap-2.5">
-          {emojiPickerOpen && (
-            <div className="absolute bottom-full left-3 mb-2 sm:left-4">
-              <EmojiPicker
-                onSelect={insertEmoji}
-                onClose={() => setEmojiPickerOpen(false)}
-              />
-            </div>
-          )}
+          {emojiPickerOpen ? (
+            <>
+              <div
+                className="fixed inset-0 z-[60] sm:hidden"
+                role="presentation"
+                onClick={() => setEmojiPickerOpen(false)}
+              >
+                <div className="absolute inset-0 bg-black/30" aria-hidden />
+                <div
+                  className="absolute bottom-0 left-0 right-0 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <EmojiPicker
+                    onSelect={insertEmoji}
+                    onClose={() => setEmojiPickerOpen(false)}
+                    className="mx-auto w-full max-w-none"
+                  />
+                </div>
+              </div>
+              <div className="absolute bottom-full left-3 mb-2 hidden sm:block sm:left-4">
+                <EmojiPicker
+                  onSelect={insertEmoji}
+                  onClose={() => setEmojiPickerOpen(false)}
+                />
+              </div>
+            </>
+          ) : null}
           <button
             type="button"
             className="mb-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#9b8fa8] transition-colors hover:bg-[#f3eef8] hover:text-[#5b3d8f]"

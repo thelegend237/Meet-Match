@@ -567,7 +567,78 @@ export function MatchesTable({ matches }: MatchesTableProps) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto px-1 pb-1 sm:px-2">
+            {/* Cartes mobile */}
+            <div className="space-y-3 p-4 md:hidden">
+              {paginated.map((match) => (
+                <article
+                  key={match.id}
+                  className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
+                >
+                  <CoupleCell match={match} />
+                  <div className="mt-3">
+                    <StatusBadge
+                      kind="match"
+                      status={match.status}
+                      className="px-3 py-1 text-xs"
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Proposé le {formatMatchDate(match.proposedAt)}
+                    </p>
+                  </div>
+                  <div className="mt-3 border-t border-border/40 pt-3">
+                    <PaymentsCell
+                      match={match}
+                      remindingKey={remindingKey}
+                      onRemind={remindPayment}
+                    />
+                  </div>
+                  <div className="mt-4 grid grid-cols-1 gap-2">
+                    {match.chatId && (
+                      <Link
+                        href={`/admin/conversations/${match.chatId}`}
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#e8e0f0] bg-white text-sm font-semibold text-[#5b3d8f]"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Discussion
+                      </Link>
+                    )}
+                    {match.status === "active" && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => updateStatus(match.id, "success")}
+                          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#dcfce7] text-sm font-semibold text-[#15803d] disabled:opacity-60"
+                        >
+                          Réussi
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => updateStatus(match.id, "failed")}
+                          className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#fce7f3] text-sm font-semibold text-[#be185d] disabled:opacity-60"
+                        >
+                          Échoué
+                        </button>
+                      </>
+                    )}
+                    {(match.status === "pending_payment" ||
+                      match.status === "pending") && (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => updateStatus(match.id, "cancelled")}
+                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border/60 bg-white text-sm font-semibold text-muted-foreground disabled:opacity-60"
+                      >
+                        Annuler
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto px-1 pb-1 sm:px-2 md:block">
               <table className="mm-admin-data-table">
                 <thead>
                   <tr>

@@ -92,7 +92,7 @@ export function Header({
 
         <button
           type="button"
-          className="rounded-xl p-2 text-primary lg:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-primary lg:hidden"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Menu"
         >

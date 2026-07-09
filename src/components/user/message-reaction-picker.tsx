@@ -27,7 +27,8 @@ export function MessageReactionPicker({
   return (
     <div
       className={cn(
-        "absolute -top-11 z-20 flex items-center gap-1",
+        "absolute z-20 flex items-center gap-1",
+        "top-full mt-1 sm:-top-11 sm:mt-0",
         isMine ? "right-0" : "left-0"
       )}
     >
@@ -37,7 +38,7 @@ export function MessageReactionPicker({
             key={emoji}
             type="button"
             onClick={() => onReact(emoji)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-lg transition-transform hover:scale-110 hover:bg-[#f3eef8]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-lg transition-transform active:scale-95 hover:bg-[#f3eef8] sm:h-8 sm:w-8"
             aria-label={`Réagir avec ${emoji}`}
           >
             {emoji}
@@ -47,7 +48,7 @@ export function MessageReactionPicker({
           <button
             type="button"
             onClick={onToggleEmojiPicker}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#7b3d8f] transition-colors hover:bg-[#f3eef8]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[#7b3d8f] transition-colors hover:bg-[#f3eef8] sm:h-8 sm:w-8"
             aria-label="Plus d'emojis"
           >
             <Plus className="h-4 w-4" />

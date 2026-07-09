@@ -492,7 +492,7 @@ export function DiscoverCardStack({
         </Link>
       </div>
 
-      <div className="relative min-h-[min(78dvh,720px)] py-2 sm:py-4">
+      <div className="relative min-h-[min(68dvh,640px)] py-2 sm:min-h-[min(78dvh,720px)] sm:py-4">
         <ProfileBackdrop profiles={backdropProfiles} />
         <SwipeableCard
           key={current.id}

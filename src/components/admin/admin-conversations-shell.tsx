@@ -21,7 +21,14 @@ export function AdminConversationsShell({
   const showThread = Boolean(activeChatId);
 
   return (
-    <div className="mm-messages-layout flex h-full min-h-0 w-full flex-1 p-2 sm:p-3">
+    <div
+      className={cn(
+        "mm-messages-layout flex min-h-0 w-full flex-1 p-2 sm:p-3",
+        showThread
+          ? "h-full"
+          : "h-[calc(100dvh-4rem-4.75rem-env(safe-area-inset-bottom,0px))] md:h-full"
+      )}
+    >
       <div className="mm-messages-panel">
         <aside
           className={cn("mm-chat-list-col", showThread && "hidden md:flex")}

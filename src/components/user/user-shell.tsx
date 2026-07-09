@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 import { Logo } from "@/components/public/logo";
 import { MemberWelcomeTourGate } from "@/components/user/member-welcome-tour-gate";
 import { Button } from "@/components/ui/button";
@@ -125,16 +126,7 @@ export function UserShell({
     setAccountOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    if (!accountOpen) return;
-    function onClickOutside(e: MouseEvent) {
-      if (!accountRef.current?.contains(e.target as Node)) {
-        setAccountOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [accountOpen]);
+  useOnClickOutside(accountRef, () => setAccountOpen(false), accountOpen);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -406,7 +398,7 @@ export function UserShell({
               <button
                 type="button"
                 onClick={() => setMoreOpen(true)}
-                className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium text-muted-foreground"
+                className="flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-medium text-muted-foreground"
               >
                 <MoreHorizontal className="h-5 w-5" />
                 Plus

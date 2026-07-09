@@ -31,14 +31,14 @@ export function MessageInfoDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 safe-area-pt sm:items-center sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label="Informations du message"
     >
       <div
-        className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="w-full max-w-sm overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-[#ebe6f0] px-4 py-3">
@@ -48,7 +48,7 @@ export function MessageInfoDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[#9b8fa8] hover:bg-[#f3eef8]"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[#9b8fa8] hover:bg-[#f3eef8]"
             aria-label="Fermer"
           >
             <X className="h-4 w-4" />
