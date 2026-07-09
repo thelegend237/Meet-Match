@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { SPOKEN_LANGUAGE_CODES } from "@/lib/languages";
+import {
+  isOptionalMemberBirthDateValid,
+  MEMBER_MIN_AGE_ERROR,
+  meetsMinimumMemberAge,
+} from "@/lib/validations/age";
 
 const spokenLanguageCodeSchema = z.enum(SPOKEN_LANGUAGE_CODES);
 
@@ -35,13 +40,28 @@ export const onboardingAccountSchema = onboardingCredentialsSchema.merge(
 export type OnboardingAccountData = z.infer<typeof onboardingAccountSchema>;
 
 export const onboardingIdentitySchema = z.object({
-  date_of_birth: z.string().optional().or(z.literal("")),
+  date_of_birth: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(isOptionalMemberBirthDateValid, {
+      message: MEMBER_MIN_AGE_ERROR,
+    }),
   gender: z
     .enum(["male", "female", "other", "prefer_not_say"])
     .optional()
     .or(z.literal("")),
   languages: spokenLanguagesSchema,
   phone: z.string().optional().or(z.literal("")),
+});
+
+export const onboardingBirthDateSchema = z.object({
+  date_of_birth: z
+    .string()
+    .min(1, "La date de naissance est requise")
+    .refine(meetsMinimumMemberAge, {
+      message: MEMBER_MIN_AGE_ERROR,
+    }),
 });
 
 export type OnboardingIdentityData = z.infer<typeof onboardingIdentitySchema>;

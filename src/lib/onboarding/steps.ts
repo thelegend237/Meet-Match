@@ -22,7 +22,7 @@ export type OnboardingStepMeta = {
 /** Étapes après création du compte (profil). */
 export const PROFILE_STEPS: OnboardingStepMeta[] = [
   { id: "gender", optional: true },
-  { id: "birthdate", optional: true },
+  { id: "birthdate", optional: false },
   { id: "language", optional: true },
   { id: "bio", optional: true },
   { id: "expectations", optional: true },

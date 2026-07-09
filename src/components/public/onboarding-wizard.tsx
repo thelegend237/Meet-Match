@@ -59,9 +59,11 @@ import {
 } from "@/lib/onboarding/steps";
 import {
   onboardingAccountSchema,
+  onboardingBirthDateSchema,
   onboardingCredentialsSchema,
   onboardingLocationSchema,
 } from "@/lib/validations/onboarding";
+import { getMaxBirthDateForMinAge } from "@/lib/validations/age";
 import {
   getOnboardingProfile,
   saveOnboardingIdentity,
@@ -547,6 +549,22 @@ export function OnboardingWizard({
           case "location":
             break;
 
+          case "birthdate": {
+            const parsed = onboardingBirthDateSchema.safeParse({
+              date_of_birth: data.date_of_birth,
+            });
+            if (!parsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Date de naissance invalide",
+                description: parsed.error.errors[0]?.message,
+              });
+              return;
+            }
+            goNext();
+            break;
+          }
+
           case "language":
             await persistIdentity();
             goNext();
@@ -560,6 +578,16 @@ export function OnboardingWizard({
             goNext();
             break;
           case "photo":
+            if (!data.date_of_birth?.trim()) {
+              toast({
+                variant: "destructive",
+                title: "Date de naissance requise",
+                description:
+                  "Indiquez une date de naissance valide (18 ans minimum) avant de continuer.",
+              });
+              goTo("birthdate");
+              return;
+            }
             if (!photoFile && !photoPreview) {
               toast({
                 variant: "destructive",
@@ -906,15 +934,18 @@ export function OnboardingWizard({
       case "birthdate":
         if (mode === "public") {
           return (
-            <RegisterStep icon={Cake} optional>
+            <RegisterStep icon={Cake}>
               <LargeInput
                 type="date"
                 value={data.date_of_birth}
                 onChange={(e) => patch({ date_of_birth: e.target.value })}
-                max={new Date().toISOString().slice(0, 10)}
+                max={getMaxBirthDateForMinAge()}
+                required
                 className="rounded-xl border-border/60 bg-[#faf8fc] px-4 py-3.5 focus:border-secondary/40 focus:bg-white focus:ring-2 focus:ring-secondary/15"
               />
-              <RegisterSkipButton onClick={skipWithoutSave} />
+              <RegisterHint>
+                Vous devez avoir au moins 18 ans pour créer un compte sur Meet & Match.
+              </RegisterHint>
             </RegisterStep>
           );
         }
@@ -923,17 +954,16 @@ export function OnboardingWizard({
             <StepIllustration icon={Cake} />
             <StepHeader
               title="Quelle est votre date de naissance ?"
-              subtitle="Votre âge sera visible sur votre profil."
-              optional
+              subtitle="Vous devez avoir au moins 18 ans. Votre âge sera visible sur votre profil."
             />
             <StepBody>
               <LargeInput
                 type="date"
                 value={data.date_of_birth}
                 onChange={(e) => patch({ date_of_birth: e.target.value })}
-                max={new Date().toISOString().slice(0, 10)}
+                max={getMaxBirthDateForMinAge()}
+                required
               />
-              <SkipOption onClick={skipWithoutSave} />
             </StepBody>
           </>
         );

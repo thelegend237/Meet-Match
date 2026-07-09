@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { updateProfile } from "@/lib/actions/profile";
+import { getMaxBirthDateForMinAge } from "@/lib/validations/age";
 import { COUNTRIES } from "@/lib/validations/auth";
 import {
   GENDER_LABELS,
@@ -326,6 +327,7 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                   type="date"
                   className="h-12"
                   value={form.date_of_birth}
+                  max={getMaxBirthDateForMinAge()}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, date_of_birth: e.target.value }))
                   }

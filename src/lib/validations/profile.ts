@@ -1,12 +1,22 @@
 import { z } from "zod";
 import { SPOKEN_LANGUAGE_CODES } from "@/lib/languages";
+import {
+  isOptionalMemberBirthDateValid,
+  MEMBER_MIN_AGE_ERROR,
+} from "@/lib/validations/age";
 
 const spokenLanguageCodeSchema = z.enum(SPOKEN_LANGUAGE_CODES);
 
 export const profileSchema = z.object({
   display_name: z.string().min(2, "Minimum 2 caractères"),
   phone: z.string().optional().or(z.literal("")),
-  date_of_birth: z.string().optional().or(z.literal("")),
+  date_of_birth: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine(isOptionalMemberBirthDateValid, {
+      message: MEMBER_MIN_AGE_ERROR,
+    }),
   gender: z
     .enum(["male", "female", "other", "prefer_not_say"])
     .optional()

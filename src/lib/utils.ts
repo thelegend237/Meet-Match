@@ -16,7 +16,8 @@ export function formatCurrency(amount: number, currency: string): string {
 
 export function getAge(dateOfBirth: string | null): number | null {
   if (!dateOfBirth) return null;
-  const birth = new Date(dateOfBirth);
+  const birth = new Date(`${dateOfBirth}T12:00:00`);
+  if (Number.isNaN(birth.getTime())) return null;
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
@@ -26,5 +27,6 @@ export function getAge(dateOfBirth: string | null): number | null {
   ) {
     age--;
   }
+  if (age < 0) return null;
   return age;
 }
