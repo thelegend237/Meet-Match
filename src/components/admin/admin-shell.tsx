@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_HOME } from "@/lib/auth/routes";
+import { isAdminConversationThread } from "@/lib/navigation/mobile-shell";
 import { useNotificationRealtime } from "@/components/user/notification-realtime-provider";
 
 type NavLink = {
@@ -160,10 +161,7 @@ export function AdminShell({
 
   useOnClickOutside(accountRef, () => setAccountOpen(false), accountOpen);
 
-  const isAdminConversationThread = Boolean(
-    pathname.match(/^\/admin\/conversations\/[^/]+$/)
-  );
-  const hideMobileNav = isAdminConversationThread;
+  const hideMobileNav = isAdminConversationThread(pathname);
 
   useEffect(() => {
     if (!drawerOpen && !moreOpen) return;

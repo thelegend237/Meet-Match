@@ -2,10 +2,15 @@
 
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import {
+  isUserMessageThread,
+  isUserMessagesSection,
+} from "@/lib/navigation/mobile-shell";
 
 export function UserContentArea({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isMessages = pathname.startsWith("/messages");
+  const isMessages = isUserMessagesSection(pathname);
+  const isMessageThread = isUserMessageThread(pathname);
   const isEdgeToEdge =
     pathname === "/profil" ||
     pathname.startsWith("/decouvrir") ||
@@ -13,7 +18,14 @@ export function UserContentArea({ children }: { children: React.ReactNode }) {
 
   if (isMessages) {
     return (
-      <div className="mm-page-enter flex h-[calc(100dvh-3.5rem)] min-h-0 flex-col overflow-hidden md:h-[calc(100dvh-4rem)]">
+      <div
+        className={cn(
+          "mm-page-enter flex min-h-0 flex-col overflow-hidden",
+          isMessageThread
+            ? "h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-4rem)]"
+            : "h-[calc(100dvh-3.5rem-4.75rem-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-4rem)]"
+        )}
+      >
         {children}
       </div>
     );

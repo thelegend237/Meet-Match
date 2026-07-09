@@ -32,6 +32,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { PUBLIC_HOME } from "@/lib/auth/routes";
+import {
+  isUserMessageThread,
+  isUserMessagesSection,
+} from "@/lib/navigation/mobile-shell";
 import { useNotificationRealtime } from "@/components/user/notification-realtime-provider";
 import { PushInviteBanner } from "@/components/user/push-invite-banner";
 
@@ -157,8 +161,9 @@ export function UserShell({
     return null;
   }
 
-  const isMessagesRoute = pathname.startsWith("/messages");
-  const hideMobileNav = isMessagesRoute;
+  const isMessagesRoute = isUserMessagesSection(pathname);
+  const isMessageThread = isUserMessageThread(pathname);
+  const hideMobileNav = isMessageThread;
 
   function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     return (
@@ -202,7 +207,7 @@ export function UserShell({
         </div>
 
         <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 sm:px-6">
-          <div className={cn("flex items-center md:hidden", isMessagesRoute && "hidden")}>
+          <div className={cn("flex items-center md:hidden", isMessageThread && "hidden")}>
             <Logo size="sm" />
           </div>
           <div className="flex-1" />
