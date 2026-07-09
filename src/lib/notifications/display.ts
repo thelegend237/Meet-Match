@@ -114,7 +114,7 @@ export function getNotificationActionLabel(
       return "Régler mon paiement →";
     case "admin_new_member":
     case "admin_registration_unpaid":
-      return "Voir le profil →";
+      return "Contacter le membre →";
     case "admin_mutual_like":
       return "Comparer les profils →";
     case "admin_match_pending":
