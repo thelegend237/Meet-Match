@@ -56,6 +56,16 @@ export function getNotificationHref(
     return "/decouvrir/likes";
   }
 
+  if (notification.type === "likes_interest_reminder") {
+    return "/decouvrir";
+  }
+
+  if (notification.type === "match_partner_payment_pending") {
+    const matchId = meta.match_id;
+    if (typeof matchId === "string") return `/matchs?match=${matchId}`;
+    return "/matchs";
+  }
+
   if (notification.type === "message_received") {
     const chatId = meta.chat_id;
     if (typeof chatId === "string") {
@@ -103,6 +113,10 @@ export function getNotificationActionLabel(
       return href.startsWith("/admin") ? "Ouvrir la discussion →" : "Ouvrir la conversation →";
     case "like_received":
       return "Voir mes likes →";
+    case "likes_interest_reminder":
+      return "Explorer Découvrir →";
+    case "match_partner_payment_pending":
+      return "Voir mes matchs →";
     case "message_received":
       return href.startsWith("/admin") ? "Ouvrir la discussion →" : "Répondre →";
     case "account_created":
@@ -129,9 +143,11 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   account_created: "Bienvenue",
   profile_incomplete: "Profil",
   like_received: "Like",
+  likes_interest_reminder: "Intérêt",
   message_received: "Message",
   like_sent: "Like",
   match_proposed: "Match",
+  match_partner_payment_pending: "Match",
   matching_payment_required: "Paiement",
   registration_payment_required: "Paiement",
   payment_confirmed: "Paiement",
