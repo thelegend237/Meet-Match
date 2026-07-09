@@ -76,6 +76,10 @@ export function getNotificationHref(
     return "/paiements";
   }
 
+  if (notification.type === "registration_payment_required") {
+    return "/paiements";
+  }
+
   if (MATCH_TYPES.has(notification.type)) {
     const matchId = meta.match_id;
     if (typeof matchId === "string") return `/matchs?match=${matchId}`;
@@ -106,6 +110,8 @@ export function getNotificationActionLabel(
       return "Compléter mon profil →";
     case "payment_confirmed":
       return "Voir les détails →";
+    case "registration_payment_required":
+      return "Régler mon paiement →";
     case "admin_new_member":
     case "admin_registration_unpaid":
       return "Voir le profil →";
@@ -127,6 +133,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   like_sent: "Like",
   match_proposed: "Match",
   matching_payment_required: "Paiement",
+  registration_payment_required: "Paiement",
   payment_confirmed: "Paiement",
   chat_opened: "Discussion",
   match_success: "Match réussi",
