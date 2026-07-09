@@ -151,7 +151,29 @@ export async function remindMatchingPaymentAction(
   if (error) return { error: error.message };
 
   revalidatePath("/admin/matchs");
+  revalidatePath("/admin/paiements");
   revalidatePath("/notifications");
+  revalidatePath("/matchs");
+  return { success: true };
+}
+
+export async function remindPaymentAction(paymentId: string) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("admin_remind_payment", {
+    p_admin_id: admin.id,
+    p_payment_id: paymentId,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/paiements");
+  revalidatePath("/admin/matchs");
+  revalidatePath("/notifications");
+  revalidatePath("/paiements");
   revalidatePath("/matchs");
   return { success: true };
 }

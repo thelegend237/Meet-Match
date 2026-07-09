@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
+  Bell,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -11,6 +12,8 @@ import {
   Search,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { remindPaymentAction } from "@/lib/actions/admin";
+import { useAdminAction } from "@/hooks/use-admin-action";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { paymentStatusLabels } from "@/lib/admin/labels";
 import type { Payment, PaymentStatus, PaymentType } from "@/lib/types/database";
@@ -44,6 +47,36 @@ function formatPaymentDate(value: string) {
     month: "long",
     year: "numeric",
   });
+}
+
+function paymentNeedsReminder(status: PaymentStatus) {
+  return status === "unpaid" || status === "failed";
+}
+
+function RemindPaymentButton({
+  paymentId,
+  reminding,
+  onRemind,
+}: {
+  paymentId: string;
+  reminding: boolean;
+  onRemind: (paymentId: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={reminding}
+      onClick={() => onRemind(paymentId)}
+      className="inline-flex h-9 min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#ffedd5] bg-[#fff7ed] px-3 text-xs font-semibold text-[#c2410c] transition-colors hover:bg-[#ffedd5] disabled:opacity-60 md:min-h-9"
+    >
+      {reminding ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Bell className="h-3.5 w-3.5" />
+      )}
+      Relancer
+    </button>
+  );
 }
 
 function Pagination({
@@ -138,6 +171,17 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
   const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(1);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+  const { run } = useAdminAction();
+
+  function remindPayment(paymentId: string) {
+    setRemindingId(paymentId);
+    void run(() => remindPaymentAction(paymentId), {
+      success: "Rappel de paiement envoyé au membre.",
+    }).finally(() => {
+      setRemindingId((current) => (current === paymentId ? null : current));
+    });
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -442,6 +486,16 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
                         {formatPaymentDate(payment.created_at)}
                       </p>
                     </div>
+
+                    {paymentNeedsReminder(payment.status) ? (
+                      <div className="mt-4">
+                        <RemindPaymentButton
+                          paymentId={payment.id}
+                          reminding={remindingId === payment.id}
+                          onRemind={remindPayment}
+                        />
+                      </div>
+                    ) : null}
                   </article>
                 );
               })}
@@ -456,6 +510,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
                     <th className="px-4 py-2.5 font-semibold">Montant</th>
                     <th className="px-4 py-2.5 font-semibold">Statut</th>
                     <th className="px-4 py-2.5 font-semibold">Date</th>
+                    <th className="px-4 py-2.5 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
@@ -529,6 +584,17 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {formatPaymentDate(payment.created_at)}
+                        </td>
+                        <td className="px-4 py-3">
+                          {paymentNeedsReminder(payment.status) ? (
+                            <RemindPaymentButton
+                              paymentId={payment.id}
+                              reminding={remindingId === payment.id}
+                              onRemind={remindPayment}
+                            />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </td>
                       </tr>
                     );
