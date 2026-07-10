@@ -73,7 +73,8 @@ export function PaymentActivationBanner({
           <RegistrationPaymentButton
             amount={fee.amount}
             currency={fee.currency}
-            className="h-10 shrink-0 rounded-full px-4 text-xs font-semibold"
+            skipConfirm={PRICING_TEST_MODE}
+            className="h-11 min-h-11 shrink-0 rounded-full px-4 text-xs font-semibold"
           />
         </div>
       </div>
@@ -109,6 +110,7 @@ export function PaymentActivationBanner({
           <RegistrationPaymentButton
             amount={fee.amount}
             currency={fee.currency}
+            skipConfirm={PRICING_TEST_MODE}
             className="w-full sm:w-auto"
           />
           <Link

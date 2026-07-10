@@ -420,7 +420,7 @@ export function UserShell({
             onClick={() => setMoreOpen(false)}
             aria-hidden
           />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-card p-5 pb-8 shadow-2xl">
+          <div className="absolute bottom-0 left-0 right-0 max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-card p-5 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-sans text-lg font-semibold text-primary">Menu</h3>
               <button

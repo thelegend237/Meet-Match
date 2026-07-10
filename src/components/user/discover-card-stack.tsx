@@ -215,11 +215,7 @@ function SwipeableCard({
     }
 
     if (offsetX < -SWIPE_THRESHOLD) {
-      if (!canInteract) {
-        setOffsetX(0);
-        onPass();
-        return;
-      }
+      // Passer est autorisé en browse-free — animer la carte.
       finishExit("left");
       return;
     }
@@ -234,10 +230,6 @@ function SwipeableCard({
 
   function triggerPass() {
     if (pending || exitDir) return;
-    if (!canInteract) {
-      onPass();
-      return;
-    }
     finishExit("left");
   }
 
@@ -451,7 +443,7 @@ function SwipeableCard({
       </div>
       {!canInteract ? (
         <p className="relative z-30 -mt-1 pb-1 text-center text-xs font-medium text-amber-800">
-          Activez votre compte pour liker
+          Glissez pour parcourir · activez pour liker
         </p>
       ) : null}
     </div>

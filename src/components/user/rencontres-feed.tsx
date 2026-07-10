@@ -85,15 +85,12 @@ export function RencontresFeed({
   }
 
   function handlePass(profile: DiscoveryProfile) {
-    if (!canInteract) {
-      showSubscriptionRequiredToast();
-      return;
-    }
     if (passedSet.has(profile.id) || pending) return;
     setPassedSet((prev) => new Set(prev).add(profile.id));
     startTransition(async () => {
       const result = await passProfile(profile.id);
       if (result.error) {
+        if (!canInteract) return;
         setPassedSet((prev) => {
           const next = new Set(prev);
           next.delete(profile.id);
@@ -119,7 +116,12 @@ export function RencontresFeed({
 
   return (
     <>
-      <div className={cn(!canInteract && "pb-24 md:pb-0")}>
+      <div
+        className={cn(
+          !canInteract &&
+            "pb-[calc(4.75rem+5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0"
+        )}
+      >
       <header className="space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div>

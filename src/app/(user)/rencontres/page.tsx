@@ -61,7 +61,11 @@ export default async function RencontresPage() {
 
   return (
     <PageStack className="gap-4">
-      {!canInteract && <PaymentRequiredBanner profile={profile} />}
+      {!canInteract && (
+        <div className="hidden md:block">
+          <PaymentRequiredBanner profile={profile} />
+        </div>
+      )}
       {canInteract && !hasPhoto && <PhotoRequiredBanner />}
       {profile.profile_completion < 100 && (
         <ProfileCompletionBanner profile={profile} />

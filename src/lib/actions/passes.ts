@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentProfile, hasPlatformAccess } from "@/lib/auth/session";
+import { getCurrentProfile, canBrowseDiscovery } from "@/lib/auth/session";
 import { SUBSCRIPTION_REQUIRED_ERROR } from "@/lib/discover/subscription";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
 
@@ -14,7 +14,8 @@ export async function passProfile(toUserId: string) {
   if (!user) return { error: "Non authentifié" };
 
   const profile = await getCurrentProfile();
-  if (!profile || !hasPlatformAccess(profile)) {
+  // Passer un profil est autorisé en mode parcours (browse-free) ; liker reste payant.
+  if (!profile || !canBrowseDiscovery(profile)) {
     return { error: SUBSCRIPTION_REQUIRED_ERROR };
   }
 

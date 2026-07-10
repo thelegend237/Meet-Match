@@ -19,7 +19,7 @@ export function showSubscriptionRequiredToast() {
       <ToastAction
         altText="Activer mon compte"
         onClick={() => {
-          window.location.assign("/paiements");
+          window.location.assign("/paiements?welcome=1");
         }}
       >
         {PRICING_TEST_MODE ? "Activer gratuitement" : "Activer mon compte"}
