@@ -321,7 +321,7 @@ export function PaymentsView({
         {[
           { icon: Users, label: "Profils actifs", sub: "Membres vérifiés" },
           { icon: Heart, label: "Likes illimités", sub: "Sans abonnement" },
-          { icon: ShieldCheck, label: "Paiement sécurisé", sub: "Bientôt Stripe" },
+          { icon: ShieldCheck, label: "Paiement sécurisé", sub: "Stripe" },
           { icon: MessageCircle, label: "Support humain", sub: "Toujours gratuit" },
         ].map((item) => (
           <div
@@ -440,7 +440,7 @@ export function PaymentsView({
                     <Zap className="h-3.5 w-3.5 text-secondary" />
                     {PRICING_TEST_MODE
                       ? "Activation immédiate et gratuite pendant la phase test."
-                      : "Activation immédiate après paiement (mode test pour l'instant)."}
+                      : "Paiement sécurisé via Stripe — activation immédiate après confirmation."}
                   </p>
                 </div>
               )
@@ -534,8 +534,9 @@ export function PaymentsView({
               Paiement sécurisé
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              En mode test, le paiement est simulé. L&apos;intégration Stripe arrivera
-              prochainement pour les cartes bancaires.
+              {PRICING_TEST_MODE
+                ? "En mode test, le paiement est simulé. Aucun débit réel n'est effectué."
+                : "Paiement sécurisé par carte via Stripe. Vos données bancaires ne transitent pas par nos serveurs."}
             </p>
           </div>
         </div>

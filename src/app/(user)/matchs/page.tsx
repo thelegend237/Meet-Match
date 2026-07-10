@@ -4,6 +4,7 @@ import { getUserMatches } from "@/lib/user/matches";
 import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
 import { MatchesList } from "@/components/user/matches-list";
 import { PaymentRequiredBanner } from "@/components/user/profile-banners";
+import { CheckoutReturnToast } from "@/components/user/checkout-return-toast";
 import { PageHeader, PageStack } from "@/components/layout/page-header";
 
 export const metadata = {
@@ -19,6 +20,9 @@ export default async function MatchsPage() {
 
   return (
     <PageStack>
+      <Suspense fallback={null}>
+        <CheckoutReturnToast />
+      </Suspense>
       <PageHeader
         title="Mes matchs"
         description="Mises en relation proposées par notre équipe et suivi de vos rencontres."

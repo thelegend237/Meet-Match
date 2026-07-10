@@ -71,28 +71,34 @@ function MatchCard({
     const free = isFreeFee(amount);
     const message = free
       ? "Confirmer ce match gratuitement ?\n\nAucun paiement ne sera demandé pendant la phase test."
-      : `Confirmer le paiement de ${priceLabel} pour ce match ?\n\n(Mode test — Stripe à l'étape 8)`;
+      : PRICING_TEST_MODE
+        ? `Confirmer le paiement de ${priceLabel} pour ce match ?\n\n(Mode test — paiement simulé)`
+        : `Vous allez être redirigé vers Stripe pour payer ${priceLabel}. Continuer ?`;
 
     if (!confirm(message)) {
       return;
     }
     startTransition(async () => {
       const result = await confirmMatchingPayment(match.myPayment!.id);
-      if (result.error) {
+      if ("error" in result && result.error) {
         toast({
           variant: "destructive",
           title: "Erreur",
           description: result.error,
         });
-      } else {
-        toast({
-          title: free ? "Match confirmé gratuitement" : "Paiement enregistré",
-          description: free
-            ? "Votre match sera activé lorsque les deux parties auront confirmé."
-            : "Votre paiement a été pris en compte. Le match sera activé lorsque les deux parties auront payé.",
-        });
-        setLocalPaymentDone(true);
+        return;
       }
+      if ("url" in result && result.url) {
+        window.location.assign(result.url);
+        return;
+      }
+      toast({
+        title: free ? "Match confirmé gratuitement" : "Paiement enregistré",
+        description: free
+          ? "Votre match sera activé lorsque les deux parties auront confirmé."
+          : "Votre paiement a été pris en compte. Le match sera activé lorsque les deux parties auront payé.",
+      });
+      setLocalPaymentDone(true);
     });
   }
 

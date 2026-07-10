@@ -1,7 +1,11 @@
 import { formatCurrency } from "@/lib/utils";
 
-/** Phase test : tous les services affichés et facturés à 0 $ — repasser à false avec les vrais tarifs au lancement Stripe. */
-export const PRICING_TEST_MODE = true;
+/**
+ * Phase test (gratuit) uniquement si NEXT_PUBLIC_PRICING_TEST_MODE=true.
+ * En prod : omettre la variable ou la mettre à false → tarifs réels + Stripe.
+ */
+export const PRICING_TEST_MODE =
+  process.env.NEXT_PUBLIC_PRICING_TEST_MODE === "true";
 
 export const PRICING_BETA_TITLE =
   "Version test — tous les services sont gratuits";
@@ -14,7 +18,7 @@ export type FeeAmount = {
   currency: string;
 };
 
-/** Tarifs prévus après la phase test (référence interne / pied de page). */
+/** Tarifs de production (et référence pendant la phase test). */
 export const FUTURE_REGISTRATION_FEES: Record<string, FeeAmount> = {
   CA: { amount: 42, currency: "CAD" },
   US: { amount: 32, currency: "USD" },

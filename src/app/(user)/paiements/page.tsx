@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
 import { PaymentsView } from "@/components/user/payments-view";
+import { CheckoutReturnToast } from "@/components/user/checkout-return-toast";
 import { PageHeader, PageStack } from "@/components/layout/page-header";
 import type { Payment } from "@/lib/types/database";
 
@@ -12,7 +14,7 @@ export const metadata = {
 export default async function PaiementsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ welcome?: string }>;
+  searchParams: Promise<{ welcome?: string; checkout?: string }>;
 }) {
   const profile = await requireUser();
   const params = await searchParams;
@@ -29,6 +31,9 @@ export default async function PaiementsPage({
 
   return (
     <PageStack>
+      <Suspense fallback={null}>
+        <CheckoutReturnToast />
+      </Suspense>
       <PageHeader
         title="Paiements"
         description="Comprenez nos tarifs, activez votre compte et suivez chaque étape vers une mise en relation accompagnée."

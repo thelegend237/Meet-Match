@@ -2,20 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { startMatchingCheckout } from "@/lib/actions/payments";
 
 export async function confirmMatchingPayment(paymentId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Non authentifié" };
-
-  const { error } = await supabase.rpc("confirm_matching_payment", {
-    p_payment_id: paymentId,
-  });
-
-  if (error) return { error: error.message };
-
+  const result = await startMatchingCheckout(paymentId);
+  if ("error" in result && result.error) return { error: result.error };
+  if ("url" in result && result.url) {
+    return { url: result.url };
+  }
   revalidatePath("/matchs");
   revalidatePath("/notifications");
   revalidatePath("/paiements");
