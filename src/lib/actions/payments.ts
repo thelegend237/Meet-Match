@@ -20,5 +20,7 @@ export async function confirmRegistrationPayment() {
   revalidatePath("/matchs");
   revalidatePath("/tableau-de-bord");
   revalidatePath("/profil");
+  revalidatePath("/onboarding");
+  revalidatePath("/inscription");
   return { success: true };
 }

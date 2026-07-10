@@ -13,25 +13,33 @@ interface RegistrationPaymentButtonProps {
   amount: number;
   currency: string;
   className?: string;
+  /** Skip the browser confirm dialog (e.g. onboarding final step). */
+  skipConfirm?: boolean;
+  /** Destination after successful activation. */
+  redirectTo?: string;
 }
 
 export function RegistrationPaymentButton({
   amount,
   currency,
   className,
+  skipConfirm = false,
+  redirectTo = "/decouvrir?activated=1",
 }: RegistrationPaymentButtonProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const free = isFreeFee(amount);
 
   function handlePay() {
-    const label = formatDisplayPrice(amount, currency);
-    const message = free
-      ? "Activer votre compte gratuitement pendant la phase test ?\n\nAucun paiement ne sera demandé."
-      : `Confirmer le paiement de ${label} pour activer votre compte ?\n\n(Mode test — paiement simulé, Stripe plus tard)`;
+    if (!skipConfirm) {
+      const label = formatDisplayPrice(amount, currency);
+      const message = free
+        ? "Activer votre compte gratuitement pendant la phase test ?\n\nAucun paiement ne sera demandé."
+        : `Confirmer le paiement de ${label} pour activer votre compte ?\n\n(Mode test — paiement simulé, Stripe plus tard)`;
 
-    if (!confirm(message)) {
-      return;
+      if (!confirm(message)) {
+        return;
+      }
     }
 
     startTransition(async () => {
@@ -48,7 +56,7 @@ export function RegistrationPaymentButton({
           description:
             "Vous pouvez liker des profils et consulter vos matchs dès qu'une mise en relation est proposée.",
         });
-        router.push("/decouvrir?activated=1");
+        router.push(redirectTo);
         router.refresh();
       }
     });

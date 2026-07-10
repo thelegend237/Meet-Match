@@ -62,6 +62,7 @@ interface PaymentsViewProps {
   profile: Profile;
   payments: Payment[];
   matchingCredits: MatchingCreditsStatus;
+  showWelcome?: boolean;
 }
 
 function FeatureRow({ children }: { children: string }) {
@@ -169,7 +170,12 @@ function PlanCard({
   );
 }
 
-export function PaymentsView({ profile, payments, matchingCredits }: PaymentsViewProps) {
+export function PaymentsView({
+  profile,
+  payments,
+  matchingCredits,
+  showWelcome = false,
+}: PaymentsViewProps) {
   const registrationPaid =
     profile.registration_payment_status === "paid" ||
     profile.registration_payment_status === "free";
@@ -188,9 +194,39 @@ export function PaymentsView({ profile, payments, matchingCredits }: PaymentsVie
     { label: "Matchs accompagnés", done: hasPaidMatching },
   ];
 
+  const showWelcomeActivation = showWelcome && !registrationPaid;
+
   return (
     <div className="space-y-8">
       <PricingBetaBanner />
+
+      {showWelcomeActivation ? (
+        <section className="rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50 via-[#fff7ed] to-amber-50/80 p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-800/80">
+                Bienvenue
+              </p>
+              <h2 className="mt-1 font-sans text-xl font-bold text-amber-950 sm:text-2xl">
+                {PRICING_TEST_MODE
+                  ? "Activez votre compte pour liker"
+                  : "Activez votre accès pour liker"}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-amber-900/85">
+                {PRICING_TEST_MODE
+                  ? "Vous pouvez déjà parcourir les profils. L'activation est gratuite pendant la phase test — un clic suffit pour envoyer des likes."
+                  : "Vous pouvez déjà parcourir les profils. Activez votre compte pour envoyer des likes et être mis en relation."}
+              </p>
+            </div>
+            <RegistrationPaymentButton
+              amount={regFee.amount}
+              currency={regFee.currency}
+              skipConfirm={PRICING_TEST_MODE}
+              className="w-full shrink-0 sm:w-auto"
+            />
+          </div>
+        </section>
+      ) : null}
 
       {/* Statut & parcours */}
       <section className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg">

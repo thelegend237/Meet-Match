@@ -21,7 +21,13 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { formatDisplayPriceDetail, getRegistrationFee, PRICING_TEST_MODE } from "@/lib/pricing";
+import {
+  formatDisplayPriceDetail,
+  getRegistrationFee,
+  PRICING_TEST_MODE,
+} from "@/lib/pricing";
+import { RegistrationPaymentButton } from "@/components/user/registration-payment-button";
+import { isStaffProfile } from "@/lib/auth/staff";
 import { calculateProfileCompletion } from "@/lib/profile/completion";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
@@ -205,6 +211,10 @@ export function OnboardingWizard({
     initialProfile?.primary_photo_url ?? null
   );
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [needsActivation, setNeedsActivation] = useState(() => {
+    if (!initialProfile || isStaffProfile(initialProfile)) return false;
+    return initialProfile.registration_payment_status === "unpaid";
+  });
 
   const [data, setData] = useState<WizardData>(() => ({
     display_name: "",
@@ -298,6 +308,7 @@ export function OnboardingWizard({
     message: { title: string; description: string }
   ) {
     setAccountCreated(true);
+    setNeedsActivation(true);
     setCompletion(
       calculateProfileCompletion({
         display_name: d.display_name,
@@ -612,12 +623,13 @@ export function OnboardingWizard({
             break;
           case "done": {
             const refreshed = await getOnboardingProfile();
-            const payStatus =
-              refreshed.profile?.registration_payment_status ??
-              initialProfile?.registration_payment_status;
-            router.push(
-              payStatus === "unpaid" ? "/paiements?welcome=1" : "/decouvrir?welcome=1"
-            );
+            if (refreshed.profile) {
+              const unpaid =
+                !isStaffProfile(refreshed.profile) &&
+                refreshed.profile.registration_payment_status === "unpaid";
+              setNeedsActivation(unpaid);
+            }
+            router.push("/decouvrir?welcome=1");
             router.refresh();
             break;
           }
@@ -1313,11 +1325,46 @@ export function OnboardingWizard({
           </>
         );
 
-      case "done":
+      case "done": {
+        const regFee = getRegistrationFee(data.country_code || null);
+        const activationBlock = needsActivation ? (
+          <div className="w-full space-y-3 rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-[#fff7ed] p-4 text-left">
+            <p className="text-sm font-semibold text-amber-950">
+              {PRICING_TEST_MODE
+                ? "Dernière étape — activez votre compte"
+                : "Dernière étape — activez votre accès"}
+            </p>
+            <p className="text-xs leading-relaxed text-amber-900/85">
+              {PRICING_TEST_MODE
+                ? "Activation gratuite pendant la phase test. Sans activation, vous pouvez parcourir les profils mais pas envoyer de likes."
+                : "Sans activation, vous pouvez parcourir les profils mais pas envoyer de likes ni être mis en relation."}
+            </p>
+            <RegistrationPaymentButton
+              amount={regFee.amount}
+              currency={regFee.currency}
+              skipConfirm
+              className="w-full"
+            />
+            <Button
+              variant="ghost"
+              className="h-auto w-full py-2 text-sm text-muted-foreground"
+              asChild
+            >
+              <Link href="/decouvrir?welcome=1">Continuer sans activer</Link>
+            </Button>
+          </div>
+        ) : null;
+
         if (mode === "public") {
           return (
             <RegisterStep icon={HeartHandshake}>
               <RegisterCompletion percent={displayCompletion} />
+              {activationBlock}
+              {!needsActivation && (
+                <Button variant="secondary" className="w-full rounded-xl" asChild>
+                  <Link href="/decouvrir?welcome=1">Découvrir les profils</Link>
+                </Button>
+              )}
               <Button variant="outline" className="w-full rounded-xl" asChild>
                 <Link href="/profil/modifier">Compléter plus tard</Link>
               </Button>
@@ -1333,7 +1380,11 @@ export function OnboardingWizard({
                   ? "Profil complet à 100 % !"
                   : `Profil à ${displayCompletion} % — c'est un bon début`
               }
-              subtitle="Vous pourrez enrichir votre profil à tout moment depuis l'application."
+              subtitle={
+                needsActivation
+                  ? "Activez votre compte pour liker, ou continuez en mode parcours uniquement."
+                  : "Vous pourrez enrichir votre profil à tout moment depuis l'application."
+              }
             />
             <StepBody className="flex flex-col items-center gap-4 py-4">
               <div className="w-full rounded-2xl bg-muted/30 p-4">
@@ -1347,12 +1398,19 @@ export function OnboardingWizard({
                   Complétion du profil
                 </p>
               </div>
+              {activationBlock}
+              {!needsActivation && (
+                <Button variant="secondary" className="w-full rounded-full" asChild>
+                  <Link href="/decouvrir?welcome=1">Découvrir les profils</Link>
+                </Button>
+              )}
               <Button variant="outline" className="w-full rounded-full" asChild>
                 <Link href="/profil/modifier">Compléter plus tard</Link>
               </Button>
             </StepBody>
           </>
         );
+      }
 
       default:
         return null;
@@ -1390,7 +1448,11 @@ export function OnboardingWizard({
                 pending={pending}
                 showBack={currentStep !== "account"}
                 nextLabel={
-                  currentStep === "done" ? "Terminer" : "Continuer"
+                  currentStep === "done"
+                    ? needsActivation
+                      ? "Continuer sans activer"
+                      : "Terminer"
+                    : "Continuer"
                 }
                 skipLabel={
                   currentStep === "photo"
@@ -1429,6 +1491,13 @@ export function OnboardingWizard({
             progress={progress}
             pending={pending}
             showBack={currentStep !== "account"}
+            nextLabel={
+              currentStep === "done"
+                ? needsActivation
+                  ? "Continuer sans activer"
+                  : "Terminer"
+                : undefined
+            }
             skipLabel={
               currentStep === "photo"
                 ? "Passer pour l'instant"

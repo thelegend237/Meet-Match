@@ -9,8 +9,13 @@ export const metadata = {
   title: "Paiements",
 };
 
-export default async function PaiementsPage() {
+export default async function PaiementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ welcome?: string }>;
+}) {
   const profile = await requireUser();
+  const params = await searchParams;
   const supabase = await createClient();
 
   const { data: payments } = await supabase
@@ -20,6 +25,7 @@ export default async function PaiementsPage() {
     .order("created_at", { ascending: false });
 
   const matchingCredits = await getMatchingCreditsStatus(profile.id);
+  const showWelcome = params.welcome === "1";
 
   return (
     <PageStack>
@@ -31,6 +37,7 @@ export default async function PaiementsPage() {
         profile={profile}
         payments={(payments as Payment[]) ?? []}
         matchingCredits={matchingCredits}
+        showWelcome={showWelcome}
       />
     </PageStack>
   );
