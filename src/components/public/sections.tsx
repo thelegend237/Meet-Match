@@ -18,6 +18,7 @@ import { RegisterForm } from "@/components/public/register-form";
 import {
   formatDisplayPrice,
   getRegistrationFee,
+  isFreeFee,
   PRICING_TEST_MODE,
   REGISTRATION_FEATURES,
 } from "@/lib/pricing";
@@ -378,12 +379,16 @@ export function PricingTeaserSection({ variant = "default" }: { variant?: Sectio
               <h2 className={cn("mt-2 font-sans text-2xl font-bold sm:text-3xl", isLanding ? "text-[#2e1a47]" : "text-primary")}>
                 {PRICING_TEST_MODE
                   ? "Tout est gratuit en phase test"
-                  : `Commencez pour ${formatDisplayPrice(regFee.amount, regFee.currency)}`}
+                  : isFreeFee(regFee.amount)
+                    ? "Inscription offerte — offre de lancement"
+                    : `Commencez pour ${formatDisplayPrice(regFee.amount, regFee.currency)}`}
               </h2>
               <p className={cn("mt-3 text-sm leading-relaxed sm:text-base", isLanding ? "text-[#6b5f7a]" : "text-muted-foreground")}>
                 {PRICING_TEST_MODE
                   ? "Inscription, likes et matching sont offerts pendant que nous testons la plateforme avec vous. Les tarifs définitifs seront communiqués avant tout paiement réel."
-                  : "Un paiement unique pour rejoindre la communauté. Les frais de matching ne sont dus que lorsqu'un administrateur vous propose une rencontre compatible."}
+                  : isFreeFee(regFee.amount)
+                    ? "Activez gratuitement pour liker. Matching : 10 $ US uniquement quand un admin vous propose une rencontre."
+                    : "Un paiement unique (5 $ US) pour rejoindre la communauté. Matching : 10 $ US uniquement quand un administrateur vous propose une rencontre."}
               </p>
               <ul className="mt-5 space-y-2">
                 {REGISTRATION_FEATURES.slice(0, 4).map((f) => (

@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import {
   formatDisplayPriceDetail,
   getRegistrationFee,
+  isFreeFee,
+  isLaunchFreeActive,
   PRICING_TEST_MODE,
 } from "@/lib/pricing";
 import { RegistrationPaymentButton } from "@/components/user/registration-payment-button";
@@ -818,6 +820,12 @@ export function OnboardingWizard({
                     phase test — activez votre compte sur la page Paiements après
                     création. Les étapes suivantes sont facultatives.
                   </>
+                ) : isFreeFee(regFee.amount) && isLaunchFreeActive() ? (
+                  <>
+                    <strong className="text-primary">Offre de lancement</strong>{" "}
+                    — inscription offerte. Activez gratuitement après création.
+                    Les étapes suivantes sont facultatives.
+                  </>
                 ) : (
                   <>
                     Inscription :{" "}
@@ -1330,14 +1338,16 @@ export function OnboardingWizard({
         const activationBlock = needsActivation ? (
           <div className="w-full space-y-3 rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-[#fff7ed] p-4 text-left">
             <p className="text-sm font-semibold text-amber-950">
-              {PRICING_TEST_MODE
+              {isFreeFee(regFee.amount)
                 ? "Dernière étape — activez votre compte"
                 : "Dernière étape — activez votre accès"}
             </p>
             <p className="text-xs leading-relaxed text-amber-900/85">
               {PRICING_TEST_MODE
                 ? "Activation gratuite pendant la phase test. Sans activation, vous pouvez parcourir les profils mais pas envoyer de likes."
-                : "Sans activation, vous pouvez parcourir les profils mais pas envoyer de likes ni être mis en relation."}
+                : isFreeFee(regFee.amount)
+                  ? "Offre de lancement : activation gratuite. Sans activation, vous pouvez parcourir les profils mais pas envoyer de likes."
+                  : "Sans activation, vous pouvez parcourir les profils mais pas envoyer de likes ni être mis en relation."}
             </p>
             <RegistrationPaymentButton
               amount={regFee.amount}

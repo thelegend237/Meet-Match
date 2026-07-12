@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getMatchingFee } from "@/lib/pricing";
+import { getChargeMatchingFee } from "@/lib/pricing";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth/session";
 import {
@@ -84,13 +84,7 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
     };
   }
 
-  const { data: userA } = await supabase
-    .from("profiles")
-    .select("country_code")
-    .eq("id", userAId)
-    .single();
-
-  const fee = getMatchingFee(userA?.country_code ?? null);
+  const fee = getChargeMatchingFee();
 
   const { data, error } = await supabase.rpc("propose_match", {
     p_admin_id: admin.id,

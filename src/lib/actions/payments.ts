@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
-  getRegistrationFee,
+  getChargeRegistrationFee,
   isFreeFee,
+  isRegistrationWaived,
   PRICING_TEST_MODE,
 } from "@/lib/pricing";
 import {
@@ -25,7 +26,7 @@ function revalidatePaymentPaths() {
   revalidatePath("/inscription");
 }
 
-/** Activation gratuite (phase test) ou simulation manuelle. */
+/** Activation gratuite (phase test / offre lancement) ou simulation manuelle sans Stripe. */
 export async function confirmRegistrationPayment() {
   const supabase = await createClient();
   const {
@@ -33,14 +34,18 @@ export async function confirmRegistrationPayment() {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Non authentifié" };
 
-  if (shouldUseStripeCheckout()) {
+  const complimentary = isRegistrationWaived();
+
+  if (shouldUseStripeCheckout() && !complimentary) {
     return {
       error:
         "Le paiement Stripe est requis. Utilisez le bouton Payer pour continuer.",
     };
   }
 
-  const { error } = await supabase.rpc("confirm_registration_payment");
+  const { error } = await supabase.rpc("confirm_registration_payment", {
+    p_as_complimentary: complimentary,
+  });
 
   if (error) return { error: error.message };
 
@@ -49,8 +54,8 @@ export async function confirmRegistrationPayment() {
 }
 
 /**
- * Crée une session Stripe Checkout pour les frais d'inscription.
- * En phase test / sans Stripe : délègue à confirmRegistrationPayment.
+ * Crée une session Stripe Checkout pour les frais d'inscription (toujours USD).
+ * Offre lancement / phase test / sans Stripe : activation complimentary.
  */
 export async function startRegistrationCheckout() {
   const supabase = await createClient();
@@ -76,7 +81,7 @@ export async function startRegistrationCheckout() {
     return { error: "Inscription déjà activée" };
   }
 
-  const fee = getRegistrationFee(profile.country_code);
+  const fee = getChargeRegistrationFee();
 
   if (PRICING_TEST_MODE || isFreeFee(fee.amount) || !shouldUseStripeCheckout()) {
     const result = await confirmRegistrationPayment();
@@ -222,6 +227,10 @@ export async function startMatchingCheckout(paymentId: string) {
   const stripe = getStripe();
   const appUrl = getAppUrl();
 
+  // Toujours facturer en USD (montant déjà stocké en USD à la proposition).
+  const chargeCurrency = "usd";
+  const chargeAmount = amount;
+
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     customer_email: profile?.email ?? user.email ?? undefined,
@@ -229,8 +238,8 @@ export async function startMatchingCheckout(paymentId: string) {
       {
         quantity: 1,
         price_data: {
-          currency: String(payment.currency).toLowerCase(),
-          unit_amount: toStripeAmount(amount),
+          currency: chargeCurrency,
+          unit_amount: toStripeAmount(chargeAmount),
           product_data: {
             name: "Frais de matching Meet & Match",
             description: "Mise en relation accompagnée proposée par l'équipe.",
@@ -252,6 +261,7 @@ export async function startMatchingCheckout(paymentId: string) {
     .from("payments")
     .update({
       provider: "stripe",
+      currency: "USD",
       stripe_session_id: session.id,
       updated_at: new Date().toISOString(),
     })

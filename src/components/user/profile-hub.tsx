@@ -26,6 +26,7 @@ import {
   formatDisplayPrice,
   getMatchingFee,
   getRegistrationFee,
+  isFreeFee,
   PLAN_COMPARISON_ROWS,
   PRICING_TEST_MODE,
 } from "@/lib/pricing";
@@ -361,7 +362,7 @@ export function ProfileHub({
                       ? "Compte équipe"
                       : registrationPaid
                         ? "Rencontres accompagnées"
-                        : PRICING_TEST_MODE
+                        : isFreeFee(regFee.amount)
                           ? "Activez votre accès gratuitement"
                           : "Activez votre accès"}
                   </h3>
@@ -371,10 +372,12 @@ export function ProfileHub({
                       : registrationPaid
                         ? PRICING_TEST_MODE
                           ? "Likes illimités et découverte. Les mises en relation sont gratuites pendant la phase test."
-                          : "Likes illimités et découverte. Les frais de matching ne sont dus que lorsqu'un admin vous propose une rencontre compatible."
-                        : PRICING_TEST_MODE
-                          ? "Rejoignez la communauté gratuitement — explorez les profils et envoyez des likes sans aucun paiement."
-                          : "Rejoignez la communauté, explorez les profils et envoyez des likes — un seul paiement d'inscription."}
+                          : "Likes illimités et découverte. Les frais de matching (10 $ US) ne sont dus que lorsqu'un admin vous propose une rencontre."
+                        : isFreeFee(regFee.amount)
+                          ? PRICING_TEST_MODE
+                            ? "Rejoignez la communauté gratuitement — explorez les profils et envoyez des likes sans aucun paiement."
+                            : "Offre de lancement : activez gratuitement pour liker. Matching payant uniquement sur proposition admin."
+                          : "Rejoignez la communauté pour 5 $ US — explorez les profils et envoyez des likes."}
                   </p>
                 </div>
                 <div className="mt-5 shrink-0 lg:mt-0 lg:w-[min(100%,320px)]">

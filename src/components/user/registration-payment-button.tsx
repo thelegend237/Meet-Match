@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { CreditCard, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { startRegistrationCheckout } from "@/lib/actions/payments";
-import { formatDisplayPrice, isFreeFee, PRICING_TEST_MODE } from "@/lib/pricing";
+import {
+  formatDisplayPrice,
+  isFreeFee,
+  PRICING_TEST_MODE,
+} from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -34,10 +38,12 @@ export function RegistrationPaymentButton({
     if (!skipConfirm) {
       const label = formatDisplayPrice(amount, currency);
       const message = free
-        ? "Activer votre compte gratuitement pendant la phase test ?\n\nAucun paiement ne sera demandé."
+        ? PRICING_TEST_MODE
+          ? "Activer votre compte gratuitement pendant la phase test ?\n\nAucun paiement ne sera demandé."
+          : "Activer votre compte gratuitement (offre de lancement) ?\n\nAucun paiement ne sera demandé."
         : PRICING_TEST_MODE
           ? `Confirmer le paiement de ${label} pour activer votre compte ?\n\n(Mode test — paiement simulé)`
-          : `Vous allez être redirigé vers Stripe pour payer ${label}. Continuer ?`;
+          : `Vous allez être redirigé vers Stripe pour payer ${label} (tarif mondial en USD). Continuer ?`;
 
       if (!confirm(message)) {
         return;
@@ -86,9 +92,7 @@ export function RegistrationPaymentButton({
         <CreditCard className="mr-2 h-4 w-4" />
       )}
       {free
-        ? PRICING_TEST_MODE
-          ? "Activer gratuitement"
-          : "Activer mon compte"
+        ? "Activer gratuitement"
         : `Payer ${formatDisplayPrice(amount, currency)}`}
     </Button>
   );

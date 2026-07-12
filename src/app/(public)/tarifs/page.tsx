@@ -16,9 +16,11 @@ import { formatCurrency } from "@/lib/utils";
 import {
   formatDisplayPrice,
   formatDisplayPriceDetail,
+  formatLaunchOfferEnd,
   futurePricingFootnote,
   getMatchingFee,
   getRegistrationFee,
+  isLaunchFreeActive,
   MATCHING_BENEFITS,
   MATCHING_FEATURES,
   PLAN_COMPARISON_ROWS,
@@ -32,11 +34,13 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Phase test Meet & Match : tous les services sont gratuits. Frais d'inscription et de matching à 0 $ pour les testeurs.",
+    "Inscription 5 $ US, matching 10 $ US. Offre de lancement : inscription offerte pour une durée limitée.",
 };
 
 const regFee = getRegistrationFee(null);
 const matchFee = getMatchingFee(null);
+const launchFree = !PRICING_TEST_MODE && isLaunchFreeActive();
+const launchUntil = formatLaunchOfferEnd();
 
 const pricingPlans = [
   {
@@ -82,14 +86,16 @@ const paymentSteps = [
     title: "Activation",
     text: PRICING_TEST_MODE
       ? "Activez votre compte gratuitement pour envoyer des likes — aucun paiement requis pendant la phase test."
-      : "Activez votre compte pour envoyer des likes ; l'équipe étudie les compatibilités.",
+      : launchFree
+        ? `Activez gratuitement${launchUntil ? ` jusqu'au ${launchUntil}` : ""} (offre de lancement), puis likez les profils.`
+        : "Activez votre compte (5 $ US) pour envoyer des likes ; l'équipe étudie les compatibilités.",
   },
   {
     step: "03",
     title: "Match proposé",
     text: PRICING_TEST_MODE
       ? "Un admin vous propose une mise en relation — gratuit pendant la phase test."
-      : "Un admin vous propose une mise en relation — les frais de matching s'appliquent alors.",
+      : "Un admin vous propose une mise en relation — 10 $ US de matching s'appliquent alors.",
   },
   {
     step: "04",
@@ -104,12 +110,26 @@ export default function TarifsPage() {
   return (
     <PublicPage
       variant="landing"
-      eyebrow={PRICING_TEST_MODE ? "Phase test" : "Tarifs transparents"}
-      title={PRICING_TEST_MODE ? "Tout est gratuit pour l'instant" : "Nos tarifs"}
+      eyebrow={
+        PRICING_TEST_MODE
+          ? "Phase test"
+          : launchFree
+            ? "Offre de lancement"
+            : "Tarifs transparents"
+      }
+      title={
+        PRICING_TEST_MODE
+          ? "Tout est gratuit pour l'instant"
+          : launchFree
+            ? "Inscription offerte"
+            : "Nos tarifs"
+      }
       description={
         PRICING_TEST_MODE
           ? "Meet & Match est en version test : inscription, matching et accompagnement sont offerts à tous les testeurs. Les tarifs définitifs seront activés plus tard."
-          : "Deux paiements clairs, sans surprise : l'inscription pour rejoindre la plateforme, le matching uniquement quand un administrateur vous propose une rencontre."
+          : launchFree
+            ? `Inscription gratuite${launchUntil ? ` jusqu'au ${launchUntil}` : ""}. Ensuite 5 $ US. Matching : 10 $ US uniquement quand un admin vous propose une rencontre.`
+            : "Deux paiements clairs : 5 $ US d'inscription, 10 $ US de matching uniquement quand un administrateur vous propose une rencontre. Affichage possible en devise locale."
       }
       wide
     >
@@ -135,11 +155,13 @@ export default function TarifsPage() {
                 </>
               ) : (
                 <>
-                  Le matching n&apos;est{" "}
+                  Tarif mondial en USD. Le matching n&apos;est{" "}
                   <strong className="font-semibold text-[#2e1a47]">jamais</strong>{" "}
-                  facturé à l&apos;avance. Vous ne payez les frais de matching que
-                  lorsqu&apos;un administrateur vous propose une mise en relation
-                  compatible.
+                  facturé à l&apos;avance
+                  {launchFree
+                    ? " — et l'inscription est offerte pendant l'offre de lancement"
+                    : ""}
+                  .
                 </>
               )}
             </p>

@@ -6,7 +6,11 @@ import { RegistrationPaymentButton } from "@/components/user/registration-paymen
 import { needsRegistrationActivation } from "@/lib/auth/payment-access";
 import {
   formatDisplayPrice,
+  formatLaunchOfferEnd,
   getRegistrationFee,
+  isFreeFee,
+  isLaunchFreeActive,
+  isRegistrationWaived,
   PRICING_TEST_MODE,
 } from "@/lib/pricing";
 import type { Profile } from "@/lib/types/database";
@@ -22,12 +26,23 @@ interface PaymentActivationBannerProps {
 function activationCopy(profile: Profile) {
   const fee = getRegistrationFee(profile.country_code);
   const priceLabel = formatDisplayPrice(fee.amount, fee.currency);
+  const waived = isRegistrationWaived();
 
   if (PRICING_TEST_MODE) {
     return {
       title: "Compte non activé",
       description:
         "Vous pouvez parcourir les profils. Activez gratuitement votre compte pour envoyer des likes et accéder aux matchs.",
+      ctaShort: "Activer gratuitement",
+      priceHint: priceLabel,
+    };
+  }
+
+  if (waived && isLaunchFreeActive()) {
+    const until = formatLaunchOfferEnd();
+    return {
+      title: "Compte non activé",
+      description: `Offre de lancement : activez gratuitement${until ? ` jusqu'au ${until}` : ""} pour liker et être mis en relation.`,
       ctaShort: "Activer gratuitement",
       priceHint: priceLabel,
     };
@@ -73,7 +88,7 @@ export function PaymentActivationBanner({
           <RegistrationPaymentButton
             amount={fee.amount}
             currency={fee.currency}
-            skipConfirm={PRICING_TEST_MODE}
+            skipConfirm={isFreeFee(fee.amount)}
             className="h-11 min-h-11 shrink-0 rounded-full px-4 text-xs font-semibold"
           />
         </div>
@@ -99,9 +114,11 @@ export function PaymentActivationBanner({
             <p className="mt-1 text-sm leading-relaxed text-amber-900/85">
               {copy.description}
             </p>
-            {PRICING_TEST_MODE && (
+            {isFreeFee(fee.amount) && (
               <p className="mt-2 text-xs font-medium text-amber-800/90">
-                Phase test · {copy.priceHint} · aucun paiement réel
+                {PRICING_TEST_MODE
+                  ? `Phase test · ${copy.priceHint} · aucun paiement réel`
+                  : `Offre de lancement · ${copy.priceHint}`}
               </p>
             )}
           </div>
@@ -110,7 +127,7 @@ export function PaymentActivationBanner({
           <RegistrationPaymentButton
             amount={fee.amount}
             currency={fee.currency}
-            skipConfirm={PRICING_TEST_MODE}
+            skipConfirm={isFreeFee(fee.amount)}
             className="w-full sm:w-auto"
           />
           <Link

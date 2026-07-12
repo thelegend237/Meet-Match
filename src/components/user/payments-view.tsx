@@ -208,20 +208,22 @@ export function PaymentsView({
                 Bienvenue
               </p>
               <h2 className="mt-1 font-sans text-xl font-bold text-amber-950 sm:text-2xl">
-                {PRICING_TEST_MODE
+                {isFreeFee(regFee.amount)
                   ? "Activez votre compte pour liker"
                   : "Activez votre accès pour liker"}
               </h2>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-amber-900/85">
                 {PRICING_TEST_MODE
                   ? "Vous pouvez déjà parcourir les profils. L'activation est gratuite pendant la phase test — un clic suffit pour envoyer des likes."
-                  : "Vous pouvez déjà parcourir les profils. Activez votre compte pour envoyer des likes et être mis en relation."}
+                  : isFreeFee(regFee.amount)
+                    ? "Vous pouvez déjà parcourir les profils. Offre de lancement : activez gratuitement pour envoyer des likes."
+                    : "Vous pouvez déjà parcourir les profils. Activez votre compte pour envoyer des likes et être mis en relation."}
               </p>
             </div>
             <RegistrationPaymentButton
               amount={regFee.amount}
               currency={regFee.currency}
-              skipConfirm={PRICING_TEST_MODE}
+              skipConfirm={isFreeFee(regFee.amount)}
               className="w-full shrink-0 sm:w-auto"
             />
           </div>
