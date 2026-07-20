@@ -83,10 +83,42 @@ const entries = [
     value: PROD_URL,
     sensitive: false,
   },
+  {
+    name: "PAYPAL_CLIENT_ID",
+    value: local.PAYPAL_CLIENT_ID,
+    sensitive: true,
+  },
+  {
+    name: "PAYPAL_CLIENT_SECRET",
+    value: local.PAYPAL_CLIENT_SECRET,
+    sensitive: true,
+  },
+  {
+    name: "PAYPAL_MODE",
+    value: local.PAYPAL_MODE || "sandbox",
+    sensitive: false,
+  },
+  {
+    name: "NEXT_PUBLIC_PAYPAL_CLIENT_ID",
+    value: local.NEXT_PUBLIC_PAYPAL_CLIENT_ID || local.PAYPAL_CLIENT_ID,
+    sensitive: false,
+  },
+  {
+    name: "PAYPAL_WEBHOOK_ID",
+    value: local.PAYPAL_WEBHOOK_ID,
+    sensitive: true,
+    optional: true,
+  },
 ];
 
 let failed = 0;
 for (const entry of entries) {
+  if (!entry.value) {
+    if (entry.optional) {
+      console.log(`SKIP ${entry.name} (optional, empty)`);
+      continue;
+    }
+  }
   if (!addEnv(entry.name, entry.value, "production", entry.sensitive)) {
     failed += 1;
   }
