@@ -1,10 +1,15 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CreditCard, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  PaymentMethodPicker,
+  resolvePaymentMethodForCheckout,
+} from "@/components/user/payment-method-picker";
 import { startRegistrationCheckout } from "@/lib/actions/payments";
+import type { PaymentMethodId } from "@/lib/payments/providers";
 import {
   formatDisplayPrice,
   isFreeFee,
@@ -32,26 +37,15 @@ export function RegistrationPaymentButton({
 }: RegistrationPaymentButtonProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const free = isFreeFee(amount);
+  const priceLabel = formatDisplayPrice(amount, currency);
 
-  function handlePay() {
-    if (!skipConfirm) {
-      const label = formatDisplayPrice(amount, currency);
-      const message = free
-        ? PRICING_TEST_MODE
-          ? "Activer votre compte gratuitement pendant la phase test ?\n\nAucun paiement ne sera demandé."
-          : "Activer votre compte gratuitement (offre de lancement) ?\n\nAucun paiement ne sera demandé."
-        : PRICING_TEST_MODE
-          ? `Confirmer le paiement de ${label} pour activer votre compte ?\n\n(Mode test — paiement simulé)`
-          : `Vous allez être redirigé vers Stripe pour payer ${label} (tarif mondial en USD). Continuer ?`;
-
-      if (!confirm(message)) {
-        return;
-      }
-    }
-
+  function runCheckout(method?: PaymentMethodId) {
     startTransition(async () => {
-      const result = await startRegistrationCheckout();
+      const result = await startRegistrationCheckout(
+        method ? { method } : undefined
+      );
       if ("error" in result && result.error) {
         toast({
           variant: "destructive",
@@ -76,24 +70,66 @@ export function RegistrationPaymentButton({
     });
   }
 
+  function handlePay() {
+    if (!skipConfirm) {
+      const message = free
+        ? PRICING_TEST_MODE
+          ? "Activer votre compte gratuitement pendant la phase test ?\n\nAucun paiement ne sera demandé."
+          : "Activer votre compte gratuitement (offre de lancement) ?\n\nAucun paiement ne sera demandé."
+        : PRICING_TEST_MODE
+          ? `Confirmer le paiement de ${priceLabel} pour activer votre compte ?\n\n(Mode test — paiement simulé)`
+          : `Payer ${priceLabel} pour activer votre compte (tarif mondial en USD). Continuer ?`;
+
+      if (!confirm(message)) {
+        return;
+      }
+    }
+
+    if (free || PRICING_TEST_MODE) {
+      runCheckout();
+      return;
+    }
+
+    startTransition(async () => {
+      const method = await resolvePaymentMethodForCheckout(() => {
+        setPickerOpen(true);
+      });
+      if (method) {
+        runCheckout(method);
+      }
+    });
+  }
+
   return (
-    <Button
-      variant="secondary"
-      size="lg"
-      className={cn("w-full sm:w-auto", className)}
-      disabled={pending}
-      onClick={handlePay}
-    >
-      {pending ? (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      ) : free ? (
-        <Sparkles className="mr-2 h-4 w-4" />
-      ) : (
-        <CreditCard className="mr-2 h-4 w-4" />
-      )}
-      {free
-        ? "Activer gratuitement"
-        : `Payer ${formatDisplayPrice(amount, currency)}`}
-    </Button>
+    <>
+      <Button
+        variant="secondary"
+        size="lg"
+        className={cn("w-full sm:w-auto", className)}
+        disabled={pending}
+        onClick={handlePay}
+      >
+        {pending ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : free ? (
+          <Sparkles className="mr-2 h-4 w-4" />
+        ) : (
+          <CreditCard className="mr-2 h-4 w-4" />
+        )}
+        {free
+          ? "Activer gratuitement"
+          : `Payer ${priceLabel}`}
+      </Button>
+
+      <PaymentMethodPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        amountLabel={priceLabel}
+        onSelect={(method) => {
+          setPickerOpen(false);
+          runCheckout(method);
+        }}
+      />
+    </>
   );
 }

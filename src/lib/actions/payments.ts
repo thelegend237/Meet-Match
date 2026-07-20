@@ -14,6 +14,19 @@ import {
   shouldUseStripeCheckout,
   toStripeAmount,
 } from "@/lib/stripe";
+import {
+  getConfiguredPaymentMethods,
+  hasAnyPaymentProvider,
+  paymentMethodToProvider,
+  resolveCheckoutMethod,
+  type PaymentMethodId,
+} from "@/lib/payments/providers";
+import { createPayPalOrder } from "@/lib/payments/paypal";
+import {
+  buildCinetPayTransactionId,
+  initCinetPayPayment,
+  type CinetPayChannelPreference,
+} from "@/lib/payments/cinetpay";
 
 function revalidatePaymentPaths() {
   revalidatePath("/paiements");
@@ -26,7 +39,20 @@ function revalidatePaymentPaths() {
   revalidatePath("/inscription");
 }
 
-/** Activation gratuite (phase test / offre lancement) ou simulation manuelle sans Stripe. */
+export type CheckoutOptions = {
+  method?: PaymentMethodId;
+};
+
+export async function listAvailablePaymentMethods() {
+  return getConfiguredPaymentMethods().map((m) => ({
+    id: m.id,
+    label: m.label,
+    description: m.description,
+    provider: m.provider,
+  }));
+}
+
+/** Activation gratuite (phase test / offre lancement) ou simulation manuelle sans provider. */
 export async function confirmRegistrationPayment() {
   const supabase = await createClient();
   const {
@@ -36,10 +62,10 @@ export async function confirmRegistrationPayment() {
 
   const complimentary = isRegistrationWaived();
 
-  if (shouldUseStripeCheckout() && !complimentary) {
+  if (hasAnyPaymentProvider() && !complimentary && !PRICING_TEST_MODE) {
     return {
       error:
-        "Le paiement Stripe est requis. Utilisez le bouton Payer pour continuer.",
+        "Le paiement est requis. Utilisez le bouton Payer pour continuer.",
     };
   }
 
@@ -54,10 +80,10 @@ export async function confirmRegistrationPayment() {
 }
 
 /**
- * Crée une session Stripe Checkout pour les frais d'inscription (toujours USD).
- * Offre lancement / phase test / sans Stripe : activation complimentary.
+ * Démarre le checkout inscription selon le moyen choisi
+ * (stripe | paypal | cinetpay via mtn/orange).
  */
-export async function startRegistrationCheckout() {
+export async function startRegistrationCheckout(options?: CheckoutOptions) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -66,7 +92,7 @@ export async function startRegistrationCheckout() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, email, country_code, registration_payment_status")
+    .select("id, email, country_code, registration_payment_status, display_name")
     .eq("id", user.id)
     .single();
 
@@ -83,12 +109,18 @@ export async function startRegistrationCheckout() {
 
   const fee = getChargeRegistrationFee();
 
-  if (PRICING_TEST_MODE || isFreeFee(fee.amount) || !shouldUseStripeCheckout()) {
+  if (PRICING_TEST_MODE || isFreeFee(fee.amount) || !hasAnyPaymentProvider()) {
     const result = await confirmRegistrationPayment();
     if (result.error) return result;
     return { success: true as const, activated: true as const };
   }
 
+  const method = resolveCheckoutMethod(options?.method);
+  if (!method) {
+    return { error: "Aucun moyen de paiement configuré" };
+  }
+
+  const provider = paymentMethodToProvider(method);
   let paymentId: string | null = null;
 
   const { data: existing } = await supabase
@@ -109,7 +141,7 @@ export async function startRegistrationCheckout() {
         amount: fee.amount,
         currency: fee.currency,
         status: "unpaid",
-        provider: "stripe",
+        provider,
         updated_at: new Date().toISOString(),
       })
       .eq("id", existing.id);
@@ -122,7 +154,7 @@ export async function startRegistrationCheckout() {
         amount: fee.amount,
         currency: fee.currency,
         status: "unpaid",
-        provider: "stripe",
+        provider,
       })
       .select("id")
       .single();
@@ -133,50 +165,35 @@ export async function startRegistrationCheckout() {
     paymentId = created.id;
   }
 
-  const stripe = getStripe();
-  const appUrl = getAppUrl();
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_email: profile.email ?? user.email ?? undefined,
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: fee.currency.toLowerCase(),
-          unit_amount: toStripeAmount(fee.amount),
-          product_data: {
-            name: "Frais d'inscription Meet & Match",
-            description: "Accès complet : découverte, likes et mise en relation.",
-          },
-        },
+  try {
+    return await startProviderCheckout({
+      provider,
+      method,
+      paymentId: paymentId!,
+      amount: fee.amount,
+      currency: fee.currency,
+      description: "Frais d'inscription Meet & Match",
+      customerEmail: profile.email ?? user.email ?? undefined,
+      customerName: profile.display_name ?? undefined,
+      successPath: "/paiements?checkout=success&type=registration",
+      cancelPath: "/paiements?checkout=cancel",
+      metadata: {
+        payment_id: paymentId!,
+        user_id: user.id,
+        payment_type: "registration",
       },
-    ],
-    metadata: {
-      payment_id: paymentId!,
-      user_id: user.id,
-      payment_type: "registration",
-    },
-    success_url: `${appUrl}/paiements?checkout=success&type=registration`,
-    cancel_url: `${appUrl}/paiements?checkout=cancel`,
-  });
-
-  await supabase
-    .from("payments")
-    .update({
-      stripe_session_id: session.id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", paymentId!);
-
-  if (!session.url) {
-    return { error: "Session Stripe invalide" };
+    });
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Checkout impossible",
+    };
   }
-
-  return { url: session.url };
 }
 
-export async function startMatchingCheckout(paymentId: string) {
+export async function startMatchingCheckout(
+  paymentId: string,
+  options?: CheckoutOptions
+) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -207,7 +224,7 @@ export async function startMatchingCheckout(paymentId: string) {
 
   const amount = Number(payment.amount);
 
-  if (PRICING_TEST_MODE || isFreeFee(amount) || !shouldUseStripeCheckout()) {
+  if (PRICING_TEST_MODE || isFreeFee(amount) || !hasAnyPaymentProvider()) {
     const { error } = await supabase.rpc("confirm_matching_payment", {
       p_payment_id: paymentId,
     });
@@ -218,58 +235,159 @@ export async function startMatchingCheckout(paymentId: string) {
     return { success: true as const, activated: true as const };
   }
 
+  const method = resolveCheckoutMethod(options?.method);
+  if (!method) {
+    return { error: "Aucun moyen de paiement configuré" };
+  }
+
+  const provider = paymentMethodToProvider(method);
+
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email")
+    .select("email, display_name")
     .eq("id", user.id)
     .single();
 
-  const stripe = getStripe();
-  const appUrl = getAppUrl();
+  try {
+    return await startProviderCheckout({
+      provider,
+      method,
+      paymentId: payment.id,
+      amount,
+      currency: "USD",
+      description: "Frais de matching Meet & Match",
+      customerEmail: profile?.email ?? user.email ?? undefined,
+      customerName: profile?.display_name ?? undefined,
+      successPath: `/matchs?checkout=success&match=${payment.match_id ?? ""}`,
+      cancelPath: "/matchs?checkout=cancel",
+      metadata: {
+        payment_id: payment.id,
+        user_id: user.id,
+        payment_type: "matching",
+        match_id: payment.match_id ?? "",
+      },
+    });
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Checkout impossible",
+    };
+  }
+}
 
-  // Toujours facturer en USD (montant déjà stocké en USD à la proposition).
-  const chargeCurrency = "usd";
-  const chargeAmount = amount;
+async function startProviderCheckout(params: {
+  provider: ReturnType<typeof paymentMethodToProvider>;
+  method: PaymentMethodId;
+  paymentId: string;
+  amount: number;
+  currency: string;
+  description: string;
+  customerEmail?: string;
+  customerName?: string;
+  successPath: string;
+  cancelPath: string;
+  metadata: Record<string, string>;
+}) {
+  const supabase = await createClient();
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_email: profile?.email ?? user.email ?? undefined,
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: chargeCurrency,
-          unit_amount: toStripeAmount(chargeAmount),
-          product_data: {
-            name: "Frais de matching Meet & Match",
-            description: "Mise en relation accompagnée proposée par l'équipe.",
+  if (params.provider === "stripe") {
+    if (!shouldUseStripeCheckout()) {
+      return { error: "Stripe n'est pas configuré" };
+    }
+
+    const stripe = getStripe();
+    const appUrl = getAppUrl();
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: params.customerEmail,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: params.currency.toLowerCase(),
+            unit_amount: toStripeAmount(params.amount),
+            product_data: {
+              name: params.description,
+              description:
+                params.metadata.payment_type === "registration"
+                  ? "Accès complet : découverte, likes et mise en relation."
+                  : "Mise en relation accompagnée proposée par l'équipe.",
+            },
           },
         },
-      },
-    ],
-    metadata: {
-      payment_id: payment.id,
-      user_id: user.id,
-      payment_type: "matching",
-      match_id: payment.match_id ?? "",
-    },
-    success_url: `${appUrl}/matchs?checkout=success&match=${payment.match_id ?? ""}`,
-    cancel_url: `${appUrl}/matchs?checkout=cancel`,
+      ],
+      metadata: params.metadata,
+      success_url: `${appUrl}${params.successPath}`,
+      cancel_url: `${appUrl}${params.cancelPath}`,
+    });
+
+    await supabase
+      .from("payments")
+      .update({
+        provider: "stripe",
+        currency: params.currency.toUpperCase(),
+        stripe_session_id: session.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", params.paymentId);
+
+    if (!session.url) {
+      return { error: "Session Stripe invalide" };
+    }
+
+    return { url: session.url };
+  }
+
+  if (params.provider === "paypal") {
+    const order = await createPayPalOrder({
+      paymentId: params.paymentId,
+      amount: params.amount,
+      currency: params.currency,
+      description: params.description,
+      successPath: params.successPath,
+      cancelPath: params.cancelPath,
+      customId: params.paymentId,
+    });
+
+    await supabase
+      .from("payments")
+      .update({
+        provider: "paypal",
+        currency: params.currency.toUpperCase(),
+        provider_reference: order.orderId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", params.paymentId);
+
+    return { url: order.approveUrl };
+  }
+
+  // cinetpay (mtn / orange)
+  const channelPreference: CinetPayChannelPreference =
+    params.method === "orange" ? "orange" : "mtn";
+  const transactionId = buildCinetPayTransactionId(params.paymentId);
+
+  const init = await initCinetPayPayment({
+    paymentId: params.paymentId,
+    transactionId,
+    amount: params.amount,
+    currency: params.currency,
+    description: params.description,
+    customerEmail: params.customerEmail,
+    customerName: params.customerName,
+    channelPreference,
+    returnPath: params.successPath,
   });
 
   await supabase
     .from("payments")
     .update({
-      provider: "stripe",
-      currency: "USD",
-      stripe_session_id: session.id,
+      provider: "cinetpay",
+      currency: params.currency.toUpperCase(),
+      provider_reference: init.transactionId,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", payment.id);
+    .eq("id", params.paymentId);
 
-  if (!session.url) {
-    return { error: "Session Stripe invalide" };
-  }
-
-  return { url: session.url };
+  return { url: init.paymentUrl };
 }

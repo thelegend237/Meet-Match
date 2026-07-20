@@ -15,9 +15,14 @@ import {
   Gift,
 } from "lucide-react";
 import { confirmMatchingPayment } from "@/lib/actions/matches";
+import {
+  PaymentMethodPicker,
+  resolvePaymentMethodForCheckout,
+} from "@/components/user/payment-method-picker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { matchStatusLabels } from "@/lib/admin/labels";
+import type { PaymentMethodId } from "@/lib/payments/providers";
 import { formatDisplayPrice, isFreeFee, MONTHLY_FREE_MATCHES, PRICING_TEST_MODE } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import type { UserMatch } from "@/lib/types/database";
@@ -47,6 +52,7 @@ function MatchCard({
 }) {
   const [pending, startTransition] = useTransition();
   const [localPaymentDone, setLocalPaymentDone] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const needsPayment =
     match.status === "pending_payment" &&
@@ -64,22 +70,14 @@ function MatchCard({
       (match.myPayment && ["paid", "free"].includes(match.myPayment.status))) &&
     !match.partnerHasPaid;
 
-  function handlePay() {
+  function runCheckout(method?: PaymentMethodId) {
     if (!match.myPayment) return;
-    const { amount, currency } = match.myPayment;
-    const priceLabel = formatDisplayPrice(amount, currency);
-    const free = isFreeFee(amount);
-    const message = free
-      ? "Confirmer ce match gratuitement ?\n\nAucun paiement ne sera demandé pendant la phase test."
-      : PRICING_TEST_MODE
-        ? `Confirmer le paiement de ${priceLabel} pour ce match ?\n\n(Mode test — paiement simulé)`
-        : `Vous allez être redirigé vers Stripe pour payer ${priceLabel}. Continuer ?`;
-
-    if (!confirm(message)) {
-      return;
-    }
+    const free = isFreeFee(match.myPayment.amount);
     startTransition(async () => {
-      const result = await confirmMatchingPayment(match.myPayment!.id);
+      const result = await confirmMatchingPayment(
+        match.myPayment!.id,
+        method ? { method } : undefined
+      );
       if ("error" in result && result.error) {
         toast({
           variant: "destructive",
@@ -99,6 +97,36 @@ function MatchCard({
           : "Votre paiement a été pris en compte. Le match sera activé lorsque les deux parties auront payé.",
       });
       setLocalPaymentDone(true);
+    });
+  }
+
+  function handlePay() {
+    if (!match.myPayment) return;
+    const { amount, currency } = match.myPayment;
+    const priceLabel = formatDisplayPrice(amount, currency);
+    const free = isFreeFee(amount);
+    const message = free
+      ? "Confirmer ce match gratuitement ?\n\nAucun paiement ne sera demandé pendant la phase test."
+      : PRICING_TEST_MODE
+        ? `Confirmer le paiement de ${priceLabel} pour ce match ?\n\n(Mode test — paiement simulé)`
+        : `Payer ${priceLabel} pour ce match. Continuer ?`;
+
+    if (!confirm(message)) {
+      return;
+    }
+
+    if (free || PRICING_TEST_MODE) {
+      runCheckout();
+      return;
+    }
+
+    startTransition(async () => {
+      const method = await resolvePaymentMethodForCheckout(() => {
+        setPickerOpen(true);
+      });
+      if (method) {
+        runCheckout(method);
+      }
     });
   }
 
@@ -191,6 +219,18 @@ function MatchCard({
                 ? "Confirmer gratuitement"
                 : `Payer ${formatDisplayPrice(match.myPayment!.amount, match.myPayment!.currency)}`}
             </Button>
+            <PaymentMethodPicker
+              open={pickerOpen}
+              onClose={() => setPickerOpen(false)}
+              amountLabel={formatDisplayPrice(
+                match.myPayment.amount,
+                match.myPayment.currency
+              )}
+              onSelect={(method) => {
+                setPickerOpen(false);
+                runCheckout(method);
+              }}
+            />
           </div>
         )}
 

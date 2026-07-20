@@ -2,32 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { markPaymentPaid } from "@/lib/payments/mark-paid";
 
 export const runtime = "nodejs";
 
 async function markPaid(paymentId: string, sessionId: string) {
-  const admin = createAdminClient();
-  const { error } = await admin.rpc("mark_payment_paid_from_stripe", {
-    p_payment_id: paymentId,
-    p_stripe_session_id: sessionId,
+  await markPaymentPaid({
+    paymentId,
+    provider: "stripe",
+    providerReference: sessionId,
   });
-  if (error) {
-    // Fallback direct update if RPC not yet migrated
-    const { error: updateError } = await admin
-      .from("payments")
-      .update({
-        status: "paid",
-        provider: "stripe",
-        stripe_session_id: sessionId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", paymentId)
-      .in("status", ["unpaid", "failed"]);
-
-    if (updateError) {
-      throw new Error(error.message || updateError.message);
-    }
-  }
 }
 
 export async function POST(request: NextRequest) {
