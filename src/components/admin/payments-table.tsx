@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { remindPaymentAction } from "@/lib/actions/admin";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { StatusBadge } from "@/components/admin/status-badge";
-import { getPaymentRowStatusLabel } from "@/lib/admin/payment-display";
+import { getPaymentRowStatusLabel, getPaymentProviderLabel, getPaymentProviderBadgeClass } from "@/lib/admin/payment-display";
 import type { Payment, PaymentStatus, PaymentType } from "@/lib/types/database";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -196,6 +196,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
           user?.email ?? "",
           TYPE_LABELS[payment.type],
           getPaymentRowStatusLabel(payment),
+          getPaymentProviderLabel(payment.provider),
         ]
           .join(" ")
           .toLowerCase();
@@ -250,7 +251,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
       "Montant",
       "Devise",
       "Statut",
-      "Fournisseur",
+      "Mode de paiement",
       "Date",
       "Match ID",
     ];
@@ -264,7 +265,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
         String(Number(payment.amount)),
         payment.currency,
         getPaymentRowStatusLabel(payment),
-        payment.provider,
+        getPaymentProviderLabel(payment.provider),
         formatPaymentDate(payment.created_at),
         payment.match_id ?? "",
       ];
@@ -475,6 +476,14 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
                       >
                         {TYPE_LABELS[payment.type]}
                       </span>
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
+                          getPaymentProviderBadgeClass(payment.provider)
+                        )}
+                      >
+                        {getPaymentProviderLabel(payment.provider)}
+                      </span>
                       <StatusBadge kind="payment" status={payment.status} />
                     </div>
 
@@ -508,6 +517,7 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
                     <th className="px-4 py-2.5 font-semibold">Utilisateur</th>
                     <th className="px-4 py-2.5 font-semibold">Type</th>
                     <th className="px-4 py-2.5 font-semibold">Montant</th>
+                    <th className="px-4 py-2.5 font-semibold">Mode</th>
                     <th className="px-4 py-2.5 font-semibold">Statut</th>
                     <th className="px-4 py-2.5 font-semibold">Date</th>
                     <th className="px-4 py-2.5 font-semibold">Actions</th>
@@ -575,6 +585,16 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
                               Accès offert
                             </p>
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full px-3 py-1 text-xs font-semibold",
+                              getPaymentProviderBadgeClass(payment.provider)
+                            )}
+                          >
+                            {getPaymentProviderLabel(payment.provider)}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge

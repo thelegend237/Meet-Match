@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import {
   Check,
   CreditCard,
@@ -90,6 +91,11 @@ export function PaymentMethodPicker({
   const [loading, startLoad] = useTransition();
   const [selected, setSelected] = useState<PaymentMethodId | null>(null);
   const [entering, setEntering] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -111,24 +117,31 @@ export function PaymentMethodPicker({
       if (e.key === "Escape") onClose();
     }
     document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prev;
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const selectedMethod = methods?.find((m) => m.id === selected);
 
-  return (
+  return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-[80] flex items-end justify-center safe-area-pt sm:items-center sm:p-5",
-        "transition-colors duration-300",
-        entering ? "bg-[#2e1a47]/45 backdrop-blur-[6px]" : "bg-[#2e1a47]/0"
+        "fixed inset-0 z-[100] flex items-center justify-center p-4",
+        "transition-colors duration-300"
       )}
+      style={{
+        backgroundColor: entering
+          ? "rgba(46, 26, 71, 0.45)"
+          : "rgba(46, 26, 71, 0)",
+        backdropFilter: entering ? "blur(6px)" : "none",
+        WebkitBackdropFilter: entering ? "blur(6px)" : "none",
+      }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -136,11 +149,12 @@ export function PaymentMethodPicker({
     >
       <div
         className={cn(
-          "relative w-full max-w-[420px] overflow-hidden rounded-t-[1.75rem] bg-white shadow-[0_-12px_48px_rgba(46,26,71,0.18)] sm:rounded-[1.75rem] sm:shadow-[0_24px_64px_rgba(46,26,71,0.22)]",
+          "relative w-full max-w-[420px] max-h-[min(92dvh,640px)] overflow-y-auto overflow-x-hidden",
+          "rounded-[1.75rem] bg-white shadow-[0_24px_64px_rgba(46,26,71,0.22)]",
           "transition-all duration-300 ease-out",
           entering
-            ? "translate-y-0 opacity-100 sm:scale-100"
-            : "translate-y-8 opacity-0 sm:translate-y-4 sm:scale-[0.97]"
+            ? "translate-y-0 scale-100 opacity-100"
+            : "translate-y-6 scale-[0.97] opacity-0"
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -159,7 +173,7 @@ export function PaymentMethodPicker({
         />
 
         {/* Handle (mobile) */}
-        <div className="relative flex justify-center pt-3 sm:hidden">
+        <div className="relative flex justify-center pt-3 md:hidden">
           <span className="h-1 w-10 rounded-full bg-[#e8e0f0]" />
         </div>
 
@@ -299,7 +313,8 @@ export function PaymentMethodPicker({
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

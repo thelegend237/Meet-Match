@@ -40,6 +40,7 @@ import {
 } from "@/lib/validations/profile";
 import { formatCurrency } from "@/lib/utils";
 import { matchStatusLabels } from "@/lib/admin/labels";
+import { getPaymentProviderLabel } from "@/lib/admin/payment-display";
 import type { AdminUserDetail } from "@/lib/types/database";
 
 const ACCESS_OPTIONS = [
@@ -440,6 +441,8 @@ export function AdminUserDetailView({
                     <p className="font-medium capitalize text-primary">{p.type}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(p.created_at).toLocaleDateString("fr-FR")}
+                      {" · "}
+                      {getPaymentProviderLabel(p.provider)}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
