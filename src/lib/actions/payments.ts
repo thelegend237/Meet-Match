@@ -22,11 +22,7 @@ import {
   type PaymentMethodId,
 } from "@/lib/payments/providers";
 import { createPayPalOrder } from "@/lib/payments/paypal";
-import {
-  buildCinetPayTransactionId,
-  initCinetPayPayment,
-  type CinetPayChannelPreference,
-} from "@/lib/payments/cinetpay";
+import { initViaziPayPayment } from "@/lib/payments/viazipay";
 
 function revalidatePaymentPaths() {
   revalidatePath("/paiements");
@@ -81,7 +77,7 @@ export async function confirmRegistrationPayment() {
 
 /**
  * Démarre le checkout inscription selon le moyen choisi
- * (stripe | paypal | cinetpay via mtn/orange).
+ * (stripe | paypal | viazipay via mtn/orange).
  */
 export async function startRegistrationCheckout(options?: CheckoutOptions) {
   const supabase = await createClient();
@@ -362,29 +358,24 @@ async function startProviderCheckout(params: {
     return { url: order.approveUrl };
   }
 
-  // cinetpay (mtn / orange)
-  const channelPreference: CinetPayChannelPreference =
-    params.method === "orange" ? "orange" : "mtn";
-  const transactionId = buildCinetPayTransactionId(params.paymentId);
-
-  const init = await initCinetPayPayment({
+  // viazipay (mtn / orange) — facturation XAF côté opérateur
+  const channel = params.method === "orange" ? "orange" : "mtn";
+  const init = await initViaziPayPayment({
     paymentId: params.paymentId,
-    transactionId,
     amount: params.amount,
     currency: params.currency,
-    description: params.description,
-    customerEmail: params.customerEmail,
-    customerName: params.customerName,
-    channelPreference,
-    returnPath: params.successPath,
+    channel,
+    successPath: params.successPath,
+    cancelPath: params.cancelPath,
   });
 
   await supabase
     .from("payments")
     .update({
-      provider: "cinetpay",
+      provider: "viazipay",
+      // On conserve la devise métier (USD) ; ViaziPay encaisse en XAF.
       currency: params.currency.toUpperCase(),
-      provider_reference: init.transactionId,
+      provider_reference: init.orderId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", params.paymentId);

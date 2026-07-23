@@ -28,7 +28,8 @@ export function getPaymentRowStatusLabel(payment: Pick<Payment, "status" | "type
 const PROVIDER_LABELS: Record<string, string> = {
   stripe: "Carte / Apple Pay",
   paypal: "PayPal",
-  cinetpay: "MTN / Orange",
+  viazipay: "MTN / Orange",
+  cinetpay: "CinetPay (legacy)",
   flutterwave: "Flutterwave",
   manual: "Manuel",
 };
@@ -45,6 +46,7 @@ export function getPaymentProviderBadgeClass(provider: string | null | undefined
       return "bg-[#ede9fe] text-[#4c1d95]";
     case "paypal":
       return "bg-[#dbeafe] text-[#1e40af]";
+    case "viazipay":
     case "cinetpay":
       return "bg-[#ffedd5] text-[#c2410c]";
     case "manual":

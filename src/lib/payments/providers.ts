@@ -1,11 +1,16 @@
 import { isStripeConfigured } from "@/lib/stripe";
 
 /** Provider stocké en DB (`payments.provider`). */
-export type PaymentProvider = "stripe" | "paypal" | "cinetpay" | "manual";
+export type PaymentProvider =
+  | "stripe"
+  | "paypal"
+  | "viazipay"
+  | "cinetpay"
+  | "manual";
 
 /**
  * Moyen affiché dans l'UI.
- * MTN et Orange passent tous deux par CinetPay.
+ * MTN et Orange passent tous deux par ViaziPay.
  */
 export type PaymentMethodId = "stripe" | "paypal" | "mtn" | "orange";
 
@@ -31,15 +36,15 @@ const METHOD_CATALOG: Record<PaymentMethodId, PaymentMethodOption> = {
   },
   mtn: {
     id: "mtn",
-    provider: "cinetpay",
+    provider: "viazipay",
     label: "MTN MoMo",
-    description: "Mobile Money MTN (Afrique francophone)",
+    description: "Mobile Money MTN (Cameroun · ViaziPay)",
   },
   orange: {
     id: "orange",
-    provider: "cinetpay",
+    provider: "viazipay",
     label: "Orange Money",
-    description: "Mobile Money Orange (Afrique francophone)",
+    description: "Mobile Money Orange (Cameroun · ViaziPay)",
   },
 };
 
@@ -50,10 +55,10 @@ export function isPayPalConfigured(): boolean {
   );
 }
 
-export function isCinetPayConfigured(): boolean {
+export function isViaziPayConfigured(): boolean {
   return Boolean(
-    process.env.CINETPAY_API_KEY?.trim() &&
-      process.env.CINETPAY_SITE_ID?.trim()
+    process.env.VIAZIPAY_PUBLIC_KEY?.trim() &&
+      process.env.VIAZIPAY_PRIVATE_KEY?.trim()
   );
 }
 
@@ -68,7 +73,7 @@ export function getConfiguredPaymentMethods(): PaymentMethodOption[] {
   const methods: PaymentMethodOption[] = [];
   if (isStripeConfigured()) methods.push(METHOD_CATALOG.stripe);
   if (isPayPalConfigured()) methods.push(METHOD_CATALOG.paypal);
-  if (isCinetPayConfigured()) {
+  if (isViaziPayConfigured()) {
     methods.push(METHOD_CATALOG.mtn, METHOD_CATALOG.orange);
   }
   return methods;

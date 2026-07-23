@@ -109,6 +109,26 @@ const entries = [
     sensitive: true,
     optional: true,
   },
+  {
+    name: "VIAZIPAY_PUBLIC_KEY",
+    value: local.VIAZIPAY_PUBLIC_KEY,
+    sensitive: true,
+  },
+  {
+    name: "VIAZIPAY_PRIVATE_KEY",
+    value: local.VIAZIPAY_PRIVATE_KEY,
+    sensitive: true,
+  },
+  {
+    name: "VIAZIPAY_MODE",
+    value: local.VIAZIPAY_MODE || "DEV",
+    sensitive: false,
+  },
+  {
+    name: "VIAZIPAY_USD_TO_XAF",
+    value: local.VIAZIPAY_USD_TO_XAF || "600",
+    sensitive: false,
+  },
 ];
 
 let failed = 0;
