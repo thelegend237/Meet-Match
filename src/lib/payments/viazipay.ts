@@ -112,9 +112,14 @@ export async function initViaziPayPayment(
   const data = (await res.json()) as ViaziPayInitResponse;
   const paymentUrl = data.datas?.payment_url;
   if (!res.ok || data.status !== 200 || !paymentUrl) {
-    throw new Error(
-      data.message || `ViaziPay init échoué (${data.status ?? res.status})`
-    );
+    const raw = (data.message || "").trim();
+    const code = data.status ?? res.status;
+    if (code === 401 || /^ERROR!?$/i.test(raw)) {
+      throw new Error(
+        "ViaziPay : authentification refusée. Vérifiez les clés et VIAZIPAY_MODE (DEV vs PROD)."
+      );
+    }
+    throw new Error(raw || `ViaziPay init échoué (${code})`);
   }
 
   return { paymentUrl, orderId, amountXaf };
