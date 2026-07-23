@@ -32,6 +32,7 @@ type MethodVisual = {
   /** Logo marque (PayPal / MTN / Orange) — sinon icône Lucide. */
   logoSrc?: string;
   logoAlt?: string;
+  logoFit?: "cover" | "contain";
   fallbackIcon?: LucideIcon;
 };
 
@@ -46,12 +47,13 @@ const METHOD_VISUAL: Record<PaymentMethodId, MethodVisual> = {
   },
   paypal: {
     accent: "from-[#0070ba]/15 to-[#003087]/5",
-    iconBg: "bg-black",
-    iconFg: "text-white",
+    iconBg: "bg-white ring-1 ring-[#ebe6f0]",
+    iconFg: "text-[#003087]",
     ring: "ring-[#0070ba]/35",
     selectedBg: "bg-[#0070ba]/[0.06]",
     logoSrc: "/payments/paypal.png",
     logoAlt: "PayPal",
+    logoFit: "contain",
   },
   mtn: {
     accent: "from-[#ffcc00]/25 to-[#ffcc00]/5",
@@ -275,7 +277,12 @@ export function PaymentMethodPicker({
                         alt={visual.logoAlt ?? method.label}
                         width={48}
                         height={48}
-                        className="h-full w-full object-cover"
+                        className={cn(
+                          "h-full w-full",
+                          visual.logoFit === "contain"
+                            ? "object-contain p-1.5"
+                            : "object-cover"
+                        )}
                       />
                     ) : FallbackIcon ? (
                       <FallbackIcon className="h-5 w-5" strokeWidth={2.25} />
