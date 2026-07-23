@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import {
   Check,
   CreditCard,
   Loader2,
   Lock,
-  Smartphone,
-  Wallet,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { listAvailablePaymentMethods } from "@/lib/actions/payments";
@@ -23,48 +23,53 @@ type MethodOption = {
   provider: string;
 };
 
-const METHOD_VISUAL: Record<
-  PaymentMethodId,
-  {
-    icon: typeof CreditCard;
-    accent: string;
-    iconBg: string;
-    iconFg: string;
-    ring: string;
-    selectedBg: string;
-  }
-> = {
+type MethodVisual = {
+  accent: string;
+  iconBg: string;
+  iconFg: string;
+  ring: string;
+  selectedBg: string;
+  /** Logo marque (PayPal / MTN / Orange) — sinon icône Lucide. */
+  logoSrc?: string;
+  logoAlt?: string;
+  fallbackIcon?: LucideIcon;
+};
+
+const METHOD_VISUAL: Record<PaymentMethodId, MethodVisual> = {
   stripe: {
-    icon: CreditCard,
     accent: "from-[#635bff]/15 to-[#0a2540]/5",
     iconBg: "bg-[#635bff]",
     iconFg: "text-white",
     ring: "ring-[#635bff]/35",
     selectedBg: "bg-[#635bff]/[0.06]",
+    fallbackIcon: CreditCard,
   },
   paypal: {
-    icon: Wallet,
     accent: "from-[#0070ba]/15 to-[#003087]/5",
-    iconBg: "bg-[#0070ba]",
+    iconBg: "bg-black",
     iconFg: "text-white",
     ring: "ring-[#0070ba]/35",
     selectedBg: "bg-[#0070ba]/[0.06]",
+    logoSrc: "/payments/paypal.png",
+    logoAlt: "PayPal",
   },
   mtn: {
-    icon: Smartphone,
     accent: "from-[#ffcc00]/25 to-[#ffcc00]/5",
     iconBg: "bg-[#ffcc00]",
     iconFg: "text-[#1a1a1a]",
     ring: "ring-[#ffcc00]/50",
     selectedBg: "bg-[#ffcc00]/10",
+    logoSrc: "/payments/mtn-momo.png",
+    logoAlt: "MTN MoMo",
   },
   orange: {
-    icon: Smartphone,
     accent: "from-[#ff7900]/20 to-[#ff7900]/5",
-    iconBg: "bg-[#ff7900]",
+    iconBg: "bg-[#12181F]",
     iconFg: "text-white",
     ring: "ring-[#ff7900]/40",
     selectedBg: "bg-[#ff7900]/[0.07]",
+    logoSrc: "/payments/orange-money.png",
+    logoAlt: "Orange Money",
   },
 };
 
@@ -226,7 +231,7 @@ export function PaymentMethodPicker({
             methods.map((method, index) => {
               const active = selected === method.id;
               const visual = METHOD_VISUAL[method.id];
-              const Icon = visual.icon;
+              const FallbackIcon = visual.fallbackIcon;
               return (
                 <button
                   key={method.id}
@@ -258,13 +263,23 @@ export function PaymentMethodPicker({
                   />
                   <span
                     className={cn(
-                      "relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200",
+                      "relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl shadow-sm transition-transform duration-200",
                       visual.iconBg,
                       visual.iconFg,
                       active && "scale-105"
                     )}
                   >
-                    <Icon className="h-5 w-5" strokeWidth={2.25} />
+                    {visual.logoSrc ? (
+                      <Image
+                        src={visual.logoSrc}
+                        alt={visual.logoAlt ?? method.label}
+                        width={48}
+                        height={48}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : FallbackIcon ? (
+                      <FallbackIcon className="h-5 w-5" strokeWidth={2.25} />
+                    ) : null}
                   </span>
                   <span className="relative min-w-0 flex-1">
                     <span className="block text-[15px] font-semibold text-primary">
