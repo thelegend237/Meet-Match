@@ -65,10 +65,9 @@ export function PricingBetaBanner({
             {LAUNCH_OFFER_TITLE}
           </p>
           <p className="mt-1.5 text-sm leading-relaxed text-rose-900/80">
-            Inscription offerte
+            Inscription et matching offerts
             {until ? ` jusqu'au ${until}` : ""}
-            . Le matching reste à 10&nbsp;$&nbsp;US lorsqu&apos;un administrateur
-            vous propose une rencontre.
+            . Aucun paiement requis pendant cette période.
           </p>
         </div>
       </div>

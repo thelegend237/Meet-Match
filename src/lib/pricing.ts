@@ -8,7 +8,8 @@ export const PRICING_TEST_MODE =
   process.env.NEXT_PUBLIC_PRICING_TEST_MODE === "true";
 
 /**
- * Offre de lancement : inscription gratuite jusqu'à cette date (ISO YYYY-MM-DD, fin de journée UTC).
+ * Offre de lancement : inscription + matching gratuits jusqu'à cette date
+ * (ISO YYYY-MM-DD, fin de journée UTC).
  * Ex. NEXT_PUBLIC_LAUNCH_FREE_UNTIL=2026-08-10
  */
 export const LAUNCH_FREE_UNTIL =
@@ -54,9 +55,9 @@ export function isRegistrationWaived(now = new Date()): boolean {
   return PRICING_TEST_MODE || isLaunchFreeActive(now);
 }
 
-/** Matching offert uniquement en phase test. */
-export function isMatchingWaived(): boolean {
-  return PRICING_TEST_MODE;
+/** Matching offert (phase test ou offre de lancement). */
+export function isMatchingWaived(now = new Date()): boolean {
+  return PRICING_TEST_MODE || isLaunchFreeActive(now);
 }
 
 export function displayCurrencyForCountry(
@@ -189,7 +190,7 @@ export function futurePricingFootnote(
     return `Après la phase test : environ ${formatCurrency(convertFromUsd(CHARGE_REGISTRATION_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} d'inscription et ${formatCurrency(convertFromUsd(CHARGE_MATCHING_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} par matching (réf. ${CHARGE_REGISTRATION_USD} $ / ${CHARGE_MATCHING_USD} $ US).`;
   }
   if (isLaunchFreeActive()) {
-    return `Offre de lancement : inscription gratuite jusqu'au ${formatLaunchOfferEnd()}. Ensuite ${formatDisplayPrice(convertFromUsd(CHARGE_REGISTRATION_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))}. Matching : ${formatDisplayPrice(match.amount, match.currency)} lorsqu'un admin vous propose une rencontre.`;
+    return `Offre de lancement : inscription et matching gratuits jusqu'au ${formatLaunchOfferEnd()}. Ensuite ${formatDisplayPrice(convertFromUsd(CHARGE_REGISTRATION_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} d'inscription et ${formatDisplayPrice(convertFromUsd(CHARGE_MATCHING_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} de matching.`;
   }
   return `Tarif mondial : ${formatDisplayPrice(reg.amount, reg.currency)} inscription · ${formatDisplayPrice(match.amount, match.currency)} matching (réf. USD).`;
 }
@@ -234,8 +235,9 @@ export const MATCHING_BENEFITS = isMatchingWaived()
   ? ([
       {
         title: "Matchs gratuits",
-        description:
-          "Chaque mise en relation proposée par l'équipe est gratuite pendant la phase test.",
+        description: PRICING_TEST_MODE
+          ? "Chaque mise en relation proposée par l'équipe est gratuite pendant la phase test."
+          : "Chaque mise en relation proposée par l'équipe est gratuite pendant l'offre de lancement.",
       },
       {
         title: "Accompagnement inclus",
@@ -244,8 +246,9 @@ export const MATCHING_BENEFITS = isMatchingWaived()
       },
       {
         title: "Sans engagement",
-        description:
-          "Testez l'expérience complète avant le lancement des paiements réels.",
+        description: PRICING_TEST_MODE
+          ? "Testez l'expérience complète avant le lancement des paiements réels."
+          : "Profitez de l'expérience complète pendant l'offre de lancement.",
       },
     ] as const)
   : ([
@@ -268,7 +271,9 @@ export const MATCHING_BENEFITS = isMatchingWaived()
 export const MATCHING_FEATURES = isMatchingWaived()
   ? ([
       "Proposition de match par un administrateur",
-      "Mise en relation gratuite pendant la phase test",
+      PRICING_TEST_MODE
+        ? "Mise en relation gratuite pendant la phase test"
+        : "Mise en relation gratuite — offre de lancement",
       "Discussion groupée encadrée",
       "Accompagnement Meet & Match",
     ] as const)

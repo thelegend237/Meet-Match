@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Inscription 5 $ US, matching 10 $ US. Offre de lancement : inscription offerte pour une durée limitée.",
+    "Inscription 5 $ US, matching 10 $ US. Offre de lancement : inscription et matching offerts pour une durée limitée.",
 };
 
 const regFee = getRegistrationFee(null);
@@ -95,14 +95,18 @@ const paymentSteps = [
     title: "Match proposé",
     text: PRICING_TEST_MODE
       ? "Un admin vous propose une mise en relation — gratuit pendant la phase test."
-      : "Un admin vous propose une mise en relation — 10 $ US de matching s'appliquent alors.",
+      : launchFree
+        ? `Un admin vous propose une mise en relation — gratuit${launchUntil ? ` jusqu'au ${launchUntil}` : ""} (offre de lancement).`
+        : "Un admin vous propose une mise en relation — 10 $ US de matching s'appliquent alors.",
   },
   {
     step: "04",
     title: "Discussion",
     text: PRICING_TEST_MODE
       ? "La conversation encadrée s'ouvre dès que le match est confirmé."
-      : "Après paiement (ou crédit gratuit mensuel), la conversation encadrée s'ouvre.",
+      : launchFree
+        ? "La conversation encadrée s'ouvre dès confirmation des deux parties — sans paiement pendant l'offre."
+        : "Après paiement (ou crédit gratuit mensuel), la conversation encadrée s'ouvre.",
   },
 ] as const;
 
@@ -121,14 +125,14 @@ export default function TarifsPage() {
         PRICING_TEST_MODE
           ? "Tout est gratuit pour l'instant"
           : launchFree
-            ? "Inscription offerte"
+            ? "Inscription et matching offerts"
             : "Nos tarifs"
       }
       description={
         PRICING_TEST_MODE
           ? "Meet & Match est en version test : inscription, matching et accompagnement sont offerts à tous les testeurs. Les tarifs définitifs seront activés plus tard."
           : launchFree
-            ? `Inscription gratuite${launchUntil ? ` jusqu'au ${launchUntil}` : ""}. Ensuite 5 $ US. Matching : 10 $ US uniquement quand un admin vous propose une rencontre.`
+            ? `Inscription et matching gratuits${launchUntil ? ` jusqu'au ${launchUntil}` : ""}. Ensuite 5 $ US d'inscription et 10 $ US de matching.`
             : "Deux paiements clairs : 5 $ US d'inscription, 10 $ US de matching uniquement quand un administrateur vous propose une rencontre. Affichage possible en devise locale."
       }
       wide
@@ -159,7 +163,7 @@ export default function TarifsPage() {
                   <strong className="font-semibold text-[#2e1a47]">jamais</strong>{" "}
                   facturé à l&apos;avance
                   {launchFree
-                    ? " — et l'inscription est offerte pendant l'offre de lancement"
+                    ? " — inscription et matching sont offerts pendant l'offre de lancement"
                     : ""}
                   .
                 </>
