@@ -71,7 +71,7 @@ export function PaymentActivationBanner({
       <div
         className={cn(
           "fixed inset-x-0 z-40 border-t border-amber-200/80 bg-gradient-to-r from-amber-50 to-[#fff7ed] px-4 py-3 shadow-[0_-8px_24px_rgba(46,26,71,0.08)] md:hidden",
-          "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))]",
+          "bottom-[calc(var(--mm-bottom-nav-h)+env(safe-area-inset-bottom,0px))]",
           className
         )}
         role="status"

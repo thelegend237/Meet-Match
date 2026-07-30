@@ -23,7 +23,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "mm-card flex flex-col items-center px-6 py-12 text-center sm:px-10 sm:py-14",
+        "mm-card flex flex-col items-center px-5 py-8 text-center sm:px-10 sm:py-12",
         className
       )}
     >

@@ -136,7 +136,7 @@ function MatchCard({
       className="mm-card overflow-hidden p-0"
     >
       <div className="flex gap-4 p-4">
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-20 sm:w-20">
           {match.partner.primary_photo_url ? (
             <Image
               src={match.partner.primary_photo_url}
@@ -314,7 +314,7 @@ export function MatchesList({ matches, matchingCredits }: MatchesListProps) {
 
   if (matches.length === 0) {
     return (
-      <div className="mm-card flex flex-col items-center px-6 py-12 text-center">
+      <div className="mm-card flex flex-col items-center px-5 py-8 text-center sm:px-6 sm:py-12">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent">
           <Heart className="h-8 w-8 text-secondary/70" />
         </div>
@@ -330,7 +330,7 @@ export function MatchesList({ matches, matchingCredits }: MatchesListProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       {active.length > 0 && (
         <section>
           <h2 className="mb-4 text-lg font-bold text-primary">En cours</h2>

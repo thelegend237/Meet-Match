@@ -94,12 +94,12 @@ function ComparisonRow({
   matching: boolean;
 }) {
   return (
-    <li className="grid grid-cols-[1fr_4.5rem_4.5rem] items-center gap-3 border-b border-border/40 py-4 last:border-0 sm:grid-cols-[1fr_5rem_5rem]">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/60">
+    <li className="grid grid-cols-[1fr_3.25rem_3.25rem] items-center gap-2 border-b border-border/40 py-3 last:border-0 sm:grid-cols-[1fr_5rem_5rem] sm:gap-3 sm:py-4">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/60 sm:flex">
           <Icon className="h-4 w-4 text-muted-foreground" />
         </span>
-        <span className="text-sm leading-snug text-foreground">{label}</span>
+        <span className="text-xs leading-snug text-foreground sm:text-sm">{label}</span>
       </div>
       <PlanCheck active={registration} />
       <PlanCheck active={matching} muted />
@@ -155,8 +155,8 @@ export function ProfileHub({
     <div className="flex min-h-[calc(100dvh-8rem)] justify-center pb-6 md:min-h-0">
       <div className="mm-card-elevated w-full max-w-2xl overflow-hidden p-0 sm:max-w-3xl lg:max-w-4xl">
         {/* En-tête */}
-        <header className="flex items-center justify-between px-5 pb-2 pt-5 sm:px-8 sm:pt-6">
-          <h1 className="text-xl font-bold tracking-tight text-primary sm:text-2xl">
+        <header className="flex items-center justify-between px-4 pb-2 pt-4 sm:px-8 sm:pt-6">
+          <h1 className="text-lg font-bold tracking-tight text-primary sm:text-2xl">
             Profil
           </h1>
           <div className="flex items-center gap-1">
@@ -184,22 +184,22 @@ export function ProfileHub({
         </header>
 
         {/* Identité */}
-        <section className="flex items-start gap-5 px-5 pb-5 sm:gap-6 sm:px-8 sm:pb-6">
+        <section className="flex items-start gap-3 px-4 pb-4 sm:gap-6 sm:px-8 sm:pb-6">
           <ProfileAvatarRing
             photoUrl={profile.primary_photo_url}
             displayName={profile.display_name}
             completion={profile.profile_completion}
-            size={104}
-            className="sm:scale-105"
+            size={80}
+            className="sm:scale-110"
           />
-          <div className="min-w-0 flex-1 pt-2 sm:pt-3">
-            <h2 className="text-xl font-bold text-primary sm:text-2xl lg:text-[1.65rem]">
+          <div className="min-w-0 flex-1 pt-1 sm:pt-3">
+            <h2 className="text-lg font-bold text-primary sm:text-2xl lg:text-[1.65rem]">
               {profile.display_name || "Mon profil"}
               {age !== null && (
                 <span className="font-semibold text-primary/90">, {age}</span>
               )}
             </h2>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-3">
               {relationshipLabel && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-medium text-muted-foreground sm:text-sm">
                   <Heart className="h-3.5 w-3.5 text-secondary" />
@@ -217,7 +217,7 @@ export function ProfileHub({
         </section>
 
         {/* Bannières */}
-        <div className="space-y-3 px-5 pb-5 sm:px-8 sm:pb-6">
+        <div className="space-y-3 px-4 pb-4 sm:px-8 sm:pb-6">
           {!profile.is_verified && (
             <Link
               href={
@@ -225,7 +225,7 @@ export function ProfileHub({
                   ? "/onboarding"
                   : "/contact"
               }
-              className="flex items-center gap-4 rounded-2xl border border-border/50 bg-card px-5 py-4 shadow-sm transition-colors hover:bg-muted/30 sm:px-6"
+              className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3 shadow-sm transition-colors hover:bg-muted/30 sm:gap-4 sm:px-6 sm:py-4"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/10">
                 <BadgeCheck className="h-5 w-5 text-blue-600" />
@@ -240,7 +240,7 @@ export function ProfileHub({
           {profile.profile_completion < 100 && (
             <Link
               href="/onboarding"
-              className="flex items-center gap-4 rounded-2xl border border-secondary/20 bg-secondary/5 px-5 py-4 transition-colors hover:bg-secondary/10 sm:px-6"
+              className="flex items-center gap-3 rounded-2xl border border-secondary/20 bg-secondary/5 px-4 py-3 transition-colors hover:bg-secondary/10 sm:gap-4 sm:px-6 sm:py-4"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/15">
                 <Sparkles className="h-5 w-5 text-secondary" />
@@ -261,7 +261,7 @@ export function ProfileHub({
         {/* Onglets */}
         <div
           role="tablist"
-          className="flex border-b border-border/60 px-5 sm:px-8"
+          className="flex border-b border-border/60 px-4 sm:px-8"
           aria-label="Sections du profil"
         >
           {(
@@ -294,10 +294,10 @@ export function ProfileHub({
         </div>
 
         {/* Stats rapides */}
-        <div className="grid grid-cols-2 gap-4 px-5 py-5 sm:gap-5 sm:px-8 sm:py-6">
+        <div className="grid grid-cols-2 gap-3 px-4 py-4 sm:gap-5 sm:px-8 sm:py-6">
           <Link
             href="/profil/modifier"
-            className="rounded-2xl border border-border/50 bg-muted/20 p-5 text-center transition-colors hover:bg-muted/40 sm:p-6"
+            className="rounded-2xl border border-border/50 bg-muted/20 p-4 text-center transition-colors hover:bg-muted/40 sm:p-6"
           >
             <Gauge className="mx-auto h-7 w-7 text-muted-foreground" />
             <p className="mt-3 text-xs font-medium text-muted-foreground sm:text-sm">
@@ -314,7 +314,7 @@ export function ProfileHub({
           </Link>
           <Link
             href="/paiements"
-            className="rounded-2xl border border-border/50 bg-muted/20 p-5 text-center transition-colors hover:bg-muted/40 sm:p-6"
+            className="rounded-2xl border border-border/50 bg-muted/20 p-4 text-center transition-colors hover:bg-muted/40 sm:p-6"
           >
             <Zap className="mx-auto h-7 w-7 text-secondary" />
             <p className="mt-3 text-xs font-medium text-muted-foreground sm:text-sm">
@@ -344,20 +344,20 @@ export function ProfileHub({
 
         {/* Contenu onglets */}
         <div
-          className="px-5 pb-7 sm:px-8 sm:pb-8"
+          className="px-4 pb-5 sm:px-8 sm:pb-8"
           role="tabpanel"
           id={`profile-tab-${tab}`}
           aria-labelledby={`profile-tab-btn-${tab}`}
         >
           {tab === "subscriptions" && (
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6">
               {/* Carte upsell */}
-              <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-accent via-accent/80 to-secondary/10 p-5 sm:p-7 lg:flex lg:items-center lg:justify-between lg:gap-8">
+              <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-accent via-accent/80 to-secondary/10 p-4 sm:p-7 lg:flex lg:items-center lg:justify-between lg:gap-8">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary/70">
                     Meet & Match
                   </p>
-                  <h3 className="mt-1 font-sans text-xl font-bold text-primary sm:text-2xl">
+                  <h3 className="mt-1 font-sans text-lg font-bold text-primary sm:text-2xl">
                     {isStaff
                       ? "Compte équipe"
                       : registrationPaid
@@ -449,10 +449,10 @@ export function ProfileHub({
 
               {/* Tableau avantages */}
               <div>
-                <div className="grid grid-cols-[1fr_4.5rem_4.5rem] gap-3 px-1 pb-2 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:grid-cols-[1fr_5rem_5rem] sm:text-xs">
+                <div className="grid grid-cols-[1fr_3.25rem_3.25rem] gap-2 px-1 pb-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:grid-cols-[1fr_5rem_5rem] sm:gap-3 sm:text-xs">
                   <span className="text-left">Les avantages</span>
-                  <span>Inscription</span>
-                  <span>Matching</span>
+                  <span>Inscr.</span>
+                  <span>Match</span>
                 </div>
                 <ul className="rounded-2xl border border-border/50 bg-card px-4 sm:px-5">
                   {PLAN_COMPARISON_ROWS.map((row, i) => (
@@ -543,7 +543,7 @@ export function ProfileHub({
         </div>
 
         {tab === "subscriptions" && (
-          <div className="border-t border-border/40 px-5 py-5 sm:px-8 sm:py-6">
+          <div className="border-t border-border/40 px-4 py-4 sm:px-8 sm:py-6">
             {profile.bio && (
               <>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">

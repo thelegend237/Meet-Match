@@ -26,7 +26,7 @@ export function AdminConversationsShell({
         "mm-messages-layout flex min-h-0 w-full flex-1 p-2 sm:p-3",
         showThread
           ? "h-full"
-          : "h-[calc(100dvh-4rem-4.75rem-env(safe-area-inset-bottom,0px))] md:h-full"
+          : "h-[calc(100dvh-4rem-var(--mm-bottom-nav-h)-env(safe-area-inset-bottom,0px))] md:h-full"
       )}
     >
       <div className="mm-messages-panel">

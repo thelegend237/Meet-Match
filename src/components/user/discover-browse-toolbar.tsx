@@ -23,32 +23,32 @@ export function DiscoverBrowseToolbar({
   totalCount?: number;
 }) {
   return (
-    <div className="mm-card flex flex-wrap items-center gap-3 p-4">
-      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+    <div className="mm-card flex flex-wrap items-center gap-2 p-2.5 sm:gap-3 sm:p-4">
+      <div className="flex w-full items-center gap-1 rounded-full bg-muted/70 p-1 sm:w-auto sm:gap-2 sm:bg-transparent sm:p-0">
         <button
           type="button"
           onClick={() => onViewModeChange("swipe")}
           className={cn(
-            "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+            "inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-colors sm:flex-none sm:gap-2 sm:px-4 sm:text-sm",
             viewMode === "swipe"
               ? "bg-secondary text-white shadow-sm"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "bg-transparent text-muted-foreground hover:bg-muted/80 sm:bg-muted"
           )}
         >
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           Carte
         </button>
         <button
           type="button"
           onClick={() => onViewModeChange("grid")}
           className={cn(
-            "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+            "inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-colors sm:flex-none sm:gap-2 sm:px-4 sm:text-sm",
             viewMode === "grid"
               ? "bg-secondary text-white shadow-sm"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
+              : "bg-transparent text-muted-foreground hover:bg-muted/80 sm:bg-muted"
           )}
         >
-          <LayoutGrid className="h-4 w-4" />
+          <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           Grille
         </button>
       </div>
@@ -62,7 +62,7 @@ export function DiscoverBrowseToolbar({
           type="button"
           onClick={() => onBrowseGenderChange(filter.value)}
           className={cn(
-            "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+            "rounded-full px-3 py-1.5 text-xs font-medium transition-colors sm:px-4 sm:py-2 sm:text-sm",
             browseGender === filter.value
               ? "bg-secondary text-white shadow-sm"
               : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -72,8 +72,8 @@ export function DiscoverBrowseToolbar({
         </button>
       ))}
       <div className="ml-auto flex w-full sm:w-auto">
-        <span className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-secondary/10 px-4 py-2 text-sm font-medium text-secondary sm:w-auto">
-          <Filter className="h-4 w-4 shrink-0" />
+        <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-secondary/10 px-3 py-1.5 text-xs font-medium text-secondary sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+          <Filter className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
           {totalCount != null
             ? `${profileCount} à swiper sur ${totalCount}`
             : `${profileCount} profil${profileCount !== 1 ? "s" : ""}`}

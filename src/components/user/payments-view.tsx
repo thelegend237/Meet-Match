@@ -114,11 +114,11 @@ function PlanCard({
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-secondary via-secondary/80 to-primary/60" />
       )}
 
-      <div className="p-5 sm:p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             {badge}
-            <h2 className="font-sans text-xl font-bold text-primary sm:text-2xl">
+            <h2 className="font-sans text-lg font-bold text-primary sm:text-2xl">
               {title}
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
@@ -128,8 +128,8 @@ function PlanCard({
           {statusSlot}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-end gap-2">
-          <p className="font-sans text-4xl font-bold tracking-tight text-primary">
+        <div className="mt-4 flex flex-wrap items-end gap-2 sm:mt-5">
+          <p className="font-sans text-3xl font-bold tracking-tight text-primary sm:text-4xl">
             {formatDisplayPrice(amount, currency)}
           </p>
           <span className="mb-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
@@ -148,7 +148,7 @@ function PlanCard({
           ))}
         </ul>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
           {benefits.map((b) => (
             <div
               key={b.title}
@@ -197,17 +197,17 @@ export function PaymentsView({
   const showWelcomeActivation = showWelcome && !registrationPaid;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <PricingBetaBanner />
 
       {showWelcomeActivation ? (
-        <section className="rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50 via-[#fff7ed] to-amber-50/80 p-5 shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50 via-[#fff7ed] to-amber-50/80 p-4 shadow-sm sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-amber-800/80">
                 Bienvenue
               </p>
-              <h2 className="mt-1 font-sans text-xl font-bold text-amber-950 sm:text-2xl">
+              <h2 className="mt-1 font-sans text-lg font-bold text-amber-950 sm:text-2xl">
                 {isFreeFee(regFee.amount)
                   ? "Activez votre compte pour liker"
                   : "Activez votre accès pour liker"}
@@ -232,7 +232,7 @@ export function PaymentsView({
 
       {/* Statut & parcours */}
       <section className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary via-primary to-primary/90 text-primary-foreground shadow-lg">
-        <div className="relative p-5 sm:p-6">
+        <div className="relative p-4 sm:p-6">
           <div
             className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-secondary/25 blur-2xl"
             aria-hidden
@@ -245,7 +245,7 @@ export function PaymentsView({
                   Votre parcours
                 </span>
               </div>
-              <h2 className="mt-2 font-sans text-2xl font-bold sm:text-3xl">
+              <h2 className="mt-2 font-sans text-xl font-bold sm:text-3xl">
                 {registrationPaid
                   ? "Vous êtes prêt à rencontrer"
                   : PRICING_TEST_MODE
@@ -338,7 +338,7 @@ export function PaymentsView({
       </div>
 
       {hasPaidMatching && !PRICING_TEST_MODE && (
-        <section className="rounded-2xl border border-secondary/25 bg-gradient-to-br from-[#fce7f3]/30 to-white p-5 sm:p-6">
+        <section className="rounded-2xl border border-secondary/25 bg-gradient-to-br from-[#fce7f3]/30 to-white p-4 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h3 className="font-sans font-semibold text-primary">
@@ -351,7 +351,7 @@ export function PaymentsView({
               </p>
             </div>
             <div className="rounded-xl bg-white px-4 py-3 text-center shadow-sm ring-1 ring-border/60">
-              <p className="text-3xl font-bold text-secondary">
+              <p className="text-2xl font-bold text-secondary sm:text-3xl">
                 {matchingCredits.remainingThisMonth}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -514,7 +514,7 @@ export function PaymentsView({
 
       {/* Infos complémentaires */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex gap-4 rounded-2xl border border-border/60 bg-accent/25 p-5">
+        <div className="flex gap-3 rounded-2xl border border-border/60 bg-accent/25 p-4 sm:gap-4 sm:p-5">
           <Gift className="h-8 w-8 shrink-0 text-secondary" />
           <div>
             <h3 className="font-sans font-semibold text-primary">
@@ -529,7 +529,7 @@ export function PaymentsView({
             </Button>
           </div>
         </div>
-        <div className="flex gap-4 rounded-2xl border border-border/60 bg-muted/30 p-5">
+        <div className="flex gap-3 rounded-2xl border border-border/60 bg-muted/30 p-4 sm:gap-4 sm:p-5">
           <CreditCard className="h-8 w-8 shrink-0 text-secondary" />
           <div>
             <h3 className="font-sans font-semibold text-primary">

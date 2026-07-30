@@ -45,6 +45,7 @@
   --destructive: #dc2626;
   --mm-purple: #5b3d8f;
   --mm-pink: #e91e8c;
+  --mm-bottom-nav-h: 4.75rem;
 }
 
 @layer base {
@@ -92,7 +93,7 @@
   }
 
   .mm-messages-panel {
-    @apply flex h-full min-h-0 w-full flex-1 overflow-hidden rounded-2xl border border-[#e8e0f0] bg-white shadow-[0_4px_24px_rgba(46,26,71,0.08)];
+    @apply flex h-full min-h-0 w-full flex-1 overflow-hidden border-0 bg-white md:rounded-2xl md:border md:border-[#e8e0f0] md:shadow-[0_4px_24px_rgba(46,26,71,0.08)];
   }
 
   .mm-chat-list-col {
@@ -422,7 +423,7 @@
   }
 
   .mm-input-field {
-    @apply h-12 rounded-xl border border-input bg-background px-4 text-sm shadow-sm transition-colors focus-visible:border-secondary focus-visible:ring-2 focus-visible:ring-secondary/20;
+    @apply h-12 rounded-xl border border-input bg-background px-4 text-base shadow-sm transition-colors focus-visible:border-secondary focus-visible:ring-2 focus-visible:ring-secondary/20 md:text-sm;
   }
 
   .mm-sidebar-link {
@@ -446,7 +447,7 @@
   }
 
   .mm-page-container {
-    @apply mx-auto w-full max-w-7xl px-3 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-5;
+    @apply mx-auto w-full max-w-7xl px-4 py-4 sm:px-4 sm:py-4 lg:px-6 lg:py-5;
   }
 
   .mm-admin-page-container {
@@ -454,7 +455,7 @@
   }
 
   .mm-page-stack {
-    @apply flex flex-col gap-4;
+    @apply flex flex-col gap-3 sm:gap-4;
   }
 
   .mm-public-page {

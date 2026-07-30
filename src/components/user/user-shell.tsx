@@ -363,7 +363,7 @@ export function UserShell({
                 : "overflow-auto bg-[#f8f6fc]",
               hideMobileNav
                 ? "pb-0"
-                : "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+                : "pb-[calc(var(--mm-bottom-nav-h)+env(safe-area-inset-bottom,0px))]"
             )}
           >
             <PushInviteBanner notifyPush={notifyPush} />
@@ -393,7 +393,7 @@ export function UserShell({
                     <tab.icon className={cn("h-5 w-5", active && "stroke-[2.5]")} />
                     <span className="max-w-full truncate">{tab.label}</span>
                     {badge && (
-                      <span className="absolute right-2 top-0.5 mm-badge-count">
+                      <span className="absolute right-1 top-0 mm-badge-count">
                         {badge}
                       </span>
                     )}

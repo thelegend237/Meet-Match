@@ -259,7 +259,7 @@ function SwipeableCard({
       {nextProfile && (
         <article
           aria-hidden
-          className="absolute inset-x-4 top-4 aspect-[3/4.2] overflow-hidden rounded-[1.75rem] bg-neutral-800 opacity-55 shadow-lg transition-transform duration-300 mm-motion-card-enter"
+          className="absolute inset-x-4 top-4 aspect-[3/3.6] max-h-[min(52dvh,420px)] overflow-hidden rounded-[1.75rem] bg-neutral-800 opacity-55 shadow-lg transition-transform duration-300 mm-motion-card-enter sm:aspect-[3/4.2] sm:max-h-none"
           style={{
             transform: `scale(${0.94 + Math.min(Math.abs(offsetX) / 900, 0.04)})`,
           }}
@@ -279,7 +279,7 @@ function SwipeableCard({
       <article
         ref={cardRef}
         className={cn(
-          "relative z-10 aspect-[3/4.2] w-full touch-none select-none overflow-hidden rounded-[1.75rem] bg-neutral-900 shadow-[0_24px_64px_rgba(46,26,71,0.28)] ring-1 ring-black/10",
+          "relative z-10 aspect-[3/3.6] max-h-[min(52dvh,420px)] w-full touch-none select-none overflow-hidden rounded-[1.75rem] bg-neutral-900 shadow-[0_24px_64px_rgba(46,26,71,0.28)] ring-1 ring-black/10 sm:aspect-[3/4.2] sm:max-h-none",
           !isDragging && !exitDir && "mm-motion-card-enter"
         )}
         style={{
@@ -340,8 +340,8 @@ function SwipeableCard({
         <SwipeStamp label="Like" side="right" opacity={likeOpacity} />
         <SwipeStamp label="Passer" side="left" opacity={passOpacity} />
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-5 pb-[5.5rem] pt-24 sm:px-7 sm:pb-24 sm:pt-28">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-4 pb-16 pt-16 sm:px-7 sm:pb-24 sm:pt-28">
+          <h2 className="text-xl font-bold text-white sm:text-3xl">
             {profile.display_name}
             {age !== null && (
               <span className="font-normal text-white/90">, {age}</span>
@@ -377,7 +377,7 @@ function SwipeableCard({
               <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">
                 À propos
               </p>
-              <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-white/85 sm:line-clamp-3">
+              <p className="mt-1 line-clamp-1 text-sm leading-relaxed text-white/85 sm:line-clamp-3">
                 {profile.bio}
               </p>
             </div>
@@ -396,13 +396,13 @@ function SwipeableCard({
         </div>
       </article>
 
-      <div className="relative z-30 -mt-10 flex items-center justify-center gap-5 pb-2 sm:-mt-12 sm:gap-6">
+      <div className="relative z-30 -mt-8 flex items-center justify-center gap-3 pb-2 sm:-mt-12 sm:gap-6">
         <button
           type="button"
           disabled={pending || !!exitDir}
           onClick={triggerPass}
           className={cn(
-            "flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#e8e0f0] bg-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16",
+            "flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#e8e0f0] bg-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16",
             (pending || exitDir) && "opacity-60"
           )}
           aria-label="Passer ce profil"
@@ -428,7 +428,7 @@ function SwipeableCard({
           disabled={pending || !!exitDir}
           onClick={triggerLike}
           className={cn(
-            "flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-gradient-to-br from-[#7b3d8f] to-[#e91e8c] shadow-xl shadow-[#e91e8c]/35 transition-transform hover:scale-105 active:scale-95 sm:h-20 sm:w-20",
+            "flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#7b3d8f] to-[#e91e8c] shadow-xl shadow-[#e91e8c]/35 transition-transform hover:scale-105 active:scale-95 sm:h-20 sm:w-20",
             (pending || exitDir) && "opacity-60",
             !canInteract && "ring-2 ring-amber-300 ring-offset-2"
           )}
@@ -466,7 +466,7 @@ export function DiscoverCardStack({
 
   if (!current) {
     return (
-      <div className="mm-card flex flex-col items-center px-6 py-14 text-center">
+      <div className="mm-card flex flex-col items-center px-5 py-8 text-center sm:px-6 sm:py-14">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
           <RotateCcw className="h-8 w-8 text-secondary" />
         </div>
@@ -512,7 +512,7 @@ export function DiscoverCardStack({
         </Link>
       </div>
 
-      <div className="relative min-h-[min(68dvh,640px)] py-2 sm:min-h-[min(78dvh,720px)] sm:py-4">
+      <div className="relative min-h-[min(52dvh,480px)] py-1 sm:min-h-[min(78dvh,720px)] sm:py-4">
         <ProfileBackdrop profiles={backdropProfiles} />
         <SwipeableCard
           key={current.id}

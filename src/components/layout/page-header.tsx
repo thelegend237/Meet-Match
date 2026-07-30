@@ -45,11 +45,11 @@ export function PageHeader({
       {backHref && <PageBackLink href={backHref} label={backLabel} />}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="font-sans text-2xl font-bold tracking-tight text-primary sm:text-3xl">
+          <h1 className="font-sans text-xl font-bold tracking-tight text-primary sm:text-2xl md:text-3xl">
             {title}
           </h1>
           {description && (
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            <p className="mt-1 max-w-2xl text-sm leading-snug text-muted-foreground sm:mt-2 sm:text-base sm:leading-relaxed">
               {description}
             </p>
           )}

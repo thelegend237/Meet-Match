@@ -88,18 +88,18 @@ export function PushInviteBanner({ notifyPush = true }: PushInviteBannerProps) {
     <div
       role="region"
       aria-label="Invitation aux notifications push"
-      className="border-b border-[#f5c2dc]/80 bg-gradient-to-r from-[#fff5f9] via-[#fef7fb] to-[#f8f2fc] px-4 py-3 sm:px-6"
+      className="border-b border-[#f5c2dc]/80 bg-gradient-to-r from-[#fff5f9] via-[#fef7fb] to-[#f8f2fc] px-4 py-2.5 sm:px-6 sm:py-3"
     >
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fce7f3] text-[#e91e8c]">
-            <Bell className="h-5 w-5" />
+      <div className="mx-auto flex max-w-6xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex min-w-0 items-center gap-3 sm:items-start">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#fce7f3] text-[#e91e8c] sm:h-10 sm:w-10">
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[#2e1a47]">
               Activez les alertes instantanées
             </p>
-            <p className="mt-0.5 text-sm text-[#6b5f7a]">
+            <p className="mt-0.5 hidden text-sm text-[#6b5f7a] sm:block">
               Recevez une popup dès qu&apos;un like, un match ou un message arrive — même hors
               de l&apos;application.
             </p>
@@ -107,7 +107,7 @@ export function PushInviteBanner({ notifyPush = true }: PushInviteBannerProps) {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 pl-[52px] sm:pl-0">
+        <div className="flex shrink-0 items-center justify-end gap-2 sm:pl-0">
           <Button
             type="button"
             size="sm"

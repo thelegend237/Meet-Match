@@ -23,7 +23,7 @@ export function UserContentArea({ children }: { children: React.ReactNode }) {
           "mm-page-enter flex min-h-0 flex-col overflow-hidden",
           isMessageThread
             ? "h-[calc(100dvh-3.5rem)] md:h-[calc(100dvh-4rem)]"
-            : "h-[calc(100dvh-3.5rem-4.75rem-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-4rem)]"
+            : "h-[calc(100dvh-3.5rem-var(--mm-bottom-nav-h)-env(safe-area-inset-bottom,0px))] md:h-[calc(100dvh-4rem)]"
         )}
       >
         {children}
@@ -35,7 +35,7 @@ export function UserContentArea({ children }: { children: React.ReactNode }) {
     return (
       <div
         key={pathname}
-        className="mm-page-enter w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
+        className="mm-page-enter w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-7"
       >
         {children}
       </div>

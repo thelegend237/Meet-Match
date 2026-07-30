@@ -122,17 +122,17 @@ export function DiscoverFeed({
       <div
         className={cn(
           !canInteract &&
-            "pb-[calc(4.75rem+5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0"
+            "pb-[calc(var(--mm-bottom-nav-h)+5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0"
         )}
       >
-      <Reveal as="header" className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
+      <Reveal as="header" className="space-y-3 sm:space-y-4">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="font-sans text-2xl font-bold text-primary sm:text-4xl">
+            <h1 className="font-sans text-xl font-bold text-primary sm:text-4xl">
               Découvrez{" "}
               <span className="text-secondary">les profils</span>
             </h1>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground sm:mt-2 sm:text-base">
               Des célibataires sérieux en quête d&apos;une relation sincère et
               durable.
             </p>
@@ -182,7 +182,7 @@ export function DiscoverFeed({
           }
         />
 
-        <p className="text-xs text-muted-foreground">
+        <p className="hidden text-xs text-muted-foreground sm:block">
           {viewMode === "swipe" ? (
             <>
               Glissez à droite pour liker, à gauche pour passer · catalogue complet en mode{" "}
@@ -223,7 +223,7 @@ export function DiscoverFeed({
             onOpen={setSelected}
           />
         ) : (
-          <div className="mm-card p-10 text-center">
+          <div className="mm-card p-6 text-center sm:p-10">
             <p className="text-muted-foreground">
               Vous avez parcouru tous les profils en mode carte.
             </p>
@@ -253,7 +253,7 @@ export function DiscoverFeed({
           </div>
         </section>
       ) : (
-        <div className="mm-card mt-6 p-10 text-center">
+        <div className="mm-card mt-4 p-6 text-center sm:mt-6 sm:p-10">
           <p className="text-muted-foreground">
             Aucun profil ne correspond à votre filtre pour le moment.
           </p>

@@ -82,14 +82,14 @@ export function NotificationsList({
 
   if (items.length === 0) {
     return (
-      <div className="mm-card px-6 py-12 text-center">
+      <div className="mm-card px-5 py-8 text-center sm:px-6 sm:py-12">
         <p className="text-muted-foreground">Aucune notification pour le moment.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {unread.length > 0 && (
         <div className="flex justify-end">
           <Button
@@ -102,7 +102,7 @@ export function NotificationsList({
           </Button>
         </div>
       )}
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {items.map((n) => {
           const link = getNotificationHref(n, { isAdmin });
           const actionLabel = getNotificationActionLabel(n, { isAdmin });
@@ -116,13 +116,13 @@ export function NotificationsList({
                 </span>
                 {!n.is_read && <Badge variant="secondary">Nouveau</Badge>}
               </div>
-              <h3 className="mt-2 font-medium text-primary">{n.title}</h3>
+              <h3 className="mt-1.5 text-sm font-medium text-primary sm:mt-2 sm:text-base">{n.title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{n.content}</p>
-              <p className="mt-2 text-xs text-muted-foreground/70">
+              <p className="mt-1.5 text-xs text-muted-foreground/70 sm:mt-2">
                 {formatDistanceToNow(n.created_at)}
               </p>
               {link && actionLabel && (
-                <p className="mt-2 text-sm font-medium text-secondary">
+                <p className="mt-1.5 text-sm font-medium text-secondary sm:mt-2">
                   {actionLabel}
                 </p>
               )}
@@ -134,8 +134,8 @@ export function NotificationsList({
               key={n.id}
               className={
                 n.is_read
-                  ? "mm-card p-4"
-                  : "mm-card border-secondary/25 bg-accent/40 p-4"
+                  ? "mm-card p-3 sm:p-4"
+                  : "mm-card border-secondary/25 bg-accent/40 p-3 sm:p-4"
               }
             >
               <div className="flex items-start justify-between gap-3">

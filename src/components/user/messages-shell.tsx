@@ -17,7 +17,7 @@ export function MessagesShell({ chats, children }: MessagesShellProps) {
   const showThread = Boolean(activeChatId);
 
   return (
-    <div className="mm-messages-layout flex h-full min-h-0 w-full flex-1 p-2 sm:p-3">
+    <div className="mm-messages-layout flex h-full min-h-0 w-full flex-1 p-0 sm:p-3">
       <div className="mm-messages-panel">
         <aside
           className={cn("mm-chat-list-col", showThread && "hidden md:flex")}

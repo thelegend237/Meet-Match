@@ -119,16 +119,16 @@ export function RencontresFeed({
       <div
         className={cn(
           !canInteract &&
-            "pb-[calc(4.75rem+5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0"
+            "pb-[calc(var(--mm-bottom-nav-h)+5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0"
         )}
       >
-      <header className="space-y-4">
-        <div className="flex items-start justify-between gap-4">
+      <header className="space-y-3 sm:space-y-4">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="font-sans text-2xl font-bold text-primary sm:text-3xl">
+            <h1 className="font-sans text-xl font-bold text-primary sm:text-3xl">
               Rencontres
             </h1>
-            <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground sm:mt-2 sm:text-base">
               Suggestions du jour · des profils sélectionnés pour vous.
             </p>
           </div>
@@ -170,7 +170,7 @@ export function RencontresFeed({
           profileCount={filteredProfiles.length}
         />
 
-        <p className="text-xs text-muted-foreground">
+        <p className="hidden text-xs text-muted-foreground sm:block">
           {viewMode === "swipe" ? (
             <>
               Glissez à droite pour liker, à gauche pour passer · parcourir tous les profils dans{" "}
@@ -200,7 +200,7 @@ export function RencontresFeed({
             onOpen={setSelected}
           />
         ) : (
-          <div className="mm-card p-10 text-center">
+          <div className="mm-card p-6 text-center sm:p-10">
             <p className="text-muted-foreground">
               Vous avez parcouru toutes les suggestions du jour en mode carte.
             </p>
@@ -230,7 +230,7 @@ export function RencontresFeed({
           </div>
         </section>
       ) : (
-        <div className="mm-card mt-2 p-10 text-center">
+        <div className="mm-card mt-2 p-6 text-center sm:p-10">
           <p className="text-muted-foreground">
             Aucune suggestion ne correspond à votre filtre pour le moment.
           </p>

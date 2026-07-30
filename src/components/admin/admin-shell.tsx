@@ -390,7 +390,7 @@ export function AdminShell({
               "min-h-0 flex-1 overflow-auto bg-[#f8f6fc] md:pb-0",
               hideMobileNav
                 ? "pb-0"
-                : "pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+                : "pb-[calc(var(--mm-bottom-nav-h)+env(safe-area-inset-bottom,0px))]"
             )}
           >
             {children}
