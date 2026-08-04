@@ -32,7 +32,9 @@ import {
 } from "@/lib/pricing";
 import { PricingBetaBanner } from "@/components/pricing/pricing-beta-banner";
 import { RegistrationPaymentButton } from "@/components/user/registration-payment-button";
+import { StaffPaymentTestPanel } from "@/components/user/staff-payment-test-panel";
 import { getPaymentRowStatusLabel } from "@/lib/admin/payment-display";
+import { isStaffProfile } from "@/lib/auth/staff";
 import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
 import type { Payment, Profile } from "@/lib/types/database";
 
@@ -195,10 +197,13 @@ export function PaymentsView({
   ];
 
   const showWelcomeActivation = showWelcome && !registrationPaid;
+  const isStaff = isStaffProfile(profile);
 
   return (
     <div className="space-y-5 sm:space-y-8">
       <PricingBetaBanner />
+
+      {isStaff ? <StaffPaymentTestPanel /> : null}
 
       {showWelcomeActivation ? (
         <section className="rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50 via-[#fff7ed] to-amber-50/80 p-4 shadow-sm sm:p-6">

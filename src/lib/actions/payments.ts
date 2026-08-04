@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
+  getChargeMatchingFee,
   getChargeRegistrationFee,
   isFreeFee,
   isRegistrationWaived,
@@ -23,6 +24,7 @@ import {
 } from "@/lib/payments/providers";
 import { createPayPalOrder } from "@/lib/payments/paypal";
 import { initViaziPayPayment } from "@/lib/payments/viazipay";
+import { isStaffRole } from "@/lib/auth/staff";
 
 function revalidatePaymentPaths() {
   revalidatePath("/paiements");
@@ -382,3 +384,98 @@ async function startProviderCheckout(params: {
 
   return { url: init.paymentUrl };
 }
+
+export type StaffPaymentTestType = "registration" | "matching";
+
+/**
+ * Checkout de test réservé aux admins / superadmins.
+ * Ignore l'offre de lancement et PRICING_TEST_MODE pour enchaîner un vrai paiement.
+ */
+export async function startStaffPaymentTestCheckout(
+  type: StaffPaymentTestType,
+  options?: CheckoutOptions
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Non authentifié" };
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, email, display_name, role")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return { error: profileError?.message ?? "Profil introuvable" };
+  }
+
+  if (!isStaffRole(profile.role)) {
+    return { error: "Réservé à l'équipe admin" };
+  }
+
+  if (!hasAnyPaymentProvider()) {
+    return { error: "Aucun moyen de paiement configuré" };
+  }
+
+  const method = resolveCheckoutMethod(options?.method);
+  if (!method) {
+    return { error: "Aucun moyen de paiement configuré" };
+  }
+
+  const provider = paymentMethodToProvider(method);
+  const fee =
+    type === "registration"
+      ? getChargeRegistrationFee({ bypassWaive: true })
+      : getChargeMatchingFee({ bypassWaive: true });
+
+  const { data: created, error: insertError } = await supabase
+    .from("payments")
+    .insert({
+      user_id: user.id,
+      type,
+      amount: fee.amount,
+      currency: fee.currency,
+      status: "unpaid",
+      provider,
+      match_id: null,
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !created) {
+    return {
+      error: insertError?.message ?? "Impossible de créer le paiement de test",
+    };
+  }
+
+  try {
+    return await startProviderCheckout({
+      provider,
+      method,
+      paymentId: created.id,
+      amount: fee.amount,
+      currency: fee.currency,
+      description:
+        type === "registration"
+          ? "Test admin — frais d'inscription Meet & Match"
+          : "Test admin — frais de matching Meet & Match",
+      customerEmail: profile.email ?? user.email ?? undefined,
+      customerName: profile.display_name ?? undefined,
+      successPath: `/paiements?checkout=success&type=${type}&staff_test=1`,
+      cancelPath: "/paiements?checkout=cancel&staff_test=1",
+      metadata: {
+        payment_id: created.id,
+        user_id: user.id,
+        payment_type: type,
+        staff_test: "1",
+      },
+    });
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Checkout de test impossible",
+    };
+  }
+}
+

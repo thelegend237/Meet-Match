@@ -117,13 +117,21 @@ export function getMatchingFee(countryCode: string | null): FeeAmount {
 }
 
 /** Montant réellement facturé (Stripe / DB) — toujours USD. */
-export function getChargeRegistrationFee(): FeeAmount {
-  if (isRegistrationWaived()) return { amount: 0, currency: "USD" };
+export function getChargeRegistrationFee(opts?: {
+  bypassWaive?: boolean;
+}): FeeAmount {
+  if (!opts?.bypassWaive && isRegistrationWaived()) {
+    return { amount: 0, currency: "USD" };
+  }
   return { amount: CHARGE_REGISTRATION_USD, currency: "USD" };
 }
 
-export function getChargeMatchingFee(): FeeAmount {
-  if (isMatchingWaived()) return { amount: 0, currency: "USD" };
+export function getChargeMatchingFee(opts?: {
+  bypassWaive?: boolean;
+}): FeeAmount {
+  if (!opts?.bypassWaive && isMatchingWaived()) {
+    return { amount: 0, currency: "USD" };
+  }
   return { amount: CHARGE_MATCHING_USD, currency: "USD" };
 }
 
