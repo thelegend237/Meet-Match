@@ -70,7 +70,7 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
 
   const { data: participants } = await supabase
     .from("profiles")
-    .select("id, role, display_name")
+    .select("id, role, display_name, country_code")
     .in("id", [userAId, userBId]);
 
   if (!participants || participants.length !== 2) {
@@ -84,17 +84,48 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
     };
   }
 
-  const fee = getChargeMatchingFee();
+  const profileA = participants.find((p) => p.id === userAId)!;
+  const profileB = participants.find((p) => p.id === userBId)!;
+  const feeA = getChargeMatchingFee({ countryCode: profileA.country_code });
+  const feeB = getChargeMatchingFee({ countryCode: profileB.country_code });
+  // RPC propose_match prend un montant unique ; on aligne ensuite par utilisateur.
+  const seedFee =
+    feeA.amount >= feeB.amount ? feeA : feeB;
 
   const { data, error } = await supabase.rpc("propose_match", {
     p_admin_id: admin.id,
     p_user_a_id: userAId,
     p_user_b_id: userBId,
-    p_amount: fee.amount,
-    p_currency: fee.currency,
+    p_amount: seedFee.amount,
+    p_currency: seedFee.currency,
   });
 
   if (error) return { error: error.message };
+
+  if (data && (feeA.amount !== feeB.amount || feeA.amount !== seedFee.amount)) {
+    await Promise.all([
+      supabase
+        .from("payments")
+        .update({
+          amount: feeA.amount,
+          currency: feeA.currency,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("match_id", data)
+        .eq("user_id", userAId)
+        .eq("type", "matching"),
+      supabase
+        .from("payments")
+        .update({
+          amount: feeB.amount,
+          currency: feeB.currency,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("match_id", data)
+        .eq("user_id", userBId)
+        .eq("type", "matching"),
+    ]);
+  }
 
   revalidatePath("/admin/matchs");
   revalidatePath("/admin");

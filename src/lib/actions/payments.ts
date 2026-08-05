@@ -105,7 +105,9 @@ export async function startRegistrationCheckout(options?: CheckoutOptions) {
     return { error: "Inscription déjà activée" };
   }
 
-  const fee = getChargeRegistrationFee();
+  const fee = getChargeRegistrationFee({
+    countryCode: profile.country_code,
+  });
 
   if (PRICING_TEST_MODE || isFreeFee(fee.amount) || !hasAnyPaymentProvider()) {
     const result = await confirmRegistrationPayment();
@@ -403,7 +405,7 @@ export async function startStaffPaymentTestCheckout(
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, email, display_name, role")
+    .select("id, email, display_name, role, country_code")
     .eq("id", user.id)
     .single();
 
@@ -427,8 +429,14 @@ export async function startStaffPaymentTestCheckout(
   const provider = paymentMethodToProvider(method);
   const fee =
     type === "registration"
-      ? getChargeRegistrationFee({ bypassWaive: true })
-      : getChargeMatchingFee({ bypassWaive: true });
+      ? getChargeRegistrationFee({
+          bypassWaive: true,
+          countryCode: profile.country_code,
+        })
+      : getChargeMatchingFee({
+          bypassWaive: true,
+          countryCode: profile.country_code,
+        });
 
   const { data: created, error: insertError } = await supabase
     .from("payments")

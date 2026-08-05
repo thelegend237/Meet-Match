@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Tarifs",
   description:
-    "Inscription 5 $ US, matching 10 $ US. Offre de lancement : inscription et matching offerts pour une durée limitée.",
+    "Inscription 5 $ US (2,50 $ US en Afrique), matching 10 $ US (5 $ US en Afrique). Offre de lancement : inscription et matching offerts pour une durée limitée.",
 };
 
 const regFee = getRegistrationFee(null);
@@ -132,8 +132,8 @@ export default function TarifsPage() {
         PRICING_TEST_MODE
           ? "Meet & Match est en version test : inscription, matching et accompagnement sont offerts à tous les testeurs. Les tarifs définitifs seront activés plus tard."
           : launchFree
-            ? `Inscription et matching gratuits${launchUntil ? ` jusqu'au ${launchUntil}` : ""}. Ensuite 5 $ US d'inscription et 10 $ US de matching.`
-            : "Deux paiements clairs : 5 $ US d'inscription, 10 $ US de matching uniquement quand un administrateur vous propose une rencontre. Affichage possible en devise locale."
+            ? `Inscription et matching gratuits${launchUntil ? ` jusqu'au ${launchUntil}` : ""}. Ensuite 5 $ US d'inscription et 10 $ US de matching (moitié pour les membres en Afrique).`
+            : "Deux paiements clairs : 5 $ US d'inscription, 10 $ US de matching (tarif Afrique −50 %). Affichage possible en devise locale."
       }
       wide
     >

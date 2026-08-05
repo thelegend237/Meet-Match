@@ -32,6 +32,84 @@ export type FeeAmount = {
 export const CHARGE_REGISTRATION_USD = 5;
 export const CHARGE_MATCHING_USD = 10;
 
+/** Facteur tarifaire Afrique (moitié du tarif mondial). */
+export const AFRICA_PRICE_FACTOR = 0.5;
+
+/** ISO 3166-1 alpha-2 — pays d'Afrique. */
+const AFRICA_COUNTRY_CODES = new Set([
+  "DZ",
+  "AO",
+  "BJ",
+  "BW",
+  "BF",
+  "BI",
+  "CV",
+  "CM",
+  "CF",
+  "TD",
+  "KM",
+  "CG",
+  "CD",
+  "CI",
+  "DJ",
+  "EG",
+  "GQ",
+  "ER",
+  "SZ",
+  "ET",
+  "GA",
+  "GM",
+  "GH",
+  "GN",
+  "GW",
+  "KE",
+  "LS",
+  "LR",
+  "LY",
+  "MG",
+  "MW",
+  "ML",
+  "MR",
+  "MU",
+  "MA",
+  "MZ",
+  "NA",
+  "NE",
+  "NG",
+  "RW",
+  "ST",
+  "SN",
+  "SC",
+  "SL",
+  "SO",
+  "ZA",
+  "SS",
+  "SD",
+  "TZ",
+  "TG",
+  "TN",
+  "UG",
+  "ZM",
+  "ZW",
+]);
+
+export function isAfricaCountry(
+  countryCode: string | null | undefined
+): boolean {
+  return AFRICA_COUNTRY_CODES.has((countryCode ?? "").toUpperCase());
+}
+
+/** Montant USD facturé selon le pays (Afrique = 50 %). */
+export function usdChargeForCountry(
+  baseUsd: number,
+  countryCode: string | null | undefined
+): number {
+  const raw = isAfricaCountry(countryCode)
+    ? baseUsd * AFRICA_PRICE_FACTOR
+    : baseUsd;
+  return Math.round(raw * 100) / 100;
+}
+
 /** Taux approximatifs USD → devise locale (affichage uniquement). */
 const USD_TO_LOCAL: Record<string, number> = {
   USD: 1,
@@ -97,8 +175,9 @@ export function getRegistrationFee(countryCode: string | null): FeeAmount {
     return { amount: 0, currency };
   }
   const currency = displayCurrencyForCountry(countryCode);
+  const usd = usdChargeForCountry(CHARGE_REGISTRATION_USD, countryCode);
   return {
-    amount: convertFromUsd(CHARGE_REGISTRATION_USD, currency),
+    amount: convertFromUsd(usd, currency),
     currency,
   };
 }
@@ -110,8 +189,9 @@ export function getMatchingFee(countryCode: string | null): FeeAmount {
     return { amount: 0, currency };
   }
   const currency = displayCurrencyForCountry(countryCode);
+  const usd = usdChargeForCountry(CHARGE_MATCHING_USD, countryCode);
   return {
-    amount: convertFromUsd(CHARGE_MATCHING_USD, currency),
+    amount: convertFromUsd(usd, currency),
     currency,
   };
 }
@@ -119,20 +199,31 @@ export function getMatchingFee(countryCode: string | null): FeeAmount {
 /** Montant réellement facturé (Stripe / DB) — toujours USD. */
 export function getChargeRegistrationFee(opts?: {
   bypassWaive?: boolean;
+  countryCode?: string | null;
 }): FeeAmount {
   if (!opts?.bypassWaive && isRegistrationWaived()) {
     return { amount: 0, currency: "USD" };
   }
-  return { amount: CHARGE_REGISTRATION_USD, currency: "USD" };
+  return {
+    amount: usdChargeForCountry(
+      CHARGE_REGISTRATION_USD,
+      opts?.countryCode ?? null
+    ),
+    currency: "USD",
+  };
 }
 
 export function getChargeMatchingFee(opts?: {
   bypassWaive?: boolean;
+  countryCode?: string | null;
 }): FeeAmount {
   if (!opts?.bypassWaive && isMatchingWaived()) {
     return { amount: 0, currency: "USD" };
   }
-  return { amount: CHARGE_MATCHING_USD, currency: "USD" };
+  return {
+    amount: usdChargeForCountry(CHARGE_MATCHING_USD, opts?.countryCode ?? null),
+    currency: "USD",
+  };
 }
 
 /** @deprecated alias — tarifs de référence USD */
@@ -194,13 +285,16 @@ export function futurePricingFootnote(
 ): string | null {
   const reg = getRegistrationFee(countryCode);
   const match = getMatchingFee(countryCode);
+  const currency = displayCurrencyForCountry(countryCode);
+  const regUsd = usdChargeForCountry(CHARGE_REGISTRATION_USD, countryCode);
+  const matchUsd = usdChargeForCountry(CHARGE_MATCHING_USD, countryCode);
   if (PRICING_TEST_MODE) {
-    return `Après la phase test : environ ${formatCurrency(convertFromUsd(CHARGE_REGISTRATION_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} d'inscription et ${formatCurrency(convertFromUsd(CHARGE_MATCHING_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} par matching (réf. ${CHARGE_REGISTRATION_USD} $ / ${CHARGE_MATCHING_USD} $ US).`;
+    return `Après la phase test : environ ${formatCurrency(convertFromUsd(regUsd, currency), currency)} d'inscription et ${formatCurrency(convertFromUsd(matchUsd, currency), currency)} par matching (réf. ${regUsd} $ / ${matchUsd} $ US${isAfricaCountry(countryCode) ? " · tarif Afrique" : ""}).`;
   }
   if (isLaunchFreeActive()) {
-    return `Offre de lancement : inscription et matching gratuits jusqu'au ${formatLaunchOfferEnd()}. Ensuite ${formatDisplayPrice(convertFromUsd(CHARGE_REGISTRATION_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} d'inscription et ${formatDisplayPrice(convertFromUsd(CHARGE_MATCHING_USD, displayCurrencyForCountry(countryCode)), displayCurrencyForCountry(countryCode))} de matching.`;
+    return `Offre de lancement : inscription et matching gratuits jusqu'au ${formatLaunchOfferEnd()}. Ensuite ${formatDisplayPrice(convertFromUsd(regUsd, currency), currency)} d'inscription et ${formatDisplayPrice(convertFromUsd(matchUsd, currency), currency)} de matching${isAfricaCountry(countryCode) ? " (tarif Afrique −50 %)" : ""}.`;
   }
-  return `Tarif mondial : ${formatDisplayPrice(reg.amount, reg.currency)} inscription · ${formatDisplayPrice(match.amount, match.currency)} matching (réf. USD).`;
+  return `Tarif ${isAfricaCountry(countryCode) ? "Afrique (−50 %)" : "mondial"} : ${formatDisplayPrice(reg.amount, reg.currency)} inscription · ${formatDisplayPrice(match.amount, match.currency)} matching (réf. USD).`;
 }
 
 export const REGISTRATION_BENEFITS = [
@@ -287,7 +381,7 @@ export const MATCHING_FEATURES = isMatchingWaived()
     ] as const)
   : ([
       "Proposition de match par un administrateur",
-      `Frais de matching : ${CHARGE_MATCHING_USD} $ US (affiché en devise locale)`,
+      `Frais de matching : ${CHARGE_MATCHING_USD} $ US (Afrique : ${CHARGE_MATCHING_USD * AFRICA_PRICE_FACTOR} $ US)`,
       `${MONTHLY_FREE_MATCHES} matchs gratuits / mois après le 1er paiement`,
       "Ouverture de discussion groupée encadrée",
       "Accompagnement Meet & Match",
@@ -336,23 +430,35 @@ export const PLAN_COMPARISON_ROWS = [
   },
 ] as const;
 
-export function currencyRegionLabel(currency: string): string {
+export function currencyRegionLabel(
+  currency: string,
+  countryCode?: string | null
+): string {
   if (PRICING_TEST_MODE) return "Phase test — gratuit";
   if (isLaunchFreeActive() && currency) {
-    return "Tarif mondial (offre lancement)";
+    return isAfricaCountry(countryCode)
+      ? "Offre lancement · tarif Afrique (−50 %) après"
+      : "Tarif mondial (offre lancement)";
   }
+  const africa = isAfricaCountry(countryCode);
   switch (currency) {
     case "USD":
-      return "Affiché en USD · tarif mondial";
+      return africa
+        ? "Affiché en USD · tarif Afrique (−50 %)"
+        : "Affiché en USD · tarif mondial";
     case "CAD":
       return "Affiché en CAD · tarif mondial";
     case "EUR":
       return "Affiché en EUR · tarif mondial";
     case "XAF":
-      return "Affiché en FCFA (XAF) · tarif mondial";
+      return africa
+        ? "Affiché en FCFA (XAF) · tarif Afrique (−50 %)"
+        : "Affiché en FCFA (XAF) · tarif mondial";
     case "XOF":
-      return "Affiché en FCFA (XOF) · tarif mondial";
+      return africa
+        ? "Affiché en FCFA (XOF) · tarif Afrique (−50 %)"
+        : "Affiché en FCFA (XOF) · tarif mondial";
     default:
-      return "Tarif mondial";
+      return africa ? "Tarif Afrique (−50 %)" : "Tarif mondial";
   }
 }

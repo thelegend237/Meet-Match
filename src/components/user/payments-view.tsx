@@ -186,6 +186,7 @@ export function PaymentsView({
 
   const regFee = getRegistrationFee(profile.country_code);
   const matchFee = getMatchingFee(profile.country_code);
+  const isStaff = isStaffProfile(profile);
 
   const matchingPayments = payments.filter((p) => p.type === "matching");
   const hasPaidMatching = matchingCredits.hasEverPaidMatching;
@@ -197,13 +198,14 @@ export function PaymentsView({
   ];
 
   const showWelcomeActivation = showWelcome && !registrationPaid;
-  const isStaff = isStaffProfile(profile);
 
   return (
     <div className="space-y-5 sm:space-y-8">
       <PricingBetaBanner />
 
-      {isStaff ? <StaffPaymentTestPanel /> : null}
+      {isStaff ? (
+        <StaffPaymentTestPanel countryCode={profile.country_code} />
+      ) : null}
 
       {showWelcomeActivation ? (
         <section className="rounded-2xl border border-amber-200/90 bg-gradient-to-r from-amber-50 via-[#fff7ed] to-amber-50/80 p-4 shadow-sm sm:p-6">
@@ -391,7 +393,10 @@ export function PaymentsView({
             subtitle="Accès complet à la plateforme : profil, découverte et likes."
             amount={regFee.amount}
             currency={regFee.currency}
-            regionLabel={currencyRegionLabel(regFee.currency)}
+            regionLabel={currencyRegionLabel(
+              regFee.currency,
+              profile.country_code
+            )}
             features={REGISTRATION_FEATURES}
             benefits={REGISTRATION_BENEFITS}
             highlighted={!registrationPaid}
@@ -463,7 +468,10 @@ export function PaymentsView({
             }
             amount={matchFee.amount}
             currency={matchFee.currency}
-            regionLabel={currencyRegionLabel(matchFee.currency)}
+            regionLabel={currencyRegionLabel(
+              matchFee.currency,
+              profile.country_code
+            )}
             features={MATCHING_FEATURES}
             benefits={MATCHING_BENEFITS}
             highlighted={registrationPaid && !hasPaidMatching}

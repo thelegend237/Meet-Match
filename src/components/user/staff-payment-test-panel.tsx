@@ -13,21 +13,33 @@ import {
 } from "@/lib/actions/payments";
 import type { PaymentMethodId } from "@/lib/payments/providers";
 import {
-  CHARGE_MATCHING_USD,
-  CHARGE_REGISTRATION_USD,
   formatDisplayPrice,
+  getChargeMatchingFee,
+  getChargeRegistrationFee,
 } from "@/lib/pricing";
 import { toast } from "@/hooks/use-toast";
 
-export function StaffPaymentTestPanel() {
+export function StaffPaymentTestPanel({
+  countryCode,
+}: {
+  countryCode?: string | null;
+}) {
   const [pending, startTransition] = useTransition();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingType, setPendingType] = useState<StaffPaymentTestType | null>(
     null
   );
 
-  const regLabel = formatDisplayPrice(CHARGE_REGISTRATION_USD, "USD");
-  const matchLabel = formatDisplayPrice(CHARGE_MATCHING_USD, "USD");
+  const regFee = getChargeRegistrationFee({
+    bypassWaive: true,
+    countryCode,
+  });
+  const matchFee = getChargeMatchingFee({
+    bypassWaive: true,
+    countryCode,
+  });
+  const regLabel = formatDisplayPrice(regFee.amount, regFee.currency);
+  const matchLabel = formatDisplayPrice(matchFee.amount, matchFee.currency);
 
   function runCheckout(type: StaffPaymentTestType, method?: PaymentMethodId) {
     startTransition(async () => {
