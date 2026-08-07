@@ -24,17 +24,34 @@ function basicAuthHeader(): string {
 }
 
 /**
+ * Plancher XAF côté ViaziPay/MTN pour requestToPay.
+ * La doc annonce 10 XAF, mais les collectes MoMo rejettent souvent
+ * les montants trop bas — on garde 100 XAF en pratique.
+ */
+export const VIAZIPAY_MIN_XAF = 100;
+
+/**
  * ViaziPay OM/MOMO facture en XAF.
  * Convertit USD → XAF via VIAZIPAY_USD_TO_XAF (défaut 600).
  */
 export function toViaziPayXafAmount(amount: number, currency: string): number {
   const cur = currency.toUpperCase();
   if (cur === "XAF" || cur === "XOF") {
-    return Math.max(10, Math.round(amount));
+    return Math.max(VIAZIPAY_MIN_XAF, Math.round(amount));
   }
   const rate = Number(process.env.VIAZIPAY_USD_TO_XAF?.trim() || "600");
   const safeRate = Number.isFinite(rate) && rate > 0 ? rate : 600;
-  return Math.max(10, Math.round(amount * safeRate));
+  return Math.max(VIAZIPAY_MIN_XAF, Math.round(amount * safeRate));
+}
+
+/** Notes MoMo : pas de caractères spéciaux (sinon VALIDATION_ERROR / ERROR!). */
+function sanitizeMoMoText(value: string, maxLen = 64): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[^\w\s.-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLen);
 }
 
 export function buildViaziPayOrderId(paymentId: string): string {
@@ -84,7 +101,8 @@ export async function initViaziPayPayment(
 
   const body: Record<string, unknown> = {
     order_id: orderId,
-    amount: amountXaf,
+    // Entier strict — MoMo refuse les décimales (ex. "12.0").
+    amount: Math.round(amountXaf),
     currency: "XAF",
     return_url: `${appUrl}${params.successPath}`,
     cancel_url: `${appUrl}${params.cancelPath}`,
@@ -94,8 +112,9 @@ export async function initViaziPayPayment(
   };
 
   if (params.channel === "mtn") {
-    body.payer_message = "Meet & Match";
-    body.payee_note = orderId;
+    // "&" et caractères spéciaux cassent souvent requestToPay MTN.
+    body.payer_message = sanitizeMoMoText("Meet and Match", 32);
+    body.payee_note = sanitizeMoMoText(orderId.replace(/-/g, ""), 64);
   } else {
     body.reference = orderId;
   }

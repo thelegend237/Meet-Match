@@ -233,11 +233,12 @@ export const STAFF_TEST_MIN_STRIPE_USD = 0.5;
 /** Minimum PayPal (USD). */
 export const STAFF_TEST_MIN_PAYPAL_USD = 0.01;
 
-/** ViaziPay exige au moins 10 XAF — converti en USD pour la DB. */
+/** ViaziPay / MoMo : plancher pratique 100 XAF — converti en USD pour la DB. */
 export function staffTestMinViaziPayUsd(): number {
   const rate = Number(process.env.VIAZIPAY_USD_TO_XAF?.trim() || "600");
   const safeRate = Number.isFinite(rate) && rate > 0 ? rate : 600;
-  return Math.ceil((10 / safeRate) * 100) / 100;
+  // Aligné sur VIAZIPAY_MIN_XAF (100) dans viazipay.ts
+  return Math.ceil((100 / safeRate) * 100) / 100;
 }
 
 /** Montant minimal autorisé pour un checkout de test admin (USD). */
