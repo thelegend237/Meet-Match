@@ -204,7 +204,7 @@ export function PaymentsView({
       <PricingBetaBanner />
 
       {isStaff ? (
-        <StaffPaymentTestPanel countryCode={profile.country_code} />
+        <StaffPaymentTestPanel />
       ) : null}
 
       {showWelcomeActivation ? (

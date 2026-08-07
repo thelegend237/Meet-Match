@@ -1,4 +1,5 @@
 import { formatCurrency } from "@/lib/utils";
+import type { PaymentMethodId } from "@/lib/payments/providers";
 
 /**
  * Phase test (tout gratuit) uniquement si NEXT_PUBLIC_PRICING_TEST_MODE=true.
@@ -224,6 +225,65 @@ export function getChargeMatchingFee(opts?: {
     amount: usdChargeForCountry(CHARGE_MATCHING_USD, opts?.countryCode ?? null),
     currency: "USD",
   };
+}
+
+/** Minimum Stripe Checkout (USD). */
+export const STAFF_TEST_MIN_STRIPE_USD = 0.5;
+
+/** Minimum PayPal (USD). */
+export const STAFF_TEST_MIN_PAYPAL_USD = 0.01;
+
+/** ViaziPay exige au moins 10 XAF — converti en USD pour la DB. */
+export function staffTestMinViaziPayUsd(): number {
+  const rate = Number(process.env.VIAZIPAY_USD_TO_XAF?.trim() || "600");
+  const safeRate = Number.isFinite(rate) && rate > 0 ? rate : 600;
+  return Math.ceil((10 / safeRate) * 100) / 100;
+}
+
+/** Montant minimal autorisé pour un checkout de test admin (USD). */
+export function getStaffPaymentTestMinUsd(
+  method?: PaymentMethodId | null
+): number {
+  switch (method) {
+    case "stripe":
+      return STAFF_TEST_MIN_STRIPE_USD;
+    case "paypal":
+      return STAFF_TEST_MIN_PAYPAL_USD;
+    case "mtn":
+    case "orange":
+      return staffTestMinViaziPayUsd();
+    default:
+      return Math.min(
+        STAFF_TEST_MIN_PAYPAL_USD,
+        staffTestMinViaziPayUsd(),
+        STAFF_TEST_MIN_STRIPE_USD
+      );
+  }
+}
+
+/** Frais réels pour un paiement de test admin — toujours le minimum du provider. */
+export function getStaffPaymentTestFee(
+  _type: "registration" | "matching",
+  method?: PaymentMethodId | null
+): FeeAmount {
+  return {
+    amount: getStaffPaymentTestMinUsd(method),
+    currency: "USD",
+  };
+}
+
+/** Libellé affiché avant choix du moyen (fourchette des minimums). */
+export function formatStaffPaymentTestPriceRange(): string {
+  const min = getStaffPaymentTestMinUsd();
+  const max = Math.max(
+    STAFF_TEST_MIN_STRIPE_USD,
+    STAFF_TEST_MIN_PAYPAL_USD,
+    staffTestMinViaziPayUsd()
+  );
+  if (min === max) {
+    return formatDisplayPrice(min, "USD");
+  }
+  return `${formatCurrency(min, "USD")}–${formatCurrency(max, "USD")}`;
 }
 
 /** @deprecated alias — tarifs de référence USD */

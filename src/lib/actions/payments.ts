@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getChargeMatchingFee,
   getChargeRegistrationFee,
+  getStaffPaymentTestFee,
   isFreeFee,
   isRegistrationWaived,
   PRICING_TEST_MODE,
@@ -427,16 +428,7 @@ export async function startStaffPaymentTestCheckout(
   }
 
   const provider = paymentMethodToProvider(method);
-  const fee =
-    type === "registration"
-      ? getChargeRegistrationFee({
-          bypassWaive: true,
-          countryCode: profile.country_code,
-        })
-      : getChargeMatchingFee({
-          bypassWaive: true,
-          countryCode: profile.country_code,
-        });
+  const fee = getStaffPaymentTestFee(type, method);
 
   const { data: created, error: insertError } = await supabase
     .from("payments")

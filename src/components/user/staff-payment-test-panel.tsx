@@ -14,32 +14,27 @@ import {
 import type { PaymentMethodId } from "@/lib/payments/providers";
 import {
   formatDisplayPrice,
-  getChargeMatchingFee,
-  getChargeRegistrationFee,
+  formatStaffPaymentTestPriceRange,
+  getStaffPaymentTestFee,
 } from "@/lib/pricing";
 import { toast } from "@/hooks/use-toast";
 
-export function StaffPaymentTestPanel({
-  countryCode,
-}: {
-  countryCode?: string | null;
-}) {
+export function StaffPaymentTestPanel() {
   const [pending, startTransition] = useTransition();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingType, setPendingType] = useState<StaffPaymentTestType | null>(
     null
   );
 
-  const regFee = getChargeRegistrationFee({
-    bypassWaive: true,
-    countryCode,
-  });
-  const matchFee = getChargeMatchingFee({
-    bypassWaive: true,
-    countryCode,
-  });
-  const regLabel = formatDisplayPrice(regFee.amount, regFee.currency);
-  const matchLabel = formatDisplayPrice(matchFee.amount, matchFee.currency);
+  const priceRange = formatStaffPaymentTestPriceRange();
+  const regLabel = formatDisplayPrice(
+    getStaffPaymentTestFee("registration").amount,
+    "USD"
+  );
+  const matchLabel = formatDisplayPrice(
+    getStaffPaymentTestFee("matching").amount,
+    "USD"
+  );
 
   function runCheckout(type: StaffPaymentTestType, method?: PaymentMethodId) {
     startTransition(async () => {
@@ -68,10 +63,9 @@ export function StaffPaymentTestPanel({
   }
 
   function handleTest(type: StaffPaymentTestType) {
-    const priceLabel = type === "registration" ? regLabel : matchLabel;
     if (
       !confirm(
-        `Lancer un paiement de test ${type === "registration" ? "inscription" : "matching"} (${priceLabel}) ?\n\nVous serez redirigé vers Stripe, PayPal ou ViaziPay (montant réel).`
+        `Lancer un paiement de test ${type === "registration" ? "inscription" : "matching"} (montant minimal : ${priceRange}) ?\n\nVous serez redirigé vers Stripe, PayPal ou ViaziPay — le montant exact dépend du moyen choisi.`
       )
     ) {
       return;
@@ -103,9 +97,9 @@ export function StaffPaymentTestPanel({
               Tester les formulaires de paiement
             </h2>
             <p className="mt-1.5 text-sm leading-relaxed text-amber-900/85">
-              Ignore l&apos;offre de lancement et ouvre un vrai checkout ({regLabel}{" "}
-              inscription · {matchLabel} matching). Utile pour valider PayPal /
-              ViaziPay (Stripe live peut encore refuser les charges).
+              Ignore l&apos;offre de lancement et ouvre un vrai checkout au
+              montant minimal ({priceRange} selon le moyen). Utile pour valider
+              PayPal / ViaziPay sans payer les tarifs réels.
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button
@@ -120,7 +114,7 @@ export function StaffPaymentTestPanel({
                 ) : (
                   <CreditCard className="mr-2 h-4 w-4" />
                 )}
-                Test inscription ({regLabel})
+                Test inscription (dès {regLabel})
               </Button>
               <Button
                 type="button"
@@ -134,7 +128,7 @@ export function StaffPaymentTestPanel({
                 ) : (
                   <Smartphone className="mr-2 h-4 w-4" />
                 )}
-                Test matching ({matchLabel})
+                Test matching (dès {matchLabel})
               </Button>
             </div>
           </div>
@@ -144,9 +138,7 @@ export function StaffPaymentTestPanel({
       <PaymentMethodPicker
         open={pickerOpen}
         title="Moyen de paiement (test admin)"
-        amountLabel={
-          pendingType === "matching" ? matchLabel : regLabel
-        }
+        amountLabel={priceRange}
         onClose={() => {
           setPickerOpen(false);
           setPendingType(null);
