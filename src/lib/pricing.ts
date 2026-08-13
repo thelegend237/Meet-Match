@@ -387,10 +387,11 @@ export const REGISTRATION_FEATURES = isRegistrationWaived()
         : "Inscription offerte — offre de lancement",
     ] as const)
   : ([
+      "14 jours d'essai gratuit à l'inscription",
       "Création et modification de profil",
       "Upload de photos",
       "Consultation des profils actifs",
-      "Envoi de likes",
+      "Envoi de likes (pendant l'essai puis après activation)",
       "Notifications et tableau de bord",
     ] as const);
 

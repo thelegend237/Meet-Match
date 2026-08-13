@@ -828,11 +828,12 @@ export function OnboardingWizard({
                   </>
                 ) : (
                   <>
-                    Inscription :{" "}
+                    <strong className="text-primary">14 jours offerts</strong> à
+                    l&apos;inscription (likes + matching). Ensuite :{" "}
                     <strong className="text-primary">
                       {formatDisplayPriceDetail(regFee.amount, regFee.currency)}
                     </strong>{" "}
-                    après création — les étapes suivantes sont facultatives.
+                    pour rester actif — les étapes suivantes sont facultatives.
                   </>
                 )}
               </RegisterHint>

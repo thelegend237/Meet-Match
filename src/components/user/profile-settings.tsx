@@ -24,8 +24,20 @@ import { PROFILE_PHOTO_ANTI_FAKE_SHORT } from "@/lib/photos/copy";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/types/database";
 import type { LucideIcon } from "lucide-react";
+import {
+  formatTrialEndDate,
+  getTrialDaysRemaining,
+  isProfileOnTrial,
+} from "@/lib/trial";
 
 function accountStatusLabel(profile: Profile) {
+  if (isProfileOnTrial(profile)) {
+    const days = getTrialDaysRemaining(profile);
+    const until = formatTrialEndDate(profile);
+    return until
+      ? `Essai gratuit — jusqu'au ${until}`
+      : `Essai gratuit — ${days} j. restant${days > 1 ? "s" : ""}`;
+  }
   if (profile.registration_payment_status === "free") return "Accès gratuit";
   if (
     profile.registration_payment_status === "paid" &&

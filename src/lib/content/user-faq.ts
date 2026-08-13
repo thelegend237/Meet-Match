@@ -8,10 +8,10 @@ export type UserFaqItem = {
 
 export const USER_FAQ_ITEMS: UserFaqItem[] = [
   {
-    id: "beta-free",
-    question: "Est-ce que Meet & Match est payant en ce moment ?",
+    id: "trial",
+    question: "Y a-t-il une période d'essai ?",
     answer:
-      "Non. Nous sommes en phase de test : l'inscription, l'activation du compte, les likes et les mises en relation (matching) sont entièrement gratuits. Nous vous préviendrons avant d'activer les tarifs définitifs et l'intégration des paiements réels (Stripe).",
+      "Oui. Chaque nouveau compte bénéficie de 14 jours gratuits : likes et mises en relation inclus. À la fin de l'essai, activez votre compte (paiement unique) pour continuer. Vous pouvez aussi payer avant la fin pour ne pas être interrompu.",
   },
   {
     id: "what-is",
@@ -23,25 +23,25 @@ export const USER_FAQ_ITEMS: UserFaqItem[] = [
     id: "browse-free",
     question: "Puis-je voir les profils sans payer ?",
     answer:
-      "Oui. Dès la création de votre compte et de votre profil, vous pouvez parcourir gratuitement les profils dans Découvrir et Rencontres. Vous voyez les photos, les informations et les préférences des membres actifs — sans pouvoir les contacter directement.",
+      "Oui. Dès la création de votre compte, vous pouvez parcourir les profils. Pendant les 14 jours d'essai, vous pouvez aussi liker et accepter des matchs. Ensuite, l'activation payante est requise pour continuer à interagir.",
   },
   {
     id: "when-pay",
     question: "Quand dois-je payer ?",
     answer:
-      "Pendant la phase test, tout est gratuit : activez votre compte sans payer pour liker. Après le lancement officiel, les frais d'inscription débloqueront les interactions et les frais de matching ne seront dus que lorsqu'un administrateur vous propose une mise en relation.",
+      "Après vos 14 jours d'essai (ou avant si vous le souhaitez). Les frais d'inscription débloquent likes et matching. Les frais de matching ne sont dus que lorsqu'un administrateur vous propose une mise en relation — sauf pendant l'essai, où ils sont offerts.",
   },
   {
     id: "registration-fee",
     question: "À quoi servent les frais d'inscription ?",
     answer:
-      "Pendant la phase test, l'activation est gratuite et débloque les likes, les passes et vos likes envoyés. À terme, ce paiement unique activera votre compte sur la plateforme. Le contact avec l'équipe Meet & Match reste toujours gratuit.",
+      "C'est un paiement unique qui active durablement votre compte : likes, passes et accès aux matchs. Pendant l'essai de 14 jours, ces fonctions sont déjà disponibles. Le contact avec l'équipe reste toujours gratuit.",
   },
   {
     id: "matching-fee",
     question: "À quoi servent les frais de matching ?",
     answer:
-      "En phase test, chaque match proposé par l'équipe est gratuit. Après le lancement, le premier match nécessitera les frais de matching, puis 3 mises en relation gratuites par mois. Chaque match ouvre une discussion encadrée avec un administrateur.",
+      "Pendant l'essai, chaque match proposé est gratuit. Ensuite, le premier match nécessite les frais de matching, puis 3 mises en relation gratuites par mois. Chaque match ouvre une discussion encadrée avec un administrateur.",
   },
   {
     id: "matching-credits",
@@ -65,7 +65,7 @@ export const USER_FAQ_ITEMS: UserFaqItem[] = [
     id: "profiles-visible",
     question: "Quels profils puis-je voir ?",
     answer:
-      "Vous voyez les membres actifs qui ont une photo sur leur profil et dont le compte est activé (inscription payée ou accès gratuit). Votre propre profil n'apparaît pas dans votre liste de découverte.",
+      "Vous voyez les membres actifs qui ont une photo sur leur profil et dont le compte est activé (inscription payée, essai en cours ou accès gratuit). Votre propre profil n'apparaît pas dans votre liste de découverte.",
   },
   {
     id: "photo-required",
@@ -77,7 +77,7 @@ export const USER_FAQ_ITEMS: UserFaqItem[] = [
     id: "free-access",
     question: "Peut-on bénéficier d'un accès gratuit ?",
     answer:
-      "Oui. L'administration peut accorder un accès gratuit à l'inscription, au matching ou les deux (bêta testeurs, cas particuliers). Dans ce cas, les étapes de paiement correspondantes sont automatiquement débloquées.",
+      "Oui : 14 jours d'essai à l'inscription pour tous. En plus, l'administration peut accorder un accès gratuit prolongé (bêta testeurs, cas particuliers).",
   },
   {
     id: "contact-team",
@@ -101,16 +101,18 @@ Meet & Match est une plateforme de rencontre **sérieuse et encadrée** : pas de
 ## Vos premières étapes
 
 1. **Complétez votre profil** — photo, bio, attentes et préférences.
-2. **Parcourez gratuitement** — allez dans *Découvrir* ou *Rencontres* pour voir les profils des membres actifs.
-3. **Activez votre compte** quand vous souhaitez liker — gratuit pendant la phase test, sur la page *Paiements*.
-4. **Likez les profils** qui vous intéressent — notre équipe analyse les compatibilités.
-5. **Match proposé** — si nous vous suggérons une rencontre, c'est gratuit en phase test (les tarifs définitifs seront communiqués plus tard).
-6. **Discussion encadrée** — une conversation s'ouvre avec l'autre membre et un administrateur dès que le match est confirmé.
+2. **Profitez de 14 jours offerts** — likes et mises en relation inclus pendant l'essai.
+3. **Parcourez les profils** — allez dans *Découvrir* ou *Rencontres*.
+4. **Likez** les profils qui vous intéressent — notre équipe analyse les compatibilités.
+5. **Match proposé** — pendant l'essai c'est gratuit ; ensuite les tarifs s'appliquent.
+6. **Avant la fin de l'essai** — activez votre compte sur *Paiements* pour continuer sans interruption.
 
 ## À retenir
 
+- Essai : **14 jours gratuits** pour chaque nouvel inscrit
 - Consultation des profils : **gratuite**
-- Likes et interactions : **après activation du compte**
+- Likes et matching pendant l'essai : **inclus**
+- Après l'essai : activation payante pour continuer
 - Messages privés entre membres : **impossible**
 - Contact avec l'équipe : **gratuit à tout moment**
 

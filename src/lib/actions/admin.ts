@@ -9,6 +9,20 @@ import {
   getMatchingCandidateById,
   searchMatchingCandidates,
 } from "@/lib/admin/matching";
+import { isProfileOnTrial } from "@/lib/trial";
+import type { Profile } from "@/lib/types/database";
+
+function matchingFeeForProfile(
+  profile: Pick<
+    Profile,
+    "country_code" | "trial_ends_at" | "registration_payment_status"
+  >
+) {
+  if (isProfileOnTrial(profile)) {
+    return { amount: 0, currency: "USD" as const };
+  }
+  return getChargeMatchingFee({ countryCode: profile.country_code });
+}
 
 async function getAdminProfile() {
   const profile = await getCurrentProfile();
@@ -70,7 +84,9 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
 
   const { data: participants } = await supabase
     .from("profiles")
-    .select("id, role, display_name, country_code")
+    .select(
+      "id, role, display_name, country_code, trial_ends_at, registration_payment_status"
+    )
     .in("id", [userAId, userBId]);
 
   if (!participants || participants.length !== 2) {
@@ -86,8 +102,8 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
 
   const profileA = participants.find((p) => p.id === userAId)!;
   const profileB = participants.find((p) => p.id === userBId)!;
-  const feeA = getChargeMatchingFee({ countryCode: profileA.country_code });
-  const feeB = getChargeMatchingFee({ countryCode: profileB.country_code });
+  const feeA = matchingFeeForProfile(profileA);
+  const feeB = matchingFeeForProfile(profileB);
   // RPC propose_match prend un montant unique ; on aligne ensuite par utilisateur.
   const seedFee =
     feeA.amount >= feeB.amount ? feeA : feeB;

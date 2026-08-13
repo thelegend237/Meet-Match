@@ -91,7 +91,9 @@ export async function startRegistrationCheckout(options?: CheckoutOptions) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, email, country_code, registration_payment_status, display_name")
+    .select(
+      "id, email, country_code, registration_payment_status, display_name, trial_ends_at"
+    )
     .eq("id", user.id)
     .single();
 
@@ -99,15 +101,21 @@ export async function startRegistrationCheckout(options?: CheckoutOptions) {
     return { error: profileError?.message ?? "Profil introuvable" };
   }
 
-  if (
-    profile.registration_payment_status === "paid" ||
-    profile.registration_payment_status === "free"
-  ) {
+  if (profile.registration_payment_status === "paid") {
+    return { error: "Inscription déjà activée" };
+  }
+
+  const convertingTrial =
+    profile.registration_payment_status === "free" &&
+    Boolean(profile.trial_ends_at);
+
+  if (profile.registration_payment_status === "free" && !convertingTrial) {
     return { error: "Inscription déjà activée" };
   }
 
   const fee = getChargeRegistrationFee({
     countryCode: profile.country_code,
+    bypassWaive: convertingTrial,
   });
 
   if (PRICING_TEST_MODE || isFreeFee(fee.amount) || !hasAnyPaymentProvider()) {
@@ -226,7 +234,23 @@ export async function startMatchingCheckout(
 
   const amount = Number(payment.amount);
 
-  if (PRICING_TEST_MODE || isFreeFee(amount) || !hasAnyPaymentProvider()) {
+  const { data: payerProfile } = await supabase
+    .from("profiles")
+    .select("email, display_name, trial_ends_at, registration_payment_status")
+    .eq("id", user.id)
+    .single();
+
+  const onTrial =
+    payerProfile?.registration_payment_status === "free" &&
+    payerProfile.trial_ends_at &&
+    new Date(payerProfile.trial_ends_at).getTime() > Date.now();
+
+  if (
+    PRICING_TEST_MODE ||
+    isFreeFee(amount) ||
+    onTrial ||
+    !hasAnyPaymentProvider()
+  ) {
     const { error } = await supabase.rpc("confirm_matching_payment", {
       p_payment_id: paymentId,
     });
@@ -244,12 +268,6 @@ export async function startMatchingCheckout(
 
   const provider = paymentMethodToProvider(method);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("email, display_name")
-    .eq("id", user.id)
-    .single();
-
   try {
     return await startProviderCheckout({
       provider,
@@ -259,8 +277,8 @@ export async function startMatchingCheckout(
       currency: "USD",
       description:
         "Frais de mise en relation Meet and Match — service de rencontre accompagnee",
-      customerEmail: profile?.email ?? user.email ?? undefined,
-      customerName: profile?.display_name ?? undefined,
+      customerEmail: payerProfile?.email ?? user.email ?? undefined,
+      customerName: payerProfile?.display_name ?? undefined,
       successPath: `/matchs?checkout=success&match=${payment.match_id ?? ""}`,
       cancelPath: "/matchs?checkout=cancel",
       metadata: {

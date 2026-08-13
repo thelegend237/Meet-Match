@@ -388,7 +388,7 @@ export function PricingTeaserSection({ variant = "default" }: { variant?: Sectio
                   ? "Inscription, likes et matching sont offerts pendant que nous testons la plateforme avec vous. Les tarifs définitifs seront communiqués avant tout paiement réel."
                   : isFreeFee(regFee.amount)
                     ? "Activez gratuitement pour liker. Matching : 10 $ US uniquement quand un admin vous propose une rencontre."
-                    : "Un paiement unique (5 $ US) pour rejoindre la communauté. Matching : 10 $ US uniquement quand un administrateur vous propose une rencontre."}
+                    : "14 jours offerts à l'inscription (likes + matching). Puis un paiement unique (5 $ US) pour rester actif. Matching : 10 $ US uniquement hors essai, quand un admin vous propose une rencontre."}
               </p>
               <ul className="mt-5 space-y-2">
                 {REGISTRATION_FEATURES.slice(0, 4).map((f) => (

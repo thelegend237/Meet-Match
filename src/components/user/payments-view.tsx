@@ -35,6 +35,12 @@ import { RegistrationPaymentButton } from "@/components/user/registration-paymen
 import { StaffPaymentTestPanel } from "@/components/user/staff-payment-test-panel";
 import { getPaymentRowStatusLabel } from "@/lib/admin/payment-display";
 import { isStaffProfile } from "@/lib/auth/staff";
+import {
+  formatTrialEndDate,
+  getTrialDaysRemaining,
+  isProfileOnTrial,
+  TRIAL_DAYS,
+} from "@/lib/trial";
 import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
 import type { Payment, Profile } from "@/lib/types/database";
 
@@ -183,6 +189,9 @@ export function PaymentsView({
     profile.registration_payment_status === "free";
 
   const registrationFree = profile.registration_payment_status === "free";
+  const onTrial = isProfileOnTrial(profile);
+  const trialDaysLeft = getTrialDaysRemaining(profile);
+  const trialEndLabel = formatTrialEndDate(profile);
 
   const regFee = getRegistrationFee(profile.country_code);
   const matchFee = getMatchingFee(profile.country_code);
@@ -193,7 +202,10 @@ export function PaymentsView({
 
   const steps = [
     { label: "Compte créé", done: true },
-    { label: "Inscription payée", done: registrationPaid },
+    {
+      label: onTrial ? `Essai ${TRIAL_DAYS} jours` : "Inscription payée",
+      done: registrationPaid,
+    },
     { label: "Matchs accompagnés", done: hasPaidMatching },
   ];
 
@@ -205,6 +217,33 @@ export function PaymentsView({
 
       {isStaff ? (
         <StaffPaymentTestPanel />
+      ) : null}
+
+      {onTrial ? (
+        <section className="rounded-2xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/80 p-4 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800/80">
+                Essai gratuit
+              </p>
+              <h2 className="mt-1 font-sans text-lg font-bold text-emerald-950 sm:text-2xl">
+                {trialDaysLeft} jour{trialDaysLeft > 1 ? "s" : ""} restant
+                {trialDaysLeft > 1 ? "s" : ""}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-emerald-900/85">
+                Likes et mises en relation inclus jusqu&apos;au{" "}
+                {trialEndLabel ?? "…"}. Après l&apos;essai, activez votre compte
+                ({formatDisplayPrice(regFee.amount, regFee.currency)}) pour
+                continuer.
+              </p>
+            </div>
+            <RegistrationPaymentButton
+              amount={regFee.amount}
+              currency={regFee.currency}
+              className="w-full shrink-0 sm:w-auto"
+            />
+          </div>
+        </section>
       ) : null}
 
       {showWelcomeActivation ? (
@@ -262,7 +301,9 @@ export function PaymentsView({
               <p className="mt-2 max-w-md text-sm leading-relaxed text-primary-foreground/85">
                 {registrationPaid
                   ? registrationFree
-                    ? "Accès gratuit — profitez de toutes les fonctionnalités pendant la phase test."
+                    ? onTrial
+                      ? `Essai gratuit en cours — ${trialDaysLeft} jour${trialDaysLeft > 1 ? "s" : ""} restant${trialDaysLeft > 1 ? "s" : ""} (jusqu'au ${trialEndLabel ?? "…"}).`
+                      : "Accès gratuit — profitez de toutes les fonctionnalités."
                     : "Inscription réglée : explorez les profils, likez et attendez une proposition de match personnalisée."
                   : PRICING_TEST_MODE
                     ? "Pendant la phase test, l'activation est gratuite. Aucun paiement n'est demandé pour liker ou être mis en relation."
@@ -275,7 +316,9 @@ export function PaymentsView({
             >
               {registrationPaid
                 ? registrationFree
-                  ? "Accès gratuit"
+                  ? onTrial
+                    ? "Essai gratuit"
+                    : "Accès gratuit"
                   : "Compte actif"
                 : "Activation requise"}
             </Badge>

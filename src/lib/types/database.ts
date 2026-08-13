@@ -79,6 +79,8 @@ export interface Profile {
   status: ProfileStatus;
   profile_completion: number;
   registration_payment_status: PaymentStatus;
+  /** Fin de l'essai gratuit 14 jours (null si hors essai / payé). */
+  trial_ends_at: string | null;
   role: "user" | "admin" | "superadmin";
   notify_email: boolean;
   notify_push: boolean;
