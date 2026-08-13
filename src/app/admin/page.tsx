@@ -136,7 +136,7 @@ export default async function AdminDashboardPage() {
             stats.revenueRegistration + stats.revenueMatching,
             "CAD"
           )}
-          hint={`↑ ${Math.round((stats.revenueMatching / Math.max(stats.revenueRegistration + stats.revenueMatching, 1)) * 100)}% ce mois`}
+          hint="PayPal · MoMo · carte"
           iconClassName={statIconStyles[3]}
         />
         <StatTile

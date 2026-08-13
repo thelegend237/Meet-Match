@@ -8,6 +8,20 @@ export type PaymentProvider =
   | "cinetpay"
   | "manual";
 
+/** Encaissement réel (hors saisie manuelle / accès offert). */
+export const REAL_PAYMENT_PROVIDERS: PaymentProvider[] = [
+  "paypal",
+  "viazipay",
+  "stripe",
+  "cinetpay",
+];
+
+export function isRealPaymentProvider(
+  provider: string | null | undefined
+): provider is PaymentProvider {
+  return REAL_PAYMENT_PROVIDERS.includes(provider as PaymentProvider);
+}
+
 /**
  * Moyen affiché dans l'UI.
  * MTN et Orange passent tous deux par ViaziPay.

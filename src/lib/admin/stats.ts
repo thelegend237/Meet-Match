@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { AdminStats } from "@/components/admin/admin-stats";
+import { REAL_PAYMENT_PROVIDERS } from "@/lib/payments/providers";
 
 export async function getAdminStats(): Promise<AdminStats> {
   const supabase = await createClient();
@@ -50,12 +51,14 @@ export async function getAdminStats(): Promise<AdminStats> {
       .from("payments")
       .select("amount")
       .eq("type", "registration")
-      .eq("status", "paid"),
+      .eq("status", "paid")
+      .in("provider", REAL_PAYMENT_PROVIDERS),
     supabase
       .from("payments")
       .select("amount")
       .eq("type", "matching")
-      .eq("status", "paid"),
+      .eq("status", "paid")
+      .in("provider", REAL_PAYMENT_PROVIDERS),
   ]);
 
   const revenueRegistration =

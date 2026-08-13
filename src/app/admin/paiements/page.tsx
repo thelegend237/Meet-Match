@@ -10,6 +10,7 @@ import {
   type PaymentUserInfo,
 } from "@/components/admin/payments-table";
 import { createClient } from "@/lib/supabase/server";
+import { REAL_PAYMENT_PROVIDERS } from "@/lib/payments/providers";
 import { formatCurrency, cn } from "@/lib/utils";
 import type { Payment } from "@/lib/types/database";
 import { PageStack } from "@/components/layout/page-header";
@@ -65,6 +66,7 @@ export default async function AdminPaymentsPage() {
     supabase
       .from("payments")
       .select("*")
+      .in("provider", REAL_PAYMENT_PROVIDERS)
       .order("created_at", { ascending: false })
       .limit(500),
     supabase
@@ -84,9 +86,7 @@ export default async function AdminPaymentsPage() {
   }, {});
 
   const rows = (payments as Payment[]) ?? [];
-  const paidOrFree = rows.filter(
-    (p) => p.status === "paid" || p.status === "free"
-  ).length;
+  const paid = rows.filter((p) => p.status === "paid").length;
   const unpaid = rows.filter((p) => p.status === "unpaid").length;
   const revenue = rows
     .filter((p) => p.status === "paid")
@@ -96,7 +96,7 @@ export default async function AdminPaymentsPage() {
     <PageStack>
       <AdminPageHeader
         title="Paiements"
-        description="Suivi des transactions d'inscription et de matching, avec export CSV."
+        description="Transactions PayPal, Mobile Money et carte uniquement — hors accès offerts."
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -104,14 +104,14 @@ export default async function AdminPaymentsPage() {
           icon={CreditCard}
           label="Transactions"
           value={rows.length}
-          hint="Historique complet"
+          hint="PayPal · MoMo · carte"
           iconClassName="bg-[#ede9fe] text-[#5b3d8f]"
         />
         <StatTile
           icon={CheckCircle2}
-          label="Payées / gratuites"
-          value={paidOrFree}
-          hint={`${rows.length ? Math.round((paidOrFree / rows.length) * 100) : 0} % du total`}
+          label="Payées"
+          value={paid}
+          hint={`${rows.length ? Math.round((paid / rows.length) * 100) : 0} % du total`}
           iconClassName="bg-[#dcfce7] text-[#15803d]"
         />
         <StatTile
@@ -125,7 +125,7 @@ export default async function AdminPaymentsPage() {
           icon={Euro}
           label="Revenus encaissés"
           value={formatCurrency(revenue, "CAD")}
-          hint="Paiements confirmés"
+          hint="Encaissés via un moyen réel"
           iconClassName="bg-[#fce7f3] text-[#e91e8c]"
         />
       </div>
