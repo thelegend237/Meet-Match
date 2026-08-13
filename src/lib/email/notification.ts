@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { PRODUCTION_FROM_EMAIL } from "@/lib/site";
 
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY?.trim();
@@ -34,8 +35,7 @@ export async function sendNotificationEmail({
   }
 
   const from =
-    process.env.RESEND_FROM_EMAIL?.trim() ||
-    "Meet & Match <notifications@meet-and-match.app>";
+    process.env.RESEND_FROM_EMAIL?.trim() || PRODUCTION_FROM_EMAIL;
 
   const safeTitle = escapeHtml(title);
   const safeContent = escapeHtml(content);

@@ -116,9 +116,9 @@ Meet & Match est une plateforme de rencontre **sérieuse et encadrée** : pas de
 
 ## Liens utiles
 
-- Fonctionnement : https://meet-and-match.vercel.app/fonctionnement
-- Tarifs : https://meet-and-match.vercel.app/tarifs
-- Contact : https://meet-and-match.vercel.app/contact
+- Fonctionnement : https://youmeetnmatch.com/fonctionnement
+- Tarifs : https://youmeetnmatch.com/tarifs
+- Contact : https://youmeetnmatch.com/contact
 
 À très bientôt sur Meet & Match,
 L'équipe Meet & Match

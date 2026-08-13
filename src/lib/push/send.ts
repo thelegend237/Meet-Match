@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { tryCreateAdminClient } from "@/lib/supabase/admin";
+import { PRODUCTION_CONTACT_EMAIL } from "@/lib/site";
 
 type PushPayload = {
   title: string;
@@ -12,8 +13,7 @@ function configureWebPush() {
   const privateKey = process.env.VAPID_PRIVATE_KEY?.trim();
   const subject =
     process.env.VAPID_SUBJECT?.trim() ||
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    "mailto:contact@meet-and-match.app";
+    `mailto:${PRODUCTION_CONTACT_EMAIL}`;
 
   if (!publicKey || !privateKey) return false;
 

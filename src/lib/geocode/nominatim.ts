@@ -2,7 +2,8 @@ import { COUNTRIES } from "@/lib/validations/auth";
 
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
 const USER_AGENT =
-  process.env.GEOCODE_USER_AGENT ?? "MeetAndMatch/1.0 (contact@meetandmatch.app)";
+  process.env.GEOCODE_USER_AGENT ??
+  "MeetAndMatch/1.0 (contact@youmeetnmatch.com)";
 
 export type GeocodeResult = {
   latitude: number;

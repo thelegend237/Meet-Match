@@ -12,9 +12,10 @@ import {
   requestPushPermission,
   subscribeToPushNotifications,
 } from "@/lib/push/client";
+import { PRODUCTION_SITE_URL } from "@/lib/site";
 
 const SITE_ORIGIN =
-  typeof window !== "undefined" ? window.location.origin : "https://meet-and-match.vercel.app";
+  typeof window !== "undefined" ? window.location.origin : PRODUCTION_SITE_URL;
 
 function permissionLabel(permission: NotificationPermission | "unsupported") {
   if (permission === "granted") return "Autorisées";

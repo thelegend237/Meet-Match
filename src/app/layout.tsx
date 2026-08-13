@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins, Playfair_Display } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
+import { PRODUCTION_SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -26,6 +27,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || PRODUCTION_SITE_URL
+  ),
   title: {
     default: "Meet & Match — Rencontres sérieuses accompagnées",
     template: "%s | Meet & Match",

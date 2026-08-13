@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { PRICING_TEST_MODE } from "@/lib/pricing";
+import { PRODUCTION_SITE_URL } from "@/lib/site";
 
 let stripeClient: Stripe | null = null;
 
@@ -33,9 +34,12 @@ export function getStripe(): Stripe {
 }
 
 export function getAppUrl(): string {
-  const url =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.VERCEL_URL?.trim();
+  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const vercel =
+    process.env.VERCEL_ENV === "production"
+      ? PRODUCTION_SITE_URL
+      : process.env.VERCEL_URL?.trim();
+  const url = explicit || vercel;
   if (!url) return "http://localhost:3000";
   if (url.startsWith("http")) return url.replace(/\/$/, "");
   return `https://${url.replace(/\/$/, "")}`;

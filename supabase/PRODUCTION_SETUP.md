@@ -152,7 +152,7 @@ Ne pas réutiliser un projet avec un autre schéma (ex. Control-Flow) — voir [
 ## Message type pour vos testeurs
 
 > Meet & Match — bêta privée  
-> https://meet-and-match.vercel.app  
+> https://youmeetnmatch.com  
 >  
 > Créez votre compte avec votre email. Les paiements sont simulés ; les matchs sont proposés par notre équipe.  
 > Contact : page **Contact** sur le site.

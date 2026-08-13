@@ -51,7 +51,7 @@ Dans **Project → Settings → Environment Variables**, ajouter pour **Producti
 |----------|-------------|------------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Oui | `https://xxxx.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Oui | Clé **anon** (Dashboard Supabase → API) |
-| `NEXT_PUBLIC_APP_URL` | Oui | `https://votre-app.vercel.app` (URL finale Vercel) |
+| `NEXT_PUBLIC_APP_URL` | Oui | `https://youmeetnmatch.com` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Recommandé | Clé **service_role** (scripts / admin, jamais côté client) |
 | `GEOCODE_USER_AGENT` | Optionnel | `MeetAndMatch/1.0 (contact@votre-email.com)` |
 
@@ -78,24 +78,24 @@ Dans **Supabase → Authentication → URL Configuration** :
 
 | Champ | Valeur |
 |-------|--------|
-| **Site URL** | `https://votre-app.vercel.app` |
-| **Redirect URLs** | `https://votre-app.vercel.app/auth/callback` |
-| | `https://votre-app.vercel.app/**` |
+| **Site URL** | `https://youmeetnmatch.com` |
+| **Redirect URLs** | `https://youmeetnmatch.com/auth/callback` |
+| | `https://youmeetnmatch.com/**` |
+| | `https://www.youmeetnmatch.com/auth/callback` |
+| | `https://meet-and-match.vercel.app/auth/callback` |
 
 Pour les previews Vercel (`*.vercel.app`), ajoutez aussi :
 
 ```
-https://*-votre-equipe.vercel.app/auth/callback
+https://*-*.vercel.app/auth/callback
 ```
-
-(Ou l’URL exacte de chaque preview si besoin.)
 
 ### OAuth Google / Facebook
 
 Dans chaque fournisseur, autoriser la redirect URI :
 
 ```
-https://votre-app.vercel.app/auth/callback
+https://youmeetnmatch.com/auth/callback
 ```
 
 ## 6. Base de données Supabase
@@ -133,9 +133,14 @@ WHERE email = 'votre@email.com';
 | Images profil cassées | Bucket `profile-photos` + policies storage Supabase |
 | Villes vides à l’inscription | Migration `013` + `npm run seed:geo` |
 
-## Domaine personnalisé (optionnel)
+## Domaine personnalisé — youmeetnmatch.com
 
-Vercel → **Settings → Domains** → ajouter votre domaine, puis mettre à jour :
-
-- `NEXT_PUBLIC_APP_URL`
-- Site URL et Redirect URLs Supabase
+1. Vercel → **Settings → Domains** → ajouter `youmeetnmatch.com` et `www.youmeetnmatch.com`
+2. DNS chez le registrar (valeurs affichées par Vercel, typiquement) :
+   - `A` `@` → `76.76.21.21`
+   - `CNAME` `www` → `cname.vercel-dns.com`
+3. Variable Vercel Production : `NEXT_PUBLIC_APP_URL=https://youmeetnmatch.com` puis **Redeploy**
+4. Supabase → **Authentication → URL Configuration** :
+   - Site URL : `https://youmeetnmatch.com`
+   - Redirect URLs : `https://youmeetnmatch.com/auth/callback`, `https://youmeetnmatch.com/**`, `https://www.youmeetnmatch.com/auth/callback`
+5. Webhooks : PayPal `https://youmeetnmatch.com/api/webhooks/paypal` · ViaziPay `https://youmeetnmatch.com/api/webhooks/viazipay`

@@ -54,7 +54,7 @@ function addEnv(name, value, environment, sensitive = true) {
 
 const local = parseEnv(resolve(root, ".env.local"));
 
-const PROD_URL = "https://meet-and-match.vercel.app";
+const PROD_URL = "https://youmeetnmatch.com";
 
 /** Production only — enough to go live. */
 const entries = [
