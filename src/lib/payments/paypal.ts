@@ -88,6 +88,8 @@ export interface CreatePayPalOrderParams {
   successPath: string;
   cancelPath: string;
   customId?: string;
+  /** Inscription vs mise en relation — évite le vocabulaire « match/jeux ». */
+  paymentType?: "registration" | "matching";
 }
 
 export interface PayPalOrderResult {
@@ -114,12 +116,34 @@ interface PayPalOrderResponse {
   }>;
 }
 
+function paypalCatalog(paymentType?: "registration" | "matching") {
+  if (paymentType === "matching") {
+    return {
+      sku: "MM-INTRODUCTION",
+      name: "Mise en relation accompagnee",
+      description:
+        "Frais de mise en relation sur la plateforme de rencontre Meet and Match",
+      unitDescription:
+        "Service de rencontre accompagnee — mise en relation",
+    };
+  }
+  return {
+    sku: "MM-MEMBERSHIP",
+    name: "Adhesion plateforme de rencontre",
+    description:
+      "Frais d'inscription Meet and Match — service de rencontre accompagnee",
+    unitDescription: "Adhesion — service de rencontre accompagnee",
+  };
+}
+
 export async function createPayPalOrder(
   params: CreatePayPalOrderParams
 ): Promise<PayPalOrderResult> {
   const appUrl = getAppUrl();
   const currency = params.currency.toUpperCase();
   const value = Number(params.amount).toFixed(2);
+  const catalog = paypalCatalog(params.paymentType);
+  const description = (params.description || catalog.description).slice(0, 127);
 
   const order = await paypalFetch<PayPalOrderResponse>("/v2/checkout/orders", {
     method: "POST",
@@ -129,16 +153,37 @@ export async function createPayPalOrder(
         {
           reference_id: params.paymentId,
           custom_id: params.customId ?? params.paymentId,
-          description: params.description.slice(0, 127),
+          description,
+          soft_descriptor: "MEETNMATCH SVC",
           amount: {
             currency_code: currency,
             value,
+            breakdown: {
+              item_total: {
+                currency_code: currency,
+                value,
+              },
+            },
           },
+          items: [
+            {
+              name: catalog.name.slice(0, 127),
+              description: catalog.unitDescription.slice(0, 127),
+              sku: catalog.sku,
+              quantity: "1",
+              category: "DIGITAL_GOODS",
+              unit_amount: {
+                currency_code: currency,
+                value,
+              },
+            },
+          ],
         },
       ],
       application_context: {
-        brand_name: "Meet & Match",
+        brand_name: "Meet and Match",
         landing_page: "NO_PREFERENCE",
+        shipping_preference: "NO_SHIPPING",
         user_action: "PAY_NOW",
         return_url: `${appUrl}${params.successPath}`,
         cancel_url: `${appUrl}${params.cancelPath}`,

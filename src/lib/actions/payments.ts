@@ -173,7 +173,8 @@ export async function startRegistrationCheckout(options?: CheckoutOptions) {
       paymentId: paymentId!,
       amount: fee.amount,
       currency: fee.currency,
-      description: "Frais d'inscription Meet & Match",
+      description:
+        "Frais d'inscription Meet and Match — service de rencontre accompagnee",
       customerEmail: profile.email ?? user.email ?? undefined,
       customerName: profile.display_name ?? undefined,
       successPath: "/paiements?checkout=success&type=registration",
@@ -256,7 +257,8 @@ export async function startMatchingCheckout(
       paymentId: payment.id,
       amount,
       currency: "USD",
-      description: "Frais de matching Meet & Match",
+      description:
+        "Frais de mise en relation Meet and Match — service de rencontre accompagnee",
       customerEmail: profile?.email ?? user.email ?? undefined,
       customerName: profile?.display_name ?? undefined,
       successPath: `/matchs?checkout=success&match=${payment.match_id ?? ""}`,
@@ -348,6 +350,10 @@ async function startProviderCheckout(params: {
       successPath: params.successPath,
       cancelPath: params.cancelPath,
       customId: params.paymentId,
+      paymentType:
+        params.metadata.payment_type === "matching"
+          ? "matching"
+          : "registration",
     });
 
     await supabase
@@ -459,8 +465,8 @@ export async function startStaffPaymentTestCheckout(
       currency: fee.currency,
       description:
         type === "registration"
-          ? "Test admin — frais d'inscription Meet & Match"
-          : "Test admin — frais de matching Meet & Match",
+          ? "Test admin — adhesion Meet and Match (rencontre)"
+          : "Test admin — mise en relation Meet and Match",
       customerEmail: profile.email ?? user.email ?? undefined,
       customerName: profile.display_name ?? undefined,
       successPath: `/paiements?checkout=success&type=${type}&staff_test=1`,
