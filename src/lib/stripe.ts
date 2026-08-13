@@ -7,9 +7,18 @@ export function isStripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
 }
 
-/** Paiement réel via Stripe Checkout (prod). Sinon simulation / gratuit. */
+/**
+ * Checkout Stripe actif uniquement si :
+ * - pas en mode test pricing
+ * - clés présentes
+ * - NEXT_PUBLIC_ENABLE_STRIPE=true (dating = activité restreinte Stripe)
+ */
 export function shouldUseStripeCheckout(): boolean {
-  return !PRICING_TEST_MODE && isStripeConfigured();
+  return (
+    !PRICING_TEST_MODE &&
+    isStripeConfigured() &&
+    process.env.NEXT_PUBLIC_ENABLE_STRIPE === "true"
+  );
 }
 
 export function getStripe(): Stripe {

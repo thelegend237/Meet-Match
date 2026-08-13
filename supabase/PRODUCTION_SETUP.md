@@ -125,8 +125,12 @@ Voir aussi [DEPLOY_VERCEL.md](../DEPLOY_VERCEL.md).
 
 Si vous avez des **vrais comptes** à garder et voulez seulement supprimer `@test.com` / `@meetandmatch.test` :
 
-→ Exécuter le bloc **« Nettoyage des données de test existantes »** au début de `seed_test_data.sql`  
-→ **Sans** exécuter la suite du fichier (création des 130 comptes).
+```bash
+npm run cleanup:test-users -- --dry-run   # aperçu
+npm run cleanup:test-users                # suppression
+```
+
+Alternative SQL : exécuter uniquement le bloc **« Nettoyage des données de test existantes »** au début de `seed_test_data.sql`, **sans** la suite (création des 130 comptes).
 
 ---
 

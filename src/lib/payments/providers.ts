@@ -48,6 +48,17 @@ const METHOD_CATALOG: Record<PaymentMethodId, PaymentMethodOption> = {
   },
 };
 
+/**
+ * Stripe est masqué par défaut : les services de rencontre sont une
+ * activité restreinte Stripe. Réactivation volontaire uniquement :
+ * NEXT_PUBLIC_ENABLE_STRIPE=true (+ clés Stripe présentes).
+ */
+export function isStripeEnabledForCheckout(): boolean {
+  return (
+    process.env.NEXT_PUBLIC_ENABLE_STRIPE === "true" && isStripeConfigured()
+  );
+}
+
 export function isPayPalConfigured(): boolean {
   return Boolean(
     process.env.PAYPAL_CLIENT_ID?.trim() &&
@@ -68,14 +79,19 @@ export function paymentMethodToProvider(
   return METHOD_CATALOG[method].provider;
 }
 
-/** Moyens de paiement réellement configurés (ordre d'affichage). */
+/**
+ * Moyens de paiement réellement configurés (ordre d'affichage).
+ * Ordre : PayPal → MTN → Orange → (Stripe si réactivé explicitement).
+ */
 export function getConfiguredPaymentMethods(): PaymentMethodOption[] {
   const methods: PaymentMethodOption[] = [];
-  if (isStripeConfigured()) methods.push(METHOD_CATALOG.stripe);
+
   if (isPayPalConfigured()) methods.push(METHOD_CATALOG.paypal);
   if (isViaziPayConfigured()) {
     methods.push(METHOD_CATALOG.mtn, METHOD_CATALOG.orange);
   }
+  if (isStripeEnabledForCheckout()) methods.push(METHOD_CATALOG.stripe);
+
   return methods;
 }
 
@@ -89,8 +105,7 @@ export function hasAnyPaymentProvider(): boolean {
 }
 
 /**
- * Provider DB par défaut quand un seul moyen (ou Stripe en priorité).
- * Utilisé si l'appelant n'en précise pas.
+ * Moyen par défaut : premier de la liste configurée (PayPal en priorité).
  */
 export function getDefaultPaymentMethod(): PaymentMethodId | null {
   const methods = getConfiguredPaymentMethods();

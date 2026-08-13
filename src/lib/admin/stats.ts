@@ -3,8 +3,16 @@ import type { AdminStats } from "@/components/admin/admin-stats";
 
 export async function getAdminStats(): Promise<AdminStats> {
   const supabase = await createClient();
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const liveUsers = () =>
+    supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "user")
+      .eq("is_deleted", false);
 
   const [
     { count: totalUsers },
@@ -18,25 +26,10 @@ export async function getAdminStats(): Promise<AdminStats> {
     { data: regPayments },
     { data: matchPayments },
   ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .eq("role", "user"),
-    supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .eq("role", "user")
-      .eq("status", "active"),
-    supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .eq("role", "user")
-      .gte("created_at", weekAgo.toISOString()),
-    supabase
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .eq("role", "user")
-      .lt("profile_completion", 80),
+    liveUsers(),
+    liveUsers().eq("status", "active"),
+    liveUsers().gte("created_at", startOfMonth.toISOString()),
+    liveUsers().lt("profile_completion", 80),
     supabase
       .from("matches")
       .select("*", { count: "exact", head: true })
