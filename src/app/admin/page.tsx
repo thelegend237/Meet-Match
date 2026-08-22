@@ -13,11 +13,13 @@ import {
   getDistinctUserCountries,
   getUsersWithSummaryStats,
 } from "@/lib/admin/users";
+import { getTrialUsersWithUnprocessedLikes } from "@/lib/admin/trial-likes-queue";
 import { requireAdmin } from "@/lib/auth/session";
 import { PageStack } from "@/components/layout/page-header";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdminUsersAlert } from "@/components/admin/admin-users-alert";
+import { AdminTrialLikesAlert } from "@/components/admin/admin-trial-likes-alert";
 import { UsersTable } from "@/components/admin/users-table";
 
 const statIconStyles = [
@@ -71,9 +73,10 @@ function StatTile({
 export default async function AdminDashboardPage() {
   const profile = await requireAdmin();
   const stats = await getAdminStats();
-  const [users, countryOptions] = await Promise.all([
+  const [users, countryOptions, trialLikesQueue] = await Promise.all([
     getUsersWithSummaryStats(),
     getDistinctUserCountries(),
+    getTrialUsersWithUnprocessedLikes(),
   ]);
   const firstName = profile.display_name?.split(" ")[0] ?? "Admin";
 
@@ -151,6 +154,8 @@ export default async function AdminDashboardPage() {
       <Suspense fallback={null}>
         <AdminUsersAlert />
       </Suspense>
+
+      <AdminTrialLikesAlert items={trialLikesQueue} />
 
       <UsersTable users={users} countryOptions={countryOptions} />
     </PageStack>

@@ -19,6 +19,7 @@ import {
   showDiscoverActionError,
   showSubscriptionRequiredToast,
 } from "@/lib/discover/interaction-toast";
+import { nudgePushAfterFirstLike } from "@/lib/discover/push-after-like";
 import { likeProfile } from "@/lib/actions/likes";
 import { ProfileCardBadges } from "@/components/user/profile-card-badges";
 import {
@@ -120,10 +121,14 @@ export function ProfileDetailModal({
       } else {
         setLiked(true);
         onLiked?.(profileId);
-        toast({
-          title: "Like envoyé",
-          description: result.message || "Votre intérêt a été enregistré.",
-        });
+        if ("firstLike" in result && result.firstLike) {
+          nudgePushAfterFirstLike();
+        } else {
+          toast({
+            title: "Like envoyé",
+            description: result.message || "Votre intérêt a été enregistré.",
+          });
+        }
       }
     });
   }

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { requireUser } from "@/lib/auth/session";
 import { getUserMatches } from "@/lib/user/matches";
+import { getMyLikedIds } from "@/lib/actions/likes";
 import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
 import { MatchesList } from "@/components/user/matches-list";
 import { PaymentRequiredBanner } from "@/components/user/profile-banners";
@@ -13,9 +14,10 @@ export const metadata = {
 
 export default async function MatchsPage() {
   const profile = await requireUser();
-  const [matches, matchingCredits] = await Promise.all([
+  const [matches, matchingCredits, likedIds] = await Promise.all([
     getUserMatches(profile.id),
     getMatchingCreditsStatus(profile.id),
+    getMyLikedIds(),
   ]);
 
   return (
@@ -35,7 +37,12 @@ export default async function MatchsPage() {
           </div>
         }
       >
-        <MatchesList matches={matches} matchingCredits={matchingCredits} />
+        <MatchesList
+          matches={matches}
+          matchingCredits={matchingCredits}
+          likesSent={likedIds.length}
+          profileCompletion={profile.profile_completion ?? 0}
+        />
       </Suspense>
     </PageStack>
   );

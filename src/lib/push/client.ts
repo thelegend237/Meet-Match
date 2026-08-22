@@ -137,6 +137,13 @@ export function dismissPushInvite() {
   localStorage.setItem(PUSH_INVITE_DISMISS_KEY, String(Date.now()));
 }
 
+/** Réaffiche le bandeau push (ex. après le premier like). */
+export function clearPushInviteDismiss() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(PUSH_INVITE_DISMISS_KEY);
+  window.dispatchEvent(new Event("mm:push-invite-refresh"));
+}
+
 export async function requestPushPermission() {
   if (!isPushEnvironmentSupported()) {
     throw new Error(

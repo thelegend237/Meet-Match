@@ -90,6 +90,12 @@ export function getNotificationHref(
     return "/paiements";
   }
 
+  if (notification.type === "trial_expiring") {
+    const milestone = meta.milestone;
+    if (milestone === 7) return "/decouvrir";
+    return "/paiements";
+  }
+
   if (MATCH_TYPES.has(notification.type)) {
     const matchId = meta.match_id;
     if (typeof matchId === "string") return `/matchs?match=${matchId}`;
@@ -126,6 +132,10 @@ export function getNotificationActionLabel(
       return "Voir les détails →";
     case "registration_payment_required":
       return "Régler mon paiement →";
+    case "trial_expiring":
+      return notification.metadata?.milestone === 7
+        ? "Continuer à découvrir →"
+        : "Activer mon compte →";
     case "admin_new_member":
     case "admin_registration_unpaid":
       return "Contacter le membre →";
@@ -150,6 +160,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   match_partner_payment_pending: "Match",
   matching_payment_required: "Paiement",
   registration_payment_required: "Paiement",
+  trial_expiring: "Essai",
   payment_confirmed: "Paiement",
   chat_opened: "Discussion",
   match_success: "Match réussi",

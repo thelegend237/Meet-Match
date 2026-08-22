@@ -57,6 +57,14 @@ export function PushInviteBanner({ notifyPush = true }: PushInviteBannerProps) {
     void evaluateVisibility();
   }, [evaluateVisibility]);
 
+  useEffect(() => {
+    const onRefresh = () => {
+      void evaluateVisibility();
+    };
+    window.addEventListener("mm:push-invite-refresh", onRefresh);
+    return () => window.removeEventListener("mm:push-invite-refresh", onRefresh);
+  }, [evaluateVisibility]);
+
   function handleDismiss() {
     dismissPushInvite();
     setVisible(false);

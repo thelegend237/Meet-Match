@@ -38,6 +38,9 @@ import {
 } from "@/lib/navigation/mobile-shell";
 import { useNotificationRealtime } from "@/components/user/notification-realtime-provider";
 import { PushInviteBanner } from "@/components/user/push-invite-banner";
+import { TrialBanner } from "@/components/user/trial-banner";
+import type { Profile } from "@/lib/types/database";
+import { getTrialDaysRemaining, isProfileOnTrial } from "@/lib/trial";
 
 type NavLink = {
   href: string;
@@ -102,6 +105,8 @@ interface UserShellProps {
   welcomeTourEligible?: boolean;
   showAdminLink?: boolean;
   notifyPush?: boolean;
+  /** Profil pour bannière essai (optionnel). */
+  profile?: Profile | null;
   children: React.ReactNode;
 }
 
@@ -115,6 +120,7 @@ export function UserShell({
   welcomeTourEligible = false,
   showAdminLink = false,
   notifyPush = true,
+  profile = null,
   children,
 }: UserShellProps) {
   const pathname = usePathname();
@@ -367,6 +373,16 @@ export function UserShell({
             )}
           >
             <PushInviteBanner notifyPush={notifyPush} />
+            {profile && isProfileOnTrial(profile) && !pathname.startsWith("/tableau-de-bord") && !pathname.startsWith("/decouvrir") && !pathname.startsWith("/paiements") && (
+              <div className="px-4 pt-3 md:px-6 md:pt-4">
+                <TrialBanner
+                  profile={profile}
+                  variant={
+                    getTrialDaysRemaining(profile) <= 3 ? "urgent" : "inline"
+                  }
+                />
+              </div>
+            )}
             {children}
           </main>
 

@@ -19,6 +19,7 @@ import { likeProfile } from "@/lib/actions/likes";
 import { passProfile } from "@/lib/actions/passes";
 import { toast } from "@/hooks/use-toast";
 import { showDiscoverActionError, showSubscriptionRequiredToast } from "@/lib/discover/interaction-toast";
+import { nudgePushAfterFirstLike } from "@/lib/discover/push-after-like";
 import { Reveal } from "@/components/motion/motion";
 import { PaymentActivationBanner } from "@/components/user/payment-activation-banner";
 import type { DiscoveryProfile, Profile } from "@/lib/types/database";
@@ -79,10 +80,14 @@ export function DiscoverFeed({
         showDiscoverActionError(result.error);
         return;
       }
-      toast({
-        title: "Like envoyé",
-        description: result.message ?? "Votre intérêt a été enregistré.",
-      });
+      if ("firstLike" in result && result.firstLike) {
+        nudgePushAfterFirstLike();
+      } else {
+        toast({
+          title: "Like envoyé",
+          description: result.message ?? "Votre intérêt a été enregistré.",
+        });
+      }
     });
   }
 

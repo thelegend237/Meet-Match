@@ -28,6 +28,11 @@ export async function likeProfile(toUserId: string) {
     return { error: "Une mise en relation existe déjà avec ce profil." };
   }
 
+  const { count: priorLikes } = await supabase
+    .from("likes")
+    .select("*", { count: "exact", head: true })
+    .eq("from_user_id", user.id);
+
   const { error } = await supabase.from("likes").insert({
     from_user_id: user.id,
     to_user_id: toUserId,
@@ -43,7 +48,11 @@ export async function likeProfile(toUserId: string) {
   revalidatePath("/decouvrir");
   revalidatePath("/decouvrir/likes");
   revalidatePath("/rencontres");
-  return { success: true, message: "Votre intérêt a été enregistré." };
+  return {
+    success: true as const,
+    message: "Votre intérêt a été enregistré.",
+    firstLike: (priorLikes ?? 0) === 0,
+  };
 }
 
 export async function getMyLikedIds(): Promise<string[]> {

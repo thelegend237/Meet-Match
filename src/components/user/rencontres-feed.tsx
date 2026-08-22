@@ -19,6 +19,7 @@ import {
   showDiscoverActionError,
   showSubscriptionRequiredToast,
 } from "@/lib/discover/interaction-toast";
+import { nudgePushAfterFirstLike } from "@/lib/discover/push-after-like";
 import { PaymentActivationBanner } from "@/components/user/payment-activation-banner";
 import { cn } from "@/lib/utils";
 
@@ -77,10 +78,14 @@ export function RencontresFeed({
         showDiscoverActionError(result.error);
         return;
       }
-      toast({
-        title: "Intérêt envoyé",
-        description: result.message ?? "Votre like a été enregistré.",
-      });
+      if ("firstLike" in result && result.firstLike) {
+        nudgePushAfterFirstLike();
+      } else {
+        toast({
+          title: "Intérêt envoyé",
+          description: result.message ?? "Votre like a été enregistré.",
+        });
+      }
     });
   }
 

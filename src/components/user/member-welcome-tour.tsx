@@ -23,7 +23,7 @@ import {
   markMemberTourCompleted,
 } from "@/lib/user/member-tour";
 import { cn } from "@/lib/utils";
-import { PRICING_TEST_MODE } from "@/lib/pricing";
+import { TRIAL_DAYS } from "@/lib/trial";
 
 type TourStep = {
   id: string;
@@ -40,16 +40,14 @@ const TOUR_STEPS: TourStep[] = [
     id: "welcome",
     icon: Map,
     title: "Bienvenue sur Meet & Match",
-    description:
-      "Vous n'êtes pas seul : notre équipe accompagne chaque étape. Ce guide rapide vous montre où cliquer pour profiter de l'application.",
+    description: `Votre essai de ${TRIAL_DAYS} jours vient de commencer : likes et mises en relation inclus. Notre équipe accompagne chaque étape — ce guide rapide vous montre où cliquer.`,
     tip: "2 minutes — vous pourrez le revoir dans Paramètres.",
   },
   {
     id: "discover",
     icon: Compass,
     title: "Découvrir des profils",
-    description:
-      "Parcourez gratuitement les profils actifs. Activez votre compte depuis Paiements pour envoyer des likes — pas de chat libre entre membres.",
+    description: `Pendant votre essai, likez librement les profils qui vous intéressent. Après les ${TRIAL_DAYS} jours, activez votre compte depuis Paiements pour continuer. Pas de chat libre entre membres.`,
     href: "/decouvrir",
     hrefLabel: "Aller à Découvrir",
   },
@@ -67,7 +65,7 @@ const TOUR_STEPS: TourStep[] = [
     icon: Heart,
     title: "Mes likes",
     description:
-      "Retrouvez ici tous les profils que vous avez likés. Si la personne vous like aussi, l'équipe peut analyser une mise en relation.",
+      "Retrouvez ici tous les profils que vous avez likés. L'équipe analyse ensuite les compatibilités pour proposer une mise en relation encadrée.",
     href: "/decouvrir/likes",
     hrefLabel: "Mes likes envoyés",
   },
@@ -75,9 +73,8 @@ const TOUR_STEPS: TourStep[] = [
     id: "match",
     icon: Sparkles,
     title: "Votre match encadré",
-    description: PRICING_TEST_MODE
-      ? "Quand nous validons une compatibilité, vous recevez une notification. Pendant la phase test, chaque match est gratuit."
-      : "Quand nous validons une compatibilité, vous recevez une notification. Vous payez les frais de matching uniquement à ce moment-là.",
+    description:
+      "Quand nous validons une compatibilité, vous recevez une notification. Pendant l'essai le matching est inclus ; ensuite, les frais ne sont demandés qu'au moment de la mise en relation.",
     href: "/matchs",
     hrefLabel: "Mon match",
   },
@@ -95,7 +92,7 @@ const TOUR_STEPS: TourStep[] = [
     icon: Headphones,
     title: "Une équipe à votre écoute",
     description:
-      "Questions, signalement ou demande d'accès gratuit : contactez-nous gratuitement à tout moment depuis Contact admin.",
+      "Questions, signalement ou demande d'accès : contactez-nous à tout moment depuis Contact admin.",
     href: "/contact",
     hrefLabel: "Contacter l'équipe",
   },

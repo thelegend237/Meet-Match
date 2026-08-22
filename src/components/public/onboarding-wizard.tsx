@@ -1364,7 +1364,17 @@ export function OnboardingWizard({
               <Link href="/decouvrir?welcome=1">Continuer sans activer</Link>
             </Button>
           </div>
-        ) : null;
+        ) : (
+          <div className="w-full space-y-2 rounded-2xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50 to-white p-4 text-left">
+            <p className="text-sm font-semibold text-emerald-950">
+              14 jours d&apos;essai activés
+            </p>
+            <p className="text-xs leading-relaxed text-emerald-900/85">
+              Likes et mises en relation sont inclus pendant votre essai. Vous
+              pourrez activer votre compte plus tard depuis Paiements.
+            </p>
+          </div>
+        );
 
         if (mode === "public") {
           return (

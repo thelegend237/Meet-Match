@@ -11,6 +11,7 @@ import {
   PaymentRequiredBanner,
   PhotoRequiredBanner,
 } from "@/components/user/profile-banners";
+import { TrialBanner } from "@/components/user/trial-banner";
 import { PageStack } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { loadDiscoveryProfiles } from "@/lib/discover/load-profiles";
 import { touchLastSeen } from "@/lib/actions/discover";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
 import { viewerHasDiscoveryPhoto } from "@/lib/discover/eligibility";
+import { getTrialDaysRemaining, isProfileOnTrial } from "@/lib/trial";
 import type { GenderPreference } from "@/lib/types/database";
 
 export const metadata = {
@@ -57,6 +59,12 @@ export default async function DecouvrirPage() {
 
   return (
     <PageStack className="gap-4">
+      {isProfileOnTrial(profile) && (
+        <TrialBanner
+          profile={profile}
+          variant={getTrialDaysRemaining(profile) <= 3 ? "urgent" : "inline"}
+        />
+      )}
       {!canInteract && (
         <div className="hidden md:block">
           <PaymentRequiredBanner profile={profile} />

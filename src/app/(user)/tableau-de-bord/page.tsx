@@ -8,7 +8,11 @@ import {
 } from "lucide-react";
 import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
 import { getUserMatches } from "@/lib/user/matches";
+import { getMyLikedIds } from "@/lib/actions/likes";
 import { DashboardNotificationsPreview } from "@/components/user/dashboard-notifications-preview";
+import { DashboardNextActions } from "@/components/user/dashboard-next-actions";
+import { DashboardDossier } from "@/components/user/dashboard-dossier";
+import { TrialBanner } from "@/components/user/trial-banner";
 import {
   ProfileCompletionBanner,
   PaymentRequiredBanner,
@@ -17,6 +21,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/layout/page-header";
 import { AnimatedPageStack } from "@/components/layout/animated-page-stack";
+import {
+  getTrialDaysRemaining,
+  isProfileOnTrial,
+} from "@/lib/trial";
 
 export const metadata = {
   title: "Tableau de bord",
@@ -24,11 +32,21 @@ export const metadata = {
 
 export default async function DashboardPage() {
   const profile = await requireUser();
-  const matches = await getUserMatches(profile.id);
+  const [matches, likedIds] = await Promise.all([
+    getUserMatches(profile.id),
+    getMyLikedIds(),
+  ]);
   const activeMatch = matches.find(
     (m) => m.status === "active" || m.status === "pending_payment"
   );
+  const pendingPaymentMatch =
+    matches.find(
+      (m) =>
+        m.status === "pending_payment" && m.myPayment?.status === "unpaid"
+    ) ?? null;
   const completion = profile.profile_completion ?? 0;
+  const onTrial = isProfileOnTrial(profile);
+  const trialDays = getTrialDaysRemaining(profile);
 
   return (
     <AnimatedPageStack>
@@ -37,8 +55,24 @@ export default async function DashboardPage() {
         description="Voici un aperçu de votre activité sur Meet & Match."
       />
 
+      <TrialBanner
+        profile={profile}
+        variant={onTrial && trialDays <= 3 ? "urgent" : "inline"}
+      />
       <ProfileCompletionBanner profile={profile} />
       <PaymentRequiredBanner profile={profile} />
+
+      <DashboardNextActions
+        profile={profile}
+        likesSent={likedIds.length}
+        pendingPaymentMatch={pendingPaymentMatch}
+      />
+
+      <DashboardDossier
+        profile={profile}
+        likesSent={likedIds.length}
+        matches={matches}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="mm-card flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
@@ -103,10 +137,14 @@ export default async function DashboardPage() {
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
             {activeMatch
               ? "Une mise en relation est en cours avec notre équipe."
-              : "En attente de proposition — nous analysons les profils compatibles."}
+              : likedIds.length > 0
+                ? `${likedIds.length} like${likedIds.length > 1 ? "s" : ""} envoyé${likedIds.length > 1 ? "s" : ""} — l'équipe analyse les compatibilités.`
+                : "En attente de proposition — likez des profils pour démarrer."}
           </p>
           <Button variant="secondary" className="mt-6 rounded-full" asChild>
-            <Link href="/matchs">En savoir plus</Link>
+            <Link href={likedIds.length > 0 ? "/matchs" : "/decouvrir"}>
+              {likedIds.length > 0 ? "En savoir plus" : "Découvrir"}
+            </Link>
           </Button>
         </div>
       </div>

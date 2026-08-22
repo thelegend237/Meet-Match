@@ -32,6 +32,8 @@ import { toast } from "@/hooks/use-toast";
 interface MatchesListProps {
   matches: UserMatch[];
   matchingCredits?: MatchingCreditsStatus;
+  likesSent?: number;
+  profileCompletion?: number;
 }
 
 function statusVariant(
@@ -295,7 +297,12 @@ function MatchCard({
   );
 }
 
-export function MatchesList({ matches, matchingCredits }: MatchesListProps) {
+export function MatchesList({
+  matches,
+  matchingCredits,
+  likesSent = 0,
+  profileCompletion = 100,
+}: MatchesListProps) {
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("match");
 
@@ -313,18 +320,37 @@ export function MatchesList({ matches, matchingCredits }: MatchesListProps) {
   );
 
   if (matches.length === 0) {
+    const analyzing = likesSent > 0;
     return (
       <div className="mm-card flex flex-col items-center px-5 py-8 text-center sm:px-6 sm:py-12">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent">
           <Heart className="h-8 w-8 text-secondary/70" />
         </div>
         <p className="mt-5 font-sans text-xl font-bold text-primary">
-          Aucun match pour le moment
+          {analyzing
+            ? "Dossier en cours d'analyse"
+            : "Aucun match pour le moment"}
         </p>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          Likez des profils dans Découvrir. Lorsqu&apos;un administrateur vous
-          proposera une mise en relation, elle apparaîtra ici.
+          {analyzing
+            ? `${likesSent} like${likesSent > 1 ? "s" : ""} envoyé${likesSent > 1 ? "s" : ""} — l'équipe analyse les compatibilités. Une mise en relation apparaîtra ici lorsqu'un administrateur valide un duo.`
+            : "Likez des profils dans Découvrir. Lorsqu'un administrateur vous proposera une mise en relation, elle apparaîtra ici."}
         </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Button variant="secondary" className="rounded-full" asChild>
+            <Link href="/decouvrir">Continuer à liker</Link>
+          </Button>
+          {analyzing && profileCompletion < 80 && (
+            <Button variant="outline" className="rounded-full" asChild>
+              <Link href="/profil/modifier">Compléter mon profil</Link>
+            </Button>
+          )}
+          {analyzing && (
+            <Button variant="outline" className="rounded-full" asChild>
+              <Link href="/contact">Contacter l&apos;équipe</Link>
+            </Button>
+          )}
+        </div>
       </div>
     );
   }

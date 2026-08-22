@@ -58,6 +58,22 @@ export default async function RencontresPage() {
 
   const genderPreference: GenderPreference = profile.preferred_gender ?? "both";
   const viewerLocation = getViewerLocation(profile);
+  const completion = profile.profile_completion ?? 0;
+  const incomplete = !hasPhoto || completion < 80;
+
+  let emptyTitle = "Aucune suggestion du jour";
+  let emptyDescription =
+    "Il n'y a pas encore d'autres membres actifs avec une photo. Explorez Découvrir ou revenez demain.";
+
+  if (incomplete) {
+    emptyTitle = "Complétez votre profil pour des suggestions";
+    emptyDescription = !hasPhoto
+      ? "Ajoutez une photo principale : sans photo, les Rencontres du jour restent vides et l'équipe ne peut pas vous matcher."
+      : "Un profil plus complet (bio, localisation, attentes) améliore fortement les suggestions du jour.";
+  } else if (likedIds.length > 0) {
+    emptyTitle = "Plus de suggestions pour aujourd'hui";
+    emptyDescription = `Vous avez déjà liké ${likedIds.length} profil${likedIds.length > 1 ? "s" : ""}. Revenez demain pour de nouvelles propositions, ou continuez dans Découvrir.`;
+  }
 
   return (
     <PageStack className="gap-4">
@@ -74,14 +90,25 @@ export default async function RencontresPage() {
       {rencontresProfiles.length === 0 ? (
         <EmptyState
           icon={Layers}
-          title="Aucune suggestion du jour"
-          description="Il n'y a pas encore d'autres membres actifs avec une photo. Explorez Découvrir ou revenez demain."
+          title={emptyTitle}
+          description={emptyDescription}
           action={
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button variant="secondary" className="rounded-full" asChild>
+              {incomplete ? (
+                <Button variant="secondary" className="rounded-full" asChild>
+                  <Link href={!hasPhoto ? "/profil/photos" : "/profil/modifier"}>
+                    {!hasPhoto ? "Ajouter une photo" : "Compléter mon profil"}
+                  </Link>
+                </Button>
+              ) : null}
+              <Button
+                variant={incomplete ? "outline" : "secondary"}
+                className="rounded-full"
+                asChild
+              >
                 <Link href="/decouvrir">Découvrir</Link>
               </Button>
-              {canInteract && (
+              {canInteract && likedIds.length > 0 && (
                 <Button variant="outline" className="rounded-full" asChild>
                   <Link href="/decouvrir/likes">
                     Mes likes ({likedIds.length})

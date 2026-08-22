@@ -1,6 +1,10 @@
 import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
 import { getMyLikedProfiles } from "@/lib/actions/likes";
 import { MyLikesList } from "@/components/user/my-likes-list";
+import {
+  LikesAnalysisBanner,
+  LikesEmptyWithHints,
+} from "@/components/user/likes-analysis-banner";
 import { PageHeader, PageStack } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Heart } from "lucide-react";
@@ -37,7 +41,7 @@ export default async function MesLikesPage() {
     <PageStack>
       <PageHeader
         title="Mes likes envoyés"
-        description="Les profils qui vous intéressent. Si l'intérêt est partagé, l'équipe pourra vous proposer une mise en relation."
+        description="Les profils qui vous intéressent. L'équipe analyse les compatibilités pour proposer une mise en relation."
         backHref="/decouvrir"
         backLabel="Découvrir"
         action={
@@ -49,7 +53,17 @@ export default async function MesLikesPage() {
           ) : undefined
         }
       />
-      <MyLikesList profiles={likedProfiles} />
+      {likedProfiles.length === 0 ? (
+        <LikesEmptyWithHints />
+      ) : (
+        <>
+          <LikesAnalysisBanner
+            likesCount={likedProfiles.length}
+            profileCompletion={profile.profile_completion ?? 0}
+          />
+          <MyLikesList profiles={likedProfiles} />
+        </>
+      )}
     </PageStack>
   );
 }
