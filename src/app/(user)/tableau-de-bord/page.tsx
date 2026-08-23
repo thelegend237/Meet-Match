@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import {
   CreditCard,
   Heart,
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/layout/page-header";
 import { AnimatedPageStack } from "@/components/layout/animated-page-stack";
+import { DashboardNotificationsSkeleton } from "@/components/layout/page-loading-skeletons";
 import {
   getTrialDaysRemaining,
   isProfileOnTrial,
@@ -150,7 +152,9 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <DashboardNotificationsPreview userId={profile.id} />
+        <Suspense fallback={<DashboardNotificationsSkeleton />}>
+          <DashboardNotificationsPreview userId={profile.id} />
+        </Suspense>
 
         <div className="mm-card flex flex-col justify-between bg-gradient-to-br from-accent/80 to-secondary/5 p-6">
           <div>

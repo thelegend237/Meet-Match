@@ -6,6 +6,7 @@ import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
 import { MatchesList } from "@/components/user/matches-list";
 import { PaymentRequiredBanner } from "@/components/user/profile-banners";
 import { CheckoutReturnToast } from "@/components/user/checkout-return-toast";
+import { MatchsPageSkeleton } from "@/components/layout/page-loading-skeletons";
 import { PageHeader, PageStack } from "@/components/layout/page-header";
 
 export const metadata = {
@@ -31,11 +32,7 @@ export default async function MatchsPage() {
       />
       <PaymentRequiredBanner profile={profile} />
       <Suspense
-        fallback={
-          <div className="mm-card p-8 text-center text-muted-foreground">
-            Chargement…
-          </div>
-        }
+        fallback={<MatchsPageSkeleton />}
       >
         <MatchesList
           matches={matches}
