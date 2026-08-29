@@ -7,13 +7,14 @@ import {
   Shield,
   Headphones,
 } from "lucide-react";
-import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
+import { requireUser, hasPlatformAccess, isDeactivatedAfterMatchSuccess } from "@/lib/auth/session";
 import { getUserMatches } from "@/lib/user/matches";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { DashboardNotificationsPreview } from "@/components/user/dashboard-notifications-preview";
 import { DashboardNextActions } from "@/components/user/dashboard-next-actions";
 import { DashboardDossier } from "@/components/user/dashboard-dossier";
 import { TrialBanner } from "@/components/user/trial-banner";
+import { ReactivationBanner } from "@/components/user/reactivation-banner";
 import {
   ProfileCompletionBanner,
   PaymentRequiredBanner,
@@ -36,7 +37,7 @@ export default async function DashboardPage() {
   const profile = await requireUser();
   const [matches, likedIds] = await Promise.all([
     getUserMatches(profile.id),
-    getMyLikedIds(),
+    getMyLikedIds(profile.id),
   ]);
   const activeMatch = matches.find(
     (m) => m.status === "active" || m.status === "pending_payment"
@@ -49,6 +50,38 @@ export default async function DashboardPage() {
   const completion = profile.profile_completion ?? 0;
   const onTrial = isProfileOnTrial(profile);
   const trialDays = getTrialDaysRemaining(profile);
+  const deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
+
+  if (deactivatedAfterMatch) {
+    return (
+      <AnimatedPageStack>
+        <PageHeader
+          title={`Bonjour ${profile.display_name?.split(" ")[0] ?? "membre"} 👋`}
+          description="Votre compte est en pause après une mise en relation réussie."
+        />
+        <ReactivationBanner />
+        <div className="mm-card flex flex-col items-center justify-center p-8 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-violet-100">
+            <Heart className="h-8 w-8 text-violet-700" />
+          </div>
+          <h2 className="mt-4 font-sans text-lg font-bold text-primary">
+            Profil en pause
+          </h2>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Vous conservez l&apos;accès à votre tableau de bord, votre profil et
+            le contact avec l&apos;équipe. Pour revenir sur la plateforme,
+            demandez une réactivation.
+          </p>
+          <Button variant="secondary" className="mt-6 rounded-full" asChild>
+            <Link href="/contact?subject=reactivation">
+              <MessageSquare className="h-4 w-4" />
+              Contacter l&apos;admin
+            </Link>
+          </Button>
+        </div>
+      </AnimatedPageStack>
+    );
+  }
 
   return (
     <AnimatedPageStack>

@@ -50,6 +50,7 @@ import {
 } from "@/components/user/message-reply-bar";
 import { PinnedMessagesBar } from "@/components/user/pinned-messages-bar";
 import { TypingIndicator } from "@/components/user/typing-indicator";
+import { AdminQuickReplies } from "@/components/admin/admin-quick-replies";
 import {
   formatDateSeparator,
   formatMessageTime,
@@ -862,6 +863,14 @@ export function ChatThread({
     textareaRef.current?.focus();
   }
 
+  function insertQuickReply(content: string) {
+    setInput(content);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      resizeTextarea();
+    });
+  }
+
   function handleReact(messageId: string, emoji: string) {
     setActiveActionMessageId(null);
     setActiveReactionMessageId(null);
@@ -1392,9 +1401,15 @@ export function ChatThread({
 
       {selectionMode ? null : canSend ? (
         <form
-          onSubmit={handleSend}
+          onSubmit={(e) => e.preventDefault()}
           className="mm-chat-input-bar pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         >
+          {isStaffView ? (
+            <AdminQuickReplies
+              onSelect={insertQuickReply}
+              disabled={pending}
+            />
+          ) : null}
           {editingMessage ? (
             <div className="flex items-stretch gap-2 border-b border-[#ebe6f0]/90 bg-[#faf8fc] px-3 py-2 sm:px-4">
               <div className="min-w-0 flex-1 border-l-[3px] border-[#e91e8c] pl-2">
@@ -1471,12 +1486,6 @@ export function ChatThread({
               rows={1}
               disabled={pending}
               className="max-h-[120px] min-h-[24px] w-full resize-none bg-transparent py-2.5 text-[15px] leading-snug text-[#2e1a47] outline-none placeholder:text-[#9b8fa8]"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
             />
             <button
               type="button"
@@ -1493,8 +1502,9 @@ export function ChatThread({
             </button>
           </div>
           <button
-            type="submit"
+            type="button"
             disabled={pending || !input.trim()}
+            onClick={() => handleSend()}
             className={cn(
               "mm-chat-send-btn mb-0.5",
               input.trim() ? "mm-chat-send-btn-active" : "mm-chat-send-btn-idle"

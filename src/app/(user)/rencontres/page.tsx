@@ -18,7 +18,6 @@ import { loadDiscoveryProfiles } from "@/lib/discover/load-profiles";
 import { DISCOVERY_PAGE_SIZE } from "@/lib/discover/constants";
 import { getRencontresProfiles } from "@/lib/discover/rencontres";
 import { getViewerLocation } from "@/lib/discover/geo";
-import { touchLastSeen } from "@/lib/actions/discover";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
 import { viewerHasDiscoveryPhoto } from "@/lib/discover/eligibility";
 import type { GenderPreference } from "@/lib/types/database";
@@ -31,18 +30,16 @@ export default async function RencontresPage() {
   const profile = await requireUser();
   const canInteract = hasPlatformAccess(profile);
 
-  await touchLastSeen();
-
   if (profile.city && profile.country_code && profile.latitude == null) {
     void syncProfileGeolocation(profile.id);
   }
 
   const supabase = await createClient();
-  const hasPhoto = await viewerHasDiscoveryPhoto(supabase, profile.id, profile);
-  const [excludedUserIds, likedIds, passedIds] = await Promise.all([
+  const [hasPhoto, excludedUserIds, likedIds, passedIds] = await Promise.all([
+    viewerHasDiscoveryPhoto(supabase, profile.id, profile),
     getDiscoveryExcludedUserIds(supabase, profile.id),
-    getMyLikedIds(),
-    getMyPassedIds(),
+    getMyLikedIds(profile.id),
+    getMyPassedIds(profile.id),
   ]);
 
   const discoveryProfiles = await loadDiscoveryProfiles(

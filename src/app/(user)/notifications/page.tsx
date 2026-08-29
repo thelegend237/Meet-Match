@@ -16,14 +16,15 @@ export default async function NotificationsPage() {
     <PageStack>
       <PageHeader
         title="Notifications"
-        description="Restez informé de l'activité sur votre compte, par email et sur votre appareil."
+        description="La plupart des alertes apparaissent ici. Les emails sont limités aux likes et événements essentiels."
       />
       <section className="mm-card p-4 sm:p-5">
         <h2 className="font-sans text-base font-bold text-[#2e1a47] sm:text-lg">
           Préférences de notification
         </h2>
         <p className="mt-1 text-sm text-[#6b5f7a]">
-          Choisissez comment être alerté lorsque vous n&apos;êtes pas sur l&apos;application.
+          Les matchs, messages et rappels restent dans le centre de notifications. Email et
+          push hors site pour les likes et alertes prioritaires.
         </p>
         <div className="mt-4">
           <NotificationPreferencesForm

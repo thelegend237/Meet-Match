@@ -13,6 +13,7 @@ import {
 } from "@/lib/supabase/env";
 import { isStaleAuthError } from "@/lib/supabase/auth-errors";
 import { purgeSupabaseAuthCookies } from "@/lib/supabase/purge-auth-cookies";
+import { isRouteAllowedWhenDeactivated } from "@/lib/profile/deactivation";
 
 const USER_PREFIXES = [
   "/tableau-de-bord",
@@ -146,7 +147,7 @@ export async function updateSession(request: NextRequest) {
     if (!user) return null;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, is_deleted, status")
+      .select("role, is_deleted, status, deactivation_reason")
       .eq("id", user.id)
       .single();
     return profile;
@@ -202,6 +203,22 @@ export async function updateSession(request: NextRequest) {
           url.pathname = USER_HOME;
           return NextResponse.redirect(url);
         }
+      }
+
+      const deactivatedAfterMatch =
+        profile?.role === "user" &&
+        profile.status === "inactive" &&
+        profile.deactivation_reason === "match_success";
+
+      if (
+        deactivatedAfterMatch &&
+        isUserRoute &&
+        !isRouteAllowedWhenDeactivated(pathname)
+      ) {
+        const url = request.nextUrl.clone();
+        url.pathname = USER_HOME;
+        url.search = "";
+        return NextResponse.redirect(url);
       }
 
       // Admin : accueil membre uniquement sur choix explicite (lien dans l'espace admin).

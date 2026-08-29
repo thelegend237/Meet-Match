@@ -41,13 +41,13 @@ export const USER_FAQ_ITEMS: UserFaqItem[] = [
     id: "matching-fee",
     question: "À quoi servent les frais de matching ?",
     answer:
-      "Pendant l'essai, chaque match proposé est gratuit. Ensuite, le premier match nécessite les frais de matching, puis 3 mises en relation gratuites par mois. Chaque match ouvre une discussion encadrée avec un administrateur.",
+      "Les frais de matching sont un service payé à chaque mise en relation proposée par l'équipe (pas un abonnement). Pendant l'essai, c'est gratuit. Ensuite : like sens unique = seul le liker paie ; like réciproque = les deux paient. Chaque match ouvre une discussion encadrée avec un administrateur.",
   },
   {
     id: "matching-credits",
     question: "Que se passe-t-il si un match échoue ?",
     answer:
-      "Si un match n'aboutit pas, votre prochain match peut utiliser un de vos crédits gratuits mensuels (3 par mois après votre premier paiement matching). Les crédits se renouvellent automatiquement chaque mois.",
+      "Si un match n'aboutit pas, vous pourrez être proposé à un nouveau match. Les frais de matching s'appliquent à nouveau à chaque nouvelle mise en relation — ce n'est pas un abonnement, mais un service à la demande.",
   },
   {
     id: "like-reciproque",
@@ -59,7 +59,7 @@ export const USER_FAQ_ITEMS: UserFaqItem[] = [
     id: "message-prive",
     question: "Puis-je envoyer un message privé à quelqu'un ?",
     answer:
-      "Non. Aucun chat libre n'est possible entre deux membres qui ne se connaissent pas. Les seules conversations possibles sont : le contact avec l'équipe (gratuit) et la discussion encadrée après un match proposé et payé par les deux parties.",
+      "Non. Aucun chat libre n'est possible entre deux membres qui ne se connaissent pas. Les seules conversations possibles sont : le contact avec l'équipe (gratuit) et la discussion encadrée après un match proposé et payé (like sens unique : seul le liker paie ; like réciproque : les deux).",
   },
   {
     id: "profiles-visible",

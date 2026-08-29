@@ -9,6 +9,7 @@ import { MatchCompareModal } from "@/components/admin/match-compare-modal";
 import type { MatchProposalQueue } from "@/components/admin/matching-propose-section";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { getInitials } from "@/lib/chat/format";
+import { matchPairKey } from "@/lib/matches/exclusions";
 import { ArrowRight, ChevronRight, Heart } from "lucide-react";
 import type { MatchProposalPair } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
@@ -182,14 +183,20 @@ export function MatchingPanel({
 }: MatchingPanelProps) {
   const { pending, run } = useAdminAction();
   const [selected, setSelected] = useState<MatchProposalPair | null>(null);
+  const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(
+    () => new Set()
+  );
 
   const displayPairs = useMemo(() => {
-    if (!highlightUserId) return pairs;
-    const filtered = pairs.filter(
+    let list = pairs.filter(
+      (p) => !dismissedKeys.has(matchPairKey(p.userAId, p.userBId))
+    );
+    if (!highlightUserId) return list;
+    const filtered = list.filter(
       (p) => p.userAId === highlightUserId || p.userBId === highlightUserId
     );
-    return filtered.length > 0 ? filtered : pairs;
-  }, [pairs, highlightUserId]);
+    return filtered.length > 0 ? filtered : list;
+  }, [pairs, highlightUserId, dismissedKeys]);
 
   useEffect(() => {
     if (!highlightUserId || displayPairs.length === 0) return;
@@ -199,12 +206,23 @@ export function MatchingPanel({
     if (first) setSelected(first);
   }, [highlightUserId, displayPairs]);
 
-  function propose(userAId: string, userBId: string) {
-    if (!confirm("Proposer ce match aux deux utilisateurs ?")) return;
-    void run(() => proposeMatchAction(userAId, userBId), {
-      success: "Match proposé avec succès.",
-      onSuccess: () => setSelected(null),
-    });
+  function propose(pair: MatchProposalPair) {
+    const confirmMsg =
+      pair.source === "one_way"
+        ? "Proposer ce match ? Seul le membre qui a liké paiera les frais de matching."
+        : "Proposer ce match aux deux utilisateurs ? Les frais de matching s'appliquent à chaque partie.";
+    if (!confirm(confirmMsg)) return;
+    void run(
+      () =>
+        proposeMatchAction(pair.userAId, pair.userBId, {
+          source: pair.source,
+          likedByUserId: pair.likedByUserId,
+        }),
+      {
+        success: "Match proposé avec succès.",
+        onSuccess: () => setSelected(null),
+      }
+    );
   }
 
   if (displayPairs.length === 0) {
@@ -254,6 +272,14 @@ export function MatchingPanel({
         pending={pending}
         onClose={() => setSelected(null)}
         onPropose={propose}
+        onDismiss={() => {
+          if (!selected) return;
+          setDismissedKeys((prev) => {
+            const next = new Set(prev);
+            next.add(matchPairKey(selected.userAId, selected.userBId));
+            return next;
+          });
+        }}
       />
     </>
   );

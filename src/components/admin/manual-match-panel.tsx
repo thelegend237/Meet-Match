@@ -207,16 +207,20 @@ export function ManualMatchPanel({
     setSelected(res.pair);
   }
 
-  function propose(userAId: string, userBId: string) {
-    if (!confirm("Proposer ce match aux deux utilisateurs ?")) return;
-    void run(() => proposeMatchAction(userAId, userBId), {
-      success: "Match proposé avec succès.",
-      onSuccess: () => {
-        setSelected(null);
-        setUserA(null);
-        setUserB(null);
-      },
-    });
+  function propose(pair: MatchProposalPair) {
+    if (!confirm("Proposer ce match ? Les frais de matching s'appliquent aux deux membres.")) return;
+    void run(
+      () =>
+        proposeMatchAction(pair.userAId, pair.userBId, { source: "manual" }),
+      {
+        success: "Match proposé avec succès.",
+        onSuccess: () => {
+          setSelected(null);
+          setUserA(null);
+          setUserB(null);
+        },
+      }
+    );
   }
 
   return (
@@ -286,6 +290,7 @@ export function ManualMatchPanel({
         pending={pending}
         onClose={() => setSelected(null)}
         onPropose={propose}
+        onDismiss={() => setSelected(null)}
       />
     </>
   );

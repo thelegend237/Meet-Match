@@ -67,9 +67,16 @@ import {
 } from "@/lib/onboarding/steps";
 import {
   onboardingAccountSchema,
+  onboardingAgeRangeStepSchema,
+  onboardingBioStepSchema,
   onboardingBirthDateSchema,
   onboardingCredentialsSchema,
+  onboardingGenderStepSchema,
   onboardingLocationSchema,
+  onboardingRelationshipStepSchema,
+  onboardingScopeStepSchema,
+  onboardingSeekGenderStepSchema,
+  resolvePreferredLocation,
 } from "@/lib/validations/onboarding";
 import { getMaxBirthDateForMinAge } from "@/lib/validations/age";
 import {
@@ -267,6 +274,7 @@ export function OnboardingWizard({
         preferred_age_min: data.preferred_age_min,
         preferred_age_max: data.preferred_age_max,
         preferred_relation_scope: data.preferred_relation_scope || null,
+        preferred_gender: data.preferred_gender || null,
         primary_photo_url: photoPreview,
       }),
     [data, photoPreview]
@@ -482,21 +490,28 @@ export function OnboardingWizard({
   }
 
   async function persistPreferences(clear = false) {
+    const scope = clear
+      ? ""
+      : (data.preferred_relation_scope as
+          | ""
+          | "local"
+          | "national"
+          | "international");
+    const derived = resolvePreferredLocation(
+      scope,
+      data.country_code,
+      data.city
+    );
+
     const result = await saveOnboardingPreferences({
       preferred_age_min: clear ? undefined : data.preferred_age_min,
       preferred_age_max: clear ? undefined : data.preferred_age_max,
-      preferred_relation_scope: clear
-        ? ""
-        : (data.preferred_relation_scope as
-            | ""
-            | "local"
-            | "national"
-            | "international"),
+      preferred_relation_scope: scope,
       preferred_gender: clear
         ? ""
         : (data.preferred_gender as "" | "male" | "female" | "both"),
-      preferred_country_code: "",
-      preferred_city: "",
+      preferred_country_code: clear ? "" : derived.preferred_country_code,
+      preferred_city: clear ? "" : derived.preferred_city,
     });
     if (result.profile_completion != null) setCompletion(result.profile_completion);
     if (result.error) throw new Error(result.error);
@@ -578,16 +593,119 @@ export function OnboardingWizard({
             break;
           }
 
+          case "gender": {
+            const parsed = onboardingGenderStepSchema.safeParse({
+              gender: data.gender,
+            });
+            if (!parsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Genre requis",
+                description: parsed.error.errors[0]?.message,
+              });
+              return;
+            }
+            goNext();
+            break;
+          }
+
+          case "bio": {
+            const parsed = onboardingBioStepSchema.safeParse({ bio: data.bio });
+            if (!parsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Présentation requise",
+                description: parsed.error.errors[0]?.message,
+              });
+              return;
+            }
+            goNext();
+            break;
+          }
+
+          case "relationship": {
+            const bioParsed = onboardingBioStepSchema.safeParse({ bio: data.bio });
+            if (!bioParsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Présentation requise",
+                description: bioParsed.error.errors[0]?.message,
+              });
+              goTo("bio");
+              return;
+            }
+            const parsed = onboardingRelationshipStepSchema.safeParse({
+              relationship_type: data.relationship_type,
+            });
+            if (!parsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Type de relation requis",
+                description: parsed.error.errors[0]?.message,
+              });
+              return;
+            }
+            await persistPresentation();
+            goNext();
+            break;
+          }
+
+          case "seek_gender": {
+            const parsed = onboardingSeekGenderStepSchema.safeParse({
+              preferred_gender: data.preferred_gender,
+            });
+            if (!parsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Préférence requise",
+                description: parsed.error.errors[0]?.message,
+              });
+              return;
+            }
+            goNext();
+            break;
+          }
+
+          case "age_range": {
+            const parsed = onboardingAgeRangeStepSchema.safeParse({
+              preferred_age_min: data.preferred_age_min,
+              preferred_age_max: data.preferred_age_max,
+            });
+            if (!parsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Tranche d'âge requise",
+                description: parsed.error.errors[0]?.message,
+              });
+              return;
+            }
+            goNext();
+            break;
+          }
+
+          case "scope": {
+            const parsed = onboardingScopeStepSchema.safeParse({
+              preferred_relation_scope: data.preferred_relation_scope,
+            });
+            if (!parsed.success) {
+              toast({
+                variant: "destructive",
+                title: "Portée de recherche requise",
+                description: parsed.error.errors[0]?.message,
+              });
+              return;
+            }
+            await persistPreferences();
+            goNext();
+            break;
+          }
+
           case "language":
             await persistIdentity();
             goNext();
             break;
-          case "relationship":
+          case "expectations":
             await persistPresentation();
-            goNext();
-            break;
-          case "scope":
-            await persistPreferences();
             goNext();
             break;
           case "photo":
@@ -676,9 +794,7 @@ export function OnboardingWizard({
   function handleSkip() {
     startTransition(async () => {
       try {
-        if (currentStep === "language") await persistIdentity(true);
-        if (currentStep === "relationship") await persistPresentation(true);
-        if (currentStep === "scope") await persistPreferences(true);
+        if (currentStep === "language") await persistIdentity(false);
         goNext();
       } catch (err) {
         toast({
@@ -919,7 +1035,7 @@ export function OnboardingWizard({
       case "gender":
         if (mode === "public") {
           return (
-            <RegisterStep icon={User} optional>
+            <RegisterStep icon={User}>
               <div className="space-y-2.5">
                 {GENDER_OPTIONS.map((opt) => (
                   <RegisterChoiceRow
@@ -929,7 +1045,6 @@ export function OnboardingWizard({
                     onSelect={() => patch({ gender: opt.value })}
                   />
                 ))}
-                <RegisterSkipButton onClick={skipWithoutSave} />
               </div>
             </RegisterStep>
           );
@@ -937,7 +1052,7 @@ export function OnboardingWizard({
         return (
           <>
             <StepIllustration icon={User} />
-            <StepHeader title="Vous êtes ?" optional />
+            <StepHeader title="Vous êtes ?" />
             <StepBody className="space-y-2">
               {GENDER_OPTIONS.map((opt) => (
                 <ChoiceRow
@@ -947,7 +1062,6 @@ export function OnboardingWizard({
                   onSelect={() => patch({ gender: opt.value })}
                 />
               ))}
-              <SkipOption onClick={skipWithoutSave} />
             </StepBody>
           </>
         );
@@ -1023,14 +1137,13 @@ export function OnboardingWizard({
       case "bio":
         if (mode === "public") {
           return (
-            <RegisterStep icon={Sparkles} optional>
+            <RegisterStep icon={Sparkles}>
               <RegisterTextarea
                 value={data.bio}
                 onChange={(bio) => patch({ bio })}
                 placeholder="Qui êtes-vous, vos passions, votre personnalité…"
                 minHint={20}
               />
-              <RegisterSkipButton onClick={skipWithoutSave} />
             </RegisterStep>
           );
         }
@@ -1039,8 +1152,7 @@ export function OnboardingWizard({
             <StepIllustration icon={Sparkles} />
             <StepHeader
               title="Parlez-nous de vous"
-              subtitle="20 caractères minimum pour compléter cette section."
-              optional
+              subtitle="20 caractères minimum — essentiel pour l'analyse de compatibilité."
             />
             <StepBody>
               <LargeTextarea
@@ -1049,9 +1161,8 @@ export function OnboardingWizard({
                 placeholder="Qui êtes-vous, vos passions, votre personnalité…"
               />
               <p className="mt-2 text-right text-xs text-muted-foreground">
-                {data.bio.trim().length} caractères
+                {data.bio.trim().length} caractères (minimum 20)
               </p>
-              <SkipOption onClick={skipWithoutSave} />
             </StepBody>
           </>
         );
@@ -1091,7 +1202,7 @@ export function OnboardingWizard({
       case "relationship":
         if (mode === "public") {
           return (
-            <RegisterStep icon={Heart} optional>
+            <RegisterStep icon={Heart}>
               <div className="space-y-2.5">
                 {RELATIONSHIP_OPTIONS.map((opt) => (
                   <RegisterChoiceRow
@@ -1102,7 +1213,6 @@ export function OnboardingWizard({
                     onSelect={() => patch({ relationship_type: opt.value })}
                   />
                 ))}
-                <RegisterSkipButton onClick={handleSkip} />
               </div>
             </RegisterStep>
           );
@@ -1110,7 +1220,7 @@ export function OnboardingWizard({
         return (
           <>
             <StepIllustration icon={Heart} />
-            <StepHeader title="Quel type de relation visez-vous ?" optional />
+            <StepHeader title="Quel type de relation visez-vous ?" />
             <StepBody className="space-y-2">
               {RELATIONSHIP_OPTIONS.map((opt) => (
                 <ChoiceRow
@@ -1120,7 +1230,6 @@ export function OnboardingWizard({
                   onSelect={() => patch({ relationship_type: opt.value })}
                 />
               ))}
-              <SkipOption onClick={handleSkip} />
             </StepBody>
           </>
         );
@@ -1128,7 +1237,7 @@ export function OnboardingWizard({
       case "seek_gender":
         if (mode === "public") {
           return (
-            <RegisterStep icon={Users} optional>
+            <RegisterStep icon={Users}>
               <div className="space-y-2.5">
                 {SEEK_GENDER_OPTIONS.map((opt) => (
                   <RegisterChoiceRow
@@ -1138,7 +1247,6 @@ export function OnboardingWizard({
                     onSelect={() => patch({ preferred_gender: opt.value })}
                   />
                 ))}
-                <RegisterSkipButton onClick={skipWithoutSave} />
               </div>
             </RegisterStep>
           );
@@ -1146,7 +1254,7 @@ export function OnboardingWizard({
         return (
           <>
             <StepIllustration icon={Users} />
-            <StepHeader title="Qui souhaitez-vous rencontrer ?" optional />
+            <StepHeader title="Qui souhaitez-vous rencontrer ?" />
             <StepBody className="space-y-2">
               {SEEK_GENDER_OPTIONS.map((opt) => (
                 <ChoiceRow
@@ -1156,7 +1264,6 @@ export function OnboardingWizard({
                   onSelect={() => patch({ preferred_gender: opt.value })}
                 />
               ))}
-              <SkipOption onClick={skipWithoutSave} />
             </StepBody>
           </>
         );
@@ -1164,7 +1271,7 @@ export function OnboardingWizard({
       case "age_range":
         if (mode === "public") {
           return (
-            <RegisterStep icon={Cake} optional>
+            <RegisterStep icon={Cake}>
               <RegisterAgeRange
                 min={data.preferred_age_min}
                 max={data.preferred_age_max}
@@ -1175,17 +1282,13 @@ export function OnboardingWizard({
                   patch({ preferred_age_max })
                 }
               />
-              <RegisterSkipButton onClick={skipWithoutSave} />
             </RegisterStep>
           );
         }
         return (
           <>
             <StepIllustration icon={Cake} gradient="from-secondary/15 to-accent" />
-            <StepHeader
-              title="Quelle tranche d'âge recherchez-vous ?"
-              optional
-            />
+            <StepHeader title="Quelle tranche d'âge recherchez-vous ?" />
             <StepBody className="space-y-6">
               <div className="rounded-2xl bg-muted/30 px-4 py-5 text-center">
                 <p className="font-sans text-3xl font-bold text-primary">
@@ -1234,7 +1337,6 @@ export function OnboardingWizard({
               >
                 Âge maximum
               </FieldLabel>
-              <SkipOption onClick={skipWithoutSave} />
             </StepBody>
           </>
         );
@@ -1242,7 +1344,7 @@ export function OnboardingWizard({
       case "scope":
         if (mode === "public") {
           return (
-            <RegisterStep icon={Compass} optional>
+            <RegisterStep icon={Compass}>
               <div className="space-y-2.5">
                 {SCOPE_OPTIONS.map((opt) => (
                   <RegisterChoiceRow
@@ -1253,7 +1355,6 @@ export function OnboardingWizard({
                     onSelect={() => patch({ preferred_relation_scope: opt.value })}
                   />
                 ))}
-                <RegisterSkipButton onClick={handleSkip} />
               </div>
             </RegisterStep>
           );
@@ -1261,7 +1362,7 @@ export function OnboardingWizard({
         return (
           <>
             <StepIllustration icon={Compass} />
-            <StepHeader title="Quelle portée de recherche ?" optional />
+            <StepHeader title="Quelle portée de recherche ?" />
             <StepBody className="space-y-2">
               {SCOPE_OPTIONS.map((opt) => (
                 <ChoiceRow
@@ -1271,7 +1372,6 @@ export function OnboardingWizard({
                   onSelect={() => patch({ preferred_relation_scope: opt.value })}
                 />
               ))}
-              <SkipOption onClick={handleSkip} />
             </StepBody>
           </>
         );

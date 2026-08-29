@@ -1,9 +1,15 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { isStaleAuthError } from "@/lib/supabase/auth-errors";
 import { USER_HOME } from "@/lib/auth/routes";
 import { isStaffProfile } from "@/lib/auth/staff";
+import {
+  isDeactivatedAfterMatchSuccess,
+} from "@/lib/profile/deactivation";
 import type { Profile } from "@/lib/types/database";
+
+export { isDeactivatedAfterMatchSuccess } from "@/lib/profile/deactivation";
 
 async function clearBrokenAuthSession() {
   try {
@@ -14,7 +20,7 @@ async function clearBrokenAuthSession() {
   }
 }
 
-export async function getSessionUser() {
+export const getSessionUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,9 +28,9 @@ export async function getSessionUser() {
   } = await supabase.auth.getUser();
   if (error) return null;
   return user;
-}
+});
 
-export async function getCurrentProfile(): Promise<Profile | null> {
+export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   try {
     const supabase = await createClient();
     const {
@@ -59,7 +65,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     await clearBrokenAuthSession();
     return null;
   }
-}
+});
 
 export async function requireUser(): Promise<Profile> {
   const profile = await getCurrentProfile();
@@ -81,6 +87,7 @@ export { isStaffProfile } from "@/lib/auth/staff";
 
 export function hasPlatformAccess(profile: Profile): boolean {
   if (isStaffProfile(profile)) return true;
+  if (isDeactivatedAfterMatchSuccess(profile)) return false;
   return (
     profile.status === "active" &&
     (profile.registration_payment_status === "paid" ||
@@ -92,6 +99,7 @@ export function hasPlatformAccess(profile: Profile): boolean {
 export function canBrowseDiscovery(profile: Profile): boolean {
   if (profile.is_deleted || profile.status === "deleted") return false;
   if (profile.status === "suspended") return false;
+  if (isDeactivatedAfterMatchSuccess(profile)) return false;
   if (isStaffProfile(profile)) return true;
   return (
     profile.role === "user" &&

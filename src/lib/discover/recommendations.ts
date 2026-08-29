@@ -17,6 +17,15 @@ function scoreProfile(
   const age = getAge(candidate.date_of_birth);
 
   if (
+    viewer.preferred_gender &&
+    candidate.gender &&
+    (viewer.preferred_gender === "both" ||
+      viewer.preferred_gender === candidate.gender)
+  ) {
+    score += 25;
+  }
+
+  if (
     age !== null &&
     viewer.preferred_age_min !== null &&
     viewer.preferred_age_max !== null &&

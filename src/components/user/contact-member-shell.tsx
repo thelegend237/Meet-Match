@@ -1,4 +1,5 @@
 import type { Profile } from "@/lib/types/database";
+import { isDeactivatedAfterMatchSuccess } from "@/lib/auth/session";
 import { getUnreadCount } from "@/lib/actions/notifications";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { getUnreadMessageCount } from "@/lib/user/messages";
@@ -16,22 +17,24 @@ export async function ContactMemberShell({
   profile: Profile;
   children: React.ReactNode;
 }) {
+  const deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
   let unreadCount = 0;
   let likedCount = 0;
   let unreadMessageCount = 0;
   let pendingMatchCount = 0;
 
   try {
-    const [notifications, likedIds] = await Promise.all([
-      getUnreadCount(),
-      getMyLikedIds(),
+    const [notifications, likedIds, messages, matches] = await Promise.all([
+      getUnreadCount(profile.id),
+      getMyLikedIds(profile.id),
+      getUnreadMessageCount(profile.id),
+      getUserMatches(profile.id),
     ]);
     unreadCount = notifications;
     likedCount = likedIds.length;
-    unreadMessageCount = await getUnreadMessageCount(profile.id);
-    const matches = await getUserMatches(profile.id);
+    unreadMessageCount = messages;
     pendingMatchCount = countPendingMatchActions(matches);
-    await touchLastSeen();
+    void touchLastSeen(profile.id);
   } catch (err) {
     console.error("[ContactMemberShell] sidebar data:", err);
   }
@@ -46,6 +49,8 @@ export async function ContactMemberShell({
         likedCount={likedCount}
         displayName={profile.display_name || undefined}
         avatarUrl={profile.primary_photo_url}
+        profile={profile}
+        deactivatedAfterMatch={deactivatedAfterMatch}
       >
         <UserContentArea>{children}</UserContentArea>
       </UserShell>

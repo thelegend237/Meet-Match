@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { matchStatusLabels } from "@/lib/admin/labels";
 import type { PaymentMethodId } from "@/lib/payments/providers";
-import { formatDisplayPrice, isFreeFee, MONTHLY_FREE_MATCHES, PRICING_TEST_MODE } from "@/lib/pricing";
+import { formatDisplayPrice, isFreeFee, PRICING_TEST_MODE } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import type { UserMatch } from "@/lib/types/database";
 import type { MatchingCreditsStatus } from "@/lib/user/matching-credits";
@@ -61,13 +61,15 @@ function MatchCard({
     match.myPayment?.status === "unpaid";
   const needsPaymentLocal = needsPayment && !localPaymentDone;
 
-  const coveredByCredit =
+  const isExemptFromPayment =
     match.status === "pending_payment" &&
-    match.myPayment?.status === "free";
+    match.myPayment?.status === "free" &&
+    match.myPayment &&
+    isFreeFee(match.myPayment.amount);
 
   const waitingPartner =
     match.status === "pending_payment" &&
-    !coveredByCredit &&
+    !needsPaymentLocal &&
     (localPaymentDone ||
       (match.myPayment && ["paid", "free"].includes(match.myPayment.status))) &&
     !match.partnerHasPaid;
@@ -179,23 +181,20 @@ function MatchCard({
       </div>
 
       <div className="border-t border-border bg-muted/30 px-4 py-3">
-        {match.status === "pending_payment" && coveredByCredit && !match.partnerHasPaid && (
+        {match.status === "pending_payment" && isExemptFromPayment && !match.partnerHasPaid && (
           <div className="flex items-start gap-2 text-sm text-secondary">
             <Gift className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              Ce match est inclus dans votre forfait mensuel.
-              {matchingCredits
-                ? ` Il vous reste ${matchingCredits.remainingThisMonth} crédit(s) gratuit(s) ce mois.`
-                : ""}{" "}
+              Vous n&apos;avez pas de frais à payer pour ce match (like reçu).
               En attente du paiement de {match.partner.display_name.split(" ")[0]}.
             </span>
           </div>
         )}
 
-        {match.status === "pending_payment" && coveredByCredit && match.partnerHasPaid && (
+        {match.status === "pending_payment" && isExemptFromPayment && match.partnerHasPaid && (
           <div className="flex items-center gap-2 text-sm text-green-700">
             <CheckCircle2 className="h-4 w-4" />
-            Match inclus — activation en cours.
+            Paiement du liker reçu — activation en cours.
           </div>
         )}
 
@@ -285,9 +284,10 @@ function MatchCard({
                 ? "Ce match n'a pas abouti. Nous continuons à chercher pour vous."
                 : "Ce match a été annulé."}
             </div>
-            {matchingCredits?.hasEverPaidMatching && (
+            {match.status === "failed" && (
               <p className="text-xs text-muted-foreground">
-                Votre prochain match peut utiliser un crédit gratuit ({matchingCredits.remainingThisMonth} / {MONTHLY_FREE_MATCHES} restants ce mois).
+                Un futur match proposé fera l&apos;objet de nouveaux frais de
+                matching (service à la mise en relation).
               </p>
             )}
           </div>

@@ -20,6 +20,7 @@ export interface AdminMatchRow {
   status: string;
   proposedAt: string;
   chatId: string | null;
+  deletedAt: string | null;
   paymentA: AdminMatchPayment | null;
   paymentB: AdminMatchPayment | null;
 }
@@ -29,7 +30,7 @@ export async function getAdminMatches(): Promise<AdminMatchRow[]> {
 
   const { data: matches } = await supabase
     .from("matches")
-    .select("id, user_a_id, user_b_id, status, proposed_at, chat_id")
+    .select("id, user_a_id, user_b_id, status, proposed_at, chat_id, deleted_at")
     .order("proposed_at", { ascending: false });
 
   if (!matches?.length) return [];
@@ -80,6 +81,7 @@ export async function getAdminMatches(): Promise<AdminMatchRow[]> {
       status: m.status,
       proposedAt: m.proposed_at,
       chatId: m.chat_id,
+      deletedAt: m.deleted_at ?? null,
       paymentA: paymentsByMatchUser.get(`${m.id}:${m.user_a_id}`) ?? null,
       paymentB: paymentsByMatchUser.get(`${m.id}:${m.user_b_id}`) ?? null,
     };

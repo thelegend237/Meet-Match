@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile, hasPlatformAccess } from "@/lib/auth/session";
 import { SUBSCRIPTION_REQUIRED_ERROR } from "@/lib/discover/subscription";
-import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
+import { getDiscoveryExcludedUserIds, userHasBlockingMatch } from "@/lib/matches/exclusions";
 import type { DiscoveryProfile } from "@/lib/types/database";
 
 export async function likeProfile(toUserId: string) {
@@ -21,6 +21,13 @@ export async function likeProfile(toUserId: string) {
 
   if (user.id === toUserId) {
     return { error: "Vous ne pouvez pas liker votre propre profil." };
+  }
+
+  if (await userHasBlockingMatch(supabase, user.id)) {
+    return {
+      error:
+        "Une mise en relation est déjà en cours. Vous ne pouvez pas liker d'autres profils pour le moment.",
+    };
   }
 
   const excluded = await getDiscoveryExcludedUserIds(supabase, user.id);
@@ -55,17 +62,21 @@ export async function likeProfile(toUserId: string) {
   };
 }
 
-export async function getMyLikedIds(): Promise<string[]> {
+export async function getMyLikedIds(userId?: string): Promise<string[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
+  let uid = userId;
+  if (!uid) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+    uid = user.id;
+  }
 
   const { data } = await supabase
     .from("likes")
     .select("to_user_id")
-    .eq("from_user_id", user.id);
+    .eq("from_user_id", uid);
 
   return data?.map((l) => l.to_user_id) ?? [];
 }

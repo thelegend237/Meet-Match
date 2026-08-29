@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isAdminRole, resolvePostLoginPath, safeRedirectPath } from "@/lib/auth/routes";
 import { oauthDisplayName } from "@/lib/auth/oauth";
+import { isMatchingProfileComplete } from "@/lib/profile/matching-readiness";
 
 const ONBOARDING_PATH = "/onboarding?step=gender";
 
@@ -32,7 +33,9 @@ export async function GET(request: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, is_deleted, status, display_name, profile_completion, gender")
+    .select(
+      "role, is_deleted, status, display_name, profile_completion, gender, date_of_birth, country_code, city, bio, relationship_type, preferred_gender, preferred_age_min, preferred_age_max, preferred_relation_scope, primary_photo_url"
+    )
     .eq("id", user.id)
     .single();
 
@@ -53,7 +56,8 @@ export async function GET(request: Request) {
 
   const needsOnboarding =
     !isAdminRole(profile?.role) &&
-    (!profile?.gender || (profile.profile_completion ?? 0) < 40);
+    !!profile &&
+    !isMatchingProfileComplete(profile);
 
   const destination = needsOnboarding
     ? ONBOARDING_PATH

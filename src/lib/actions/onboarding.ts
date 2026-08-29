@@ -8,6 +8,7 @@ import {
   onboardingIdentitySchema,
   onboardingPresentationSchema,
   onboardingPreferencesSchema,
+  resolvePreferredLocation,
   type OnboardingIdentityData,
   type OnboardingPresentationData,
   type OnboardingPreferencesData,
@@ -101,6 +102,19 @@ export async function saveOnboardingPreferences(
   const d = parsed.data;
   const min = d.preferred_age_min;
   const max = d.preferred_age_max;
+  const scope = d.preferred_relation_scope || null;
+
+  const { data: locationRow } = await supabase
+    .from("profiles")
+    .select("country_code, city")
+    .eq("id", userId)
+    .single();
+
+  const derivedLocation = resolvePreferredLocation(
+    scope ?? "",
+    d.preferred_country_code || locationRow?.country_code || "",
+    d.preferred_city || locationRow?.city || ""
+  );
 
   const { data: profile, error } = await supabase
     .from("profiles")
@@ -109,10 +123,10 @@ export async function saveOnboardingPreferences(
         min != null && !Number.isNaN(min) ? min : null,
       preferred_age_max:
         max != null && !Number.isNaN(max) ? max : null,
-      preferred_relation_scope: d.preferred_relation_scope || null,
-      preferred_gender: d.preferred_gender || "both",
-      preferred_country_code: d.preferred_country_code || null,
-      preferred_city: d.preferred_city?.trim() || null,
+      preferred_relation_scope: scope,
+      preferred_gender: d.preferred_gender || null,
+      preferred_country_code: derivedLocation.preferred_country_code || null,
+      preferred_city: derivedLocation.preferred_city || null,
     })
     .eq("id", userId)
     .select("profile_completion")

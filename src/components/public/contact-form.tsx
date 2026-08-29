@@ -23,6 +23,9 @@ function buildDefaultMessage(subject: string | null, profile: string | null) {
   if (subject === "acces-gratuit") {
     return "Bonjour,\n\nJe souhaite demander un accès gratuit pour la raison suivante :\n\n";
   }
+  if (subject === "reactivation") {
+    return "Bonjour,\n\nJe souhaite demander la réactivation de mon compte après une mise en relation réussie.\n\nContexte : ";
+  }
   return "";
 }
 
@@ -105,7 +108,7 @@ export function ContactForm({
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, subject: subject ?? undefined }),
       });
 
       const result = await res.json();
@@ -144,14 +147,18 @@ export function ContactForm({
       ? "Signaler un profil"
       : subject === "acces-gratuit"
         ? "Demande d'accès gratuit"
-        : "Écrire à un administrateur";
+        : subject === "reactivation"
+          ? "Demande de réactivation"
+          : "Écrire à un administrateur";
 
   const description =
     subject === "signalement"
       ? "Signalez un comportement ou un profil qui vous semble inapproprié. Notre équipe traitera votre demande en priorité."
       : subject === "acces-gratuit"
         ? "Expliquez votre situation : l'administration peut accorder un accès gratuit à l'inscription ou au matching."
-        : "Contact gratuit pour visiteurs et membres. Notre équipe vous répondra dans les meilleurs délais.";
+        : subject === "reactivation"
+          ? "Votre compte a été mis en pause après un match réussi. Expliquez votre situation : l'équipe examinera votre demande de réactivation."
+          : "Contact gratuit pour visiteurs et membres. Notre équipe vous répondra dans les meilleurs délais.";
 
   return (
     <article className="mm-landing-panel mx-auto max-w-xl overflow-hidden">

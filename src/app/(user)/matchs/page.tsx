@@ -18,7 +18,7 @@ export default async function MatchsPage() {
   const [matches, matchingCredits, likedIds] = await Promise.all([
     getUserMatches(profile.id),
     getMatchingCreditsStatus(profile.id),
-    getMyLikedIds(),
+    getMyLikedIds(profile.id),
   ]);
 
   return (

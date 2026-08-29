@@ -1,17 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 
 /** Met à jour last_seen_at (appelable depuis les Server Components). */
-export async function touchLastSeen() {
+export async function touchLastSeen(userId?: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return;
+  let uid = userId;
+  if (!uid) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    uid = user.id;
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("last_seen_at")
-    .eq("id", user.id)
+    .eq("id", uid)
     .single();
 
   if (profile?.last_seen_at) {
@@ -22,5 +26,5 @@ export async function touchLastSeen() {
   await supabase
     .from("profiles")
     .update({ last_seen_at: new Date().toISOString() })
-    .eq("id", user.id);
+    .eq("id", uid);
 }

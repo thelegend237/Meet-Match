@@ -18,6 +18,7 @@ import {
   Mail,
   ExternalLink,
   ArrowRight,
+  XCircle,
 } from "lucide-react";
 import { getAge } from "@/lib/utils";
 import { COUNTRIES } from "@/lib/validations/auth";
@@ -32,6 +33,10 @@ import {
   compatibilityScore,
   type CompatibilityPoint,
 } from "@/lib/admin/compatibility";
+import {
+  buildMatchProposalFees,
+  matchFeeSummaryLabel,
+} from "@/lib/admin/match-fees";
 import type { AdminCompareProfile, MatchProposalPair } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +44,9 @@ interface MatchCompareModalProps {
   pair: MatchProposalPair | null;
   pending: boolean;
   onClose: () => void;
-  onPropose: (userAId: string, userBId: string) => void;
+  onPropose: (pair: MatchProposalPair) => void;
+  /** Écarter le couple sans proposer de match */
+  onDismiss?: () => void;
 }
 
 function countryName(code: string | null) {
@@ -66,7 +73,7 @@ function proposalContext(pair: MatchProposalPair): string {
     return "Analysez les deux profils avant de proposer cette mise en relation.";
   }
   if (pair.source === "one_way" && pair.signalAt) {
-    return `${pair.userAName} a liké ${pair.userBName} le ${formatSignalDate(pair.signalAt)} — pas de like en retour pour l'instant.`;
+    return `${pair.userAName} a liké ${pair.userBName} le ${formatSignalDate(pair.signalAt)} — seul ${pair.userAName} paiera les frais de matching.`;
   }
   if (pair.signalAt) {
     return `Les deux membres se sont likés le ${formatSignalDate(pair.signalAt)}.`;
@@ -515,7 +522,8 @@ function CompatibilitySection({
             Indice de compatibilité
           </p>
           <p className="mt-1 text-xs text-[#6b5f7a] sm:text-sm">
-            Aide à la décision — votre jugement reste essentiel.
+            Genre, âge, relation, portée géographique et profil — votre jugement
+            reste essentiel.
           </p>
         </div>
       </div>
@@ -542,6 +550,7 @@ export function MatchCompareModal({
   pending,
   onClose,
   onPropose,
+  onDismiss,
 }: MatchCompareModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -559,8 +568,27 @@ export function MatchCompareModal({
 
   if (!pair || !mounted) return null;
 
-  const points = computePairCompatibility(pair.profileA, pair.profileB);
+  const currentPair = pair;
+  const points = computePairCompatibility(currentPair.profileA, currentPair.profileB);
   const score = compatibilityScore(points);
+  const { feeA, feeB, liableA, liableB } = buildMatchProposalFees(
+    currentPair.profileA,
+    currentPair.profileB,
+    currentPair.userAId,
+    currentPair.userBId,
+    currentPair.source,
+    currentPair.likedByUserId
+  );
+
+  function handleDismiss() {
+    const message =
+      currentPair.source === "manual"
+        ? "Abandonner cette comparaison sans proposer de match ?"
+        : "Écarter ce couple sans proposer de match ?\n\nIl restera disponible dans la file si vous changez d'avis.";
+    if (!window.confirm(message)) return;
+    onDismiss?.();
+    onClose();
+  }
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4 lg:p-6">
@@ -640,18 +668,34 @@ export function MatchCompareModal({
 
         {/* Footer — toujours visible au-dessus de la nav mobile */}
         <div className="shrink-0 border-t border-[#ebe6f0]/80 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(46,26,71,0.06)] sm:px-6 sm:py-4">
+          <div className="mb-3 rounded-xl border border-[#ebe6f0]/80 bg-[#faf8fc] px-3 py-2.5 text-xs text-[#6b5f7a] sm:text-sm">
+            <p className="font-semibold text-[#2e1a47]">Frais de matching (par mise en relation)</p>
+            <ul className="mt-1.5 space-y-1">
+              <li>{matchFeeSummaryLabel(currentPair.userAName, liableA, feeA.amount, feeA.currency)}</li>
+              <li>{matchFeeSummaryLabel(currentPair.userBName, liableB, feeB.amount, feeB.currency)}</li>
+            </ul>
+          </div>
           <div className="flex flex-col gap-2.5 sm:flex-row sm:justify-end sm:gap-3">
             <button
               type="button"
               disabled={pending}
-              onClick={() => onPropose(pair.userAId, pair.userBId)}
+              onClick={() => onPropose(currentPair)}
               className={cn(
-                "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-60 sm:order-2 sm:h-11 sm:w-auto",
+                "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-60 sm:order-3 sm:h-11 sm:w-auto",
                 "bg-gradient-to-r from-[#7b3d8f] to-[#e91e8c] shadow-[#e91e8c]/25 hover:brightness-105"
               )}
             >
               <Heart className="h-4 w-4" />
               {pending ? "Envoi en cours…" : "Proposer le match"}
+            </button>
+            <button
+              type="button"
+              onClick={handleDismiss}
+              disabled={pending}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-border/60 bg-white px-6 text-sm font-semibold text-muted-foreground transition hover:bg-muted/40 disabled:opacity-60 sm:order-2 sm:w-auto"
+            >
+              <XCircle className="h-4 w-4 shrink-0" />
+              Annuler
             </button>
             <button
               type="button"

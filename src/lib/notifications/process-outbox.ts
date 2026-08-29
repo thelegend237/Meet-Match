@@ -2,6 +2,7 @@ import { createAdminClient, tryCreateAdminClient } from "@/lib/supabase/admin";
 import { sendNotificationEmail } from "@/lib/email/notification";
 import { sendPushToUser } from "@/lib/push/send";
 import { getNotificationHref } from "@/lib/notifications/display";
+import { shouldSendNotificationEmail } from "@/lib/notifications/delivery-policy";
 import type { Notification } from "@/lib/types/database";
 
 const BATCH_SIZE = 25;
@@ -63,7 +64,11 @@ export async function deliverNotification(notification: Notification) {
 
   const results: string[] = [];
 
-  if (profile.notify_email && profile.email) {
+  if (
+    profile.notify_email &&
+    profile.email &&
+    shouldSendNotificationEmail(notification.type)
+  ) {
     try {
       await sendNotificationEmail({
         to: profile.email,

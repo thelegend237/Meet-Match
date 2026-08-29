@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getChargeMatchingFee } from "@/lib/pricing";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth/session";
 import {
@@ -9,20 +8,9 @@ import {
   getMatchingCandidateById,
   searchMatchingCandidates,
 } from "@/lib/admin/matching";
-import { isProfileOnTrial } from "@/lib/trial";
+import { buildMatchProposalFees } from "@/lib/admin/match-fees";
+import type { MatchProposalSource } from "@/lib/types/database";
 import type { Profile } from "@/lib/types/database";
-
-function matchingFeeForProfile(
-  profile: Pick<
-    Profile,
-    "country_code" | "trial_ends_at" | "registration_payment_status"
-  >
-) {
-  if (isProfileOnTrial(profile)) {
-    return { amount: 0, currency: "USD" as const };
-  }
-  return getChargeMatchingFee({ countryCode: profile.country_code });
-}
 
 async function getAdminProfile() {
   const profile = await getCurrentProfile();
@@ -68,7 +56,8 @@ export async function loadMatchProposalPairAction(
   const pair = await buildMatchProposalPair(userAId, userBId, "manual");
   if (!pair) {
     return {
-      error: "Impossible de charger ce couple (profil manquant ou match déjà existant).",
+      error:
+        "Impossible de charger ce couple (profil manquant, match existant ou mise en relation déjà en cours pour l'un des membres).",
       pair: null,
     };
   }
@@ -76,11 +65,19 @@ export async function loadMatchProposalPairAction(
   return { pair, error: null };
 }
 
-export async function proposeMatchAction(userAId: string, userBId: string) {
+export async function proposeMatchAction(
+  userAId: string,
+  userBId: string,
+  options?: {
+    source?: MatchProposalSource;
+    likedByUserId?: string;
+  }
+) {
   const { error: authError, profile: admin } = await getAdminProfile();
   if (authError || !admin) return { error: authError! };
 
   const supabase = await createClient();
+  const source = options?.source ?? "manual";
 
   const { data: participants } = await supabase
     .from("profiles")
@@ -102,45 +99,36 @@ export async function proposeMatchAction(userAId: string, userBId: string) {
 
   const profileA = participants.find((p) => p.id === userAId)!;
   const profileB = participants.find((p) => p.id === userBId)!;
-  const feeA = matchingFeeForProfile(profileA);
-  const feeB = matchingFeeForProfile(profileB);
-  // RPC propose_match prend un montant unique ; on aligne ensuite par utilisateur.
-  const seedFee =
-    feeA.amount >= feeB.amount ? feeA : feeB;
+  const { feeA, feeB, liableA, liableB } = buildMatchProposalFees(
+    profileA,
+    profileB,
+    userAId,
+    userBId,
+    source,
+    options?.likedByUserId
+  );
 
   const { data, error } = await supabase.rpc("propose_match", {
     p_admin_id: admin.id,
     p_user_a_id: userAId,
     p_user_b_id: userBId,
-    p_amount: seedFee.amount,
-    p_currency: seedFee.currency,
+    p_amount_a: feeA.amount,
+    p_currency_a: feeA.currency,
+    p_amount_b: feeB.amount,
+    p_currency_b: feeB.currency,
+    p_liable_a: liableA,
+    p_liable_b: liableB,
+    p_source: source,
   });
 
-  if (error) return { error: error.message };
-
-  if (data && (feeA.amount !== feeB.amount || feeA.amount !== seedFee.amount)) {
-    await Promise.all([
-      supabase
-        .from("payments")
-        .update({
-          amount: feeA.amount,
-          currency: feeA.currency,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("match_id", data)
-        .eq("user_id", userAId)
-        .eq("type", "matching"),
-      supabase
-        .from("payments")
-        .update({
-          amount: feeB.amount,
-          currency: feeB.currency,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("match_id", data)
-        .eq("user_id", userBId)
-        .eq("type", "matching"),
-    ]);
+  if (error) {
+    if (error.message.includes("mise en relation en cours")) {
+      return {
+        error:
+          "Impossible de proposer ce match : l'un des deux membres a déjà une mise en relation en cours (paiement ou discussion active).",
+      };
+    }
+    return { error: error.message };
   }
 
   revalidatePath("/admin/matchs");
@@ -171,6 +159,8 @@ export async function updateMatchStatusAction(
   revalidatePath("/admin/matchs");
   revalidatePath("/admin");
   revalidatePath("/decouvrir");
+  revalidatePath("/tableau-de-bord");
+  revalidatePath("/profil");
   return { success: true };
 }
 
@@ -195,6 +185,47 @@ export async function remindMatchingPaymentAction(
   revalidatePath("/admin/paiements");
   revalidatePath("/notifications");
   revalidatePath("/matchs");
+  return { success: true };
+}
+
+function revalidateMatchPaths() {
+  revalidatePath("/admin/matchs");
+  revalidatePath("/admin");
+  revalidatePath("/matchs");
+  revalidatePath("/decouvrir");
+  revalidatePath("/rencontres");
+  revalidatePath("/notifications");
+}
+
+export async function softDeleteMatchAction(matchId: string) {
+  const { error: authError } = await getAdminProfile();
+  if (authError) return { error: authError };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_soft_delete_match", {
+    p_match_id: matchId,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidateMatchPaths();
+  return { success: true };
+}
+
+export async function hardDeleteMatchAction(matchId: string) {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "superadmin") {
+    return { error: "Réservé aux super administrateurs." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("superadmin_hard_delete_match", {
+    p_match_id: matchId,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidateMatchPaths();
   return { success: true };
 }
 
@@ -315,6 +346,26 @@ export async function updateChatStatusAction(
 
   revalidatePath(`/admin/conversations/${chatId}`);
   revalidatePath("/admin/conversations");
+  return { success: true };
+}
+
+export async function reactivateUserAction(userId: string) {
+  const { error: authError, profile: admin } = await getAdminProfile();
+  if (authError || !admin) return { error: authError! };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_reactivate_user", {
+    p_admin_id: admin.id,
+    p_user_id: userId,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/utilisateurs");
+  revalidatePath(`/admin/utilisateurs/${userId}`);
+  revalidatePath("/tableau-de-bord");
+  revalidatePath("/decouvrir");
+  revalidatePath("/notifications");
   return { success: true };
 }
 

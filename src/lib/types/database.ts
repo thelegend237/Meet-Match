@@ -85,6 +85,8 @@ export interface Profile {
   notify_email: boolean;
   notify_push: boolean;
   is_deleted: boolean;
+  deactivated_at: string | null;
+  deactivation_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -140,6 +142,7 @@ export interface AdminCompareProfile {
   registration_payment_status: PaymentStatus;
   profile_completion: number;
   status: ProfileStatus;
+  trial_ends_at?: string | null;
   photos: string[];
 }
 

@@ -46,13 +46,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, phone, message } = parsed.data;
+    const { name, email, phone, message, subject } = parsed.data;
 
     const {
       data: { user },
     } = await (await createClient()).auth.getUser();
 
     const db = tryCreateAdminClient() ?? (await createClient());
+
+    if (subject === "reactivation" && user?.id) {
+      const { error: reactivationError } = await db.rpc(
+        "request_account_reactivation",
+        { p_user_id: user.id }
+      );
+      if (
+        reactivationError &&
+        !reactivationError.message.includes("Réactivation non disponible")
+      ) {
+        console.error("[contact] reactivation:", reactivationError.message);
+      }
+    }
 
     const { data, error } = await db.rpc("create_admin_contact_chat", {
       p_name: name,

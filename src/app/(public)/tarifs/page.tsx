@@ -106,7 +106,7 @@ const paymentSteps = [
       ? "La conversation encadrée s'ouvre dès que le match est confirmé."
       : launchFree
         ? "La conversation encadrée s'ouvre dès confirmation des deux parties — sans paiement pendant l'offre."
-        : "Après paiement (ou crédit gratuit mensuel), la conversation encadrée s'ouvre.",
+        : "Après paiement des parties concernées, la conversation encadrée s'ouvre.",
   },
 ] as const;
 

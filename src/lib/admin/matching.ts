@@ -5,7 +5,7 @@ import type {
   MatchProposalPair,
   MatchProposalSource,
 } from "@/lib/types/database";
-import { getExistingMatchPairKeys, matchPairKey } from "@/lib/matches/exclusions";
+import { getMatchExclusionContext, getUsersWithBlockingMatch, matchPairKey } from "@/lib/matches/exclusions";
 
 const PROFILE_FIELDS = `
   id, display_name, email, phone, date_of_birth, gender,
@@ -13,7 +13,7 @@ const PROFILE_FIELDS = `
   preferred_age_min, preferred_age_max, preferred_country_code,
   preferred_city, preferred_relation_scope, preferred_gender,
   primary_photo_url, is_verified, registration_payment_status,
-  profile_completion, status
+  profile_completion, status, trial_ends_at
 `;
 
 async function loadProfilesWithPhotos(
@@ -101,8 +101,9 @@ export async function buildMatchProposalPair(
   if (userAId === userBId) return null;
 
   const supabase = await createClient();
-  const existingPairs = await getExistingMatchPairKeys(supabase);
+  const { existingPairs, blockingUsers } = await getMatchExclusionContext(supabase);
   if (existingPairs.has(matchPairKey(userAId, userBId))) return null;
+  if (blockingUsers.has(userAId) || blockingUsers.has(userBId)) return null;
 
   const profileById = await loadProfilesWithPhotos(supabase, [userAId, userBId]);
   return buildPair(profileById, userAId, userBId, source, extras);
@@ -111,19 +112,23 @@ export async function buildMatchProposalPair(
 export async function getMutualLikePairs(): Promise<MatchProposalPair[]> {
   const supabase = await createClient();
 
-  const [{ data: mutualLikes }, existingPairs] = await Promise.all([
-    supabase
-      .from("mutual_likes")
-      .select("user_a_id, user_b_id, mutual_at")
-      .order("mutual_at", { ascending: false }),
-    getExistingMatchPairKeys(supabase),
-  ]);
+  const [{ data: mutualLikes }, { existingPairs, blockingUsers }] =
+    await Promise.all([
+      supabase
+        .from("mutual_likes")
+        .select("user_a_id, user_b_id, mutual_at")
+        .order("mutual_at", { ascending: false })
+        .limit(200),
+      getMatchExclusionContext(supabase),
+    ]);
 
   if (!mutualLikes?.length) return [];
 
-  const filtered = mutualLikes.filter(
-    (ml) => !existingPairs.has(matchPairKey(ml.user_a_id, ml.user_b_id))
-  );
+  const filtered = mutualLikes.filter((ml) => {
+    if (existingPairs.has(matchPairKey(ml.user_a_id, ml.user_b_id))) return false;
+    if (blockingUsers.has(ml.user_a_id) || blockingUsers.has(ml.user_b_id)) return false;
+    return true;
+  });
 
   const userIds = [
     ...new Set(filtered.flatMap((ml) => [ml.user_a_id, ml.user_b_id])),
@@ -146,12 +151,13 @@ export const getMutualLikes = getMutualLikePairs;
 export async function getOneWayLikePairs(): Promise<MatchProposalPair[]> {
   const supabase = await createClient();
 
-  const [{ data: likes }, existingPairs] = await Promise.all([
+  const [{ data: likes }, { existingPairs, blockingUsers }] = await Promise.all([
     supabase
       .from("likes")
       .select("from_user_id, to_user_id, created_at")
-      .order("created_at", { ascending: false }),
-    getExistingMatchPairKeys(supabase),
+      .order("created_at", { ascending: false })
+      .limit(500),
+    getMatchExclusionContext(supabase),
   ]);
 
   if (!likes?.length) return [];
@@ -163,7 +169,9 @@ export async function getOneWayLikePairs(): Promise<MatchProposalPair[]> {
   const oneWay = likes.filter((l) => {
     const reverse = `${l.to_user_id}:${l.from_user_id}`;
     if (likeKeys.has(reverse)) return false;
-    return !existingPairs.has(matchPairKey(l.from_user_id, l.to_user_id));
+    if (existingPairs.has(matchPairKey(l.from_user_id, l.to_user_id))) return false;
+    if (blockingUsers.has(l.from_user_id) || blockingUsers.has(l.to_user_id)) return false;
+    return true;
   });
 
   const userIds = [
@@ -207,6 +215,8 @@ export async function searchMatchingCandidates(
 
   const supabase = await createClient();
   const pattern = `%${trimmed.replace(/[%_]/g, "")}%`;
+  const blockingUsers = await getUsersWithBlockingMatch(supabase);
+  const blockedIds = [...blockingUsers];
 
   let q = supabase
     .from("profiles")
@@ -225,5 +235,8 @@ export async function searchMatchingCandidates(
   }
 
   const { data } = await q;
-  return data ?? [];
+  const rows = data ?? [];
+  if (blockedIds.length === 0) return rows;
+  const blocked = new Set(blockedIds);
+  return rows.filter((row) => !blocked.has(row.id));
 }

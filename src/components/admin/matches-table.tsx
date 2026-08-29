@@ -21,11 +21,13 @@ import { matchStatusLabels, paymentStatusLabels } from "@/lib/admin/labels";
 import type { AdminMatchPayment, AdminMatchRow } from "@/lib/admin/matches";
 import { getInitials } from "@/lib/chat/format";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { AdminMatchActions } from "@/components/admin/admin-match-actions";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { formatCurrency, cn } from "@/lib/utils";
 
 interface MatchesTableProps {
   matches: AdminMatchRow[];
+  actorRole: "admin" | "superadmin";
 }
 
 type StatusFilter =
@@ -313,7 +315,7 @@ function Pagination({
   );
 }
 
-export function MatchesTable({ matches }: MatchesTableProps) {
+export function MatchesTable({ matches, actorRole }: MatchesTableProps) {
   const { pending, run } = useAdminAction();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -581,6 +583,11 @@ export function MatchesTable({ matches }: MatchesTableProps) {
                       status={match.status}
                       className="px-3 py-1 text-xs"
                     />
+                    {match.deletedAt ? (
+                      <span className="mt-2 inline-flex rounded-full bg-[#fef3c7] px-2.5 py-0.5 text-[11px] font-semibold text-[#92400e]">
+                        Masqué
+                      </span>
+                    ) : null}
                     <p className="mt-2 text-xs text-muted-foreground">
                       Proposé le {formatMatchDate(match.proposedAt)}
                     </p>
@@ -602,7 +609,7 @@ export function MatchesTable({ matches }: MatchesTableProps) {
                         Discussion
                       </Link>
                     )}
-                    {match.status === "active" && (
+                    {match.status === "active" && !match.deletedAt && (
                       <>
                         <button
                           type="button"
@@ -622,17 +629,12 @@ export function MatchesTable({ matches }: MatchesTableProps) {
                         </button>
                       </>
                     )}
-                    {(match.status === "pending_payment" ||
-                      match.status === "pending") && (
-                      <button
-                        type="button"
-                        disabled={pending}
-                        onClick={() => updateStatus(match.id, "cancelled")}
-                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border/60 bg-white text-sm font-semibold text-muted-foreground disabled:opacity-60"
-                      >
-                        Annuler
-                      </button>
-                    )}
+                    <AdminMatchActions
+                      matchId={match.id}
+                      status={match.status}
+                      actorRole={actorRole}
+                      isDeleted={!!match.deletedAt}
+                    />
                   </div>
                 </article>
               ))}
@@ -663,11 +665,18 @@ export function MatchesTable({ matches }: MatchesTableProps) {
                         />
                       </td>
                       <td>
-                        <StatusBadge
-                          kind="match"
-                          status={match.status}
-                          className="px-3 py-1 text-xs"
-                        />
+                        <div className="space-y-2">
+                          <StatusBadge
+                            kind="match"
+                            status={match.status}
+                            className="px-3 py-1 text-xs"
+                          />
+                          {match.deletedAt ? (
+                            <span className="inline-flex rounded-full bg-[#fef3c7] px-2.5 py-0.5 text-[11px] font-semibold text-[#92400e]">
+                              Masqué
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="whitespace-nowrap text-[15px] text-muted-foreground">
                         {formatMatchDate(match.proposedAt)}
@@ -683,7 +692,7 @@ export function MatchesTable({ matches }: MatchesTableProps) {
                               Discussion
                             </Link>
                           )}
-                          {match.status === "active" && (
+                          {match.status === "active" && !match.deletedAt && (
                             <>
                               <button
                                 type="button"
@@ -703,17 +712,13 @@ export function MatchesTable({ matches }: MatchesTableProps) {
                               </button>
                             </>
                           )}
-                          {(match.status === "pending_payment" ||
-                            match.status === "pending") && (
-                            <button
-                              type="button"
-                              disabled={pending}
-                              onClick={() => updateStatus(match.id, "cancelled")}
-                              className="inline-flex h-10 items-center rounded-xl border border-border/60 bg-white px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted/40 disabled:opacity-60"
-                            >
-                              Annuler
-                            </button>
-                          )}
+                          <AdminMatchActions
+                            matchId={match.id}
+                            status={match.status}
+                            actorRole={actorRole}
+                            isDeleted={!!match.deletedAt}
+                            layout="inline"
+                          />
                         </div>
                       </td>
                     </tr>

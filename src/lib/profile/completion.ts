@@ -11,6 +11,7 @@ export type ProfileCompletionInput = {
   preferred_age_min?: number | null;
   preferred_age_max?: number | null;
   preferred_relation_scope?: string | null;
+  preferred_gender?: string | null;
   primary_photo_url?: string | null;
   languages?: string[] | null;
   language?: string | null;
@@ -36,6 +37,7 @@ export function calculateProfileCompletion(
 
   if (p.preferred_age_min != null && p.preferred_age_max != null) score += 8;
   if (p.preferred_relation_scope) score += 7;
+  if (p.preferred_gender) score += 5;
 
   if (p.primary_photo_url?.trim()) score += 15;
 
@@ -49,7 +51,10 @@ export const COMPLETION_HINTS = [
   { label: "Identité", fields: ["date_of_birth", "gender"] as const },
   { label: "Bio détaillée (20+ caractères)", fields: ["bio"] as const },
   { label: "Attentes & type de relation", fields: ["expectations", "relationship_type"] as const },
-  { label: "Préférences de recherche", fields: ["preferred_age_min", "preferred_relation_scope"] as const },
+  {
+    label: "Préférences de recherche",
+    fields: ["preferred_age_min", "preferred_relation_scope", "preferred_gender"] as const,
+  },
   { label: "Photo principale", fields: ["primary_photo_url"] as const },
   { label: "Téléphone & langues", fields: ["phone", "languages"] as const },
 ] as const;

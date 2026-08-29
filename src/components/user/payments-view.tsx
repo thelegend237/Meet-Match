@@ -25,7 +25,6 @@ import {
   isFreeFee,
   MATCHING_BENEFITS,
   MATCHING_FEATURES,
-  MONTHLY_FREE_MATCHES,
   PRICING_TEST_MODE,
   REGISTRATION_BENEFITS,
   REGISTRATION_FEATURES,
@@ -389,30 +388,17 @@ export function PaymentsView({
 
       {hasPaidMatching && !PRICING_TEST_MODE && (
         <section className="rounded-2xl border border-secondary/25 bg-gradient-to-br from-[#fce7f3]/30 to-white p-4 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h3 className="font-sans font-semibold text-primary">
-                Forfait matching mensuel
-              </h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                Après votre premier paiement matching, vous bénéficiez de{" "}
-                {MONTHLY_FREE_MATCHES} mises en relation gratuites par mois.
-                Les crédits se renouvellent automatiquement chaque mois.
-              </p>
-            </div>
-            <div className="rounded-xl bg-white px-4 py-3 text-center shadow-sm ring-1 ring-border/60">
-              <p className="text-2xl font-bold text-secondary sm:text-3xl">
-                {matchingCredits.remainingThisMonth}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                crédit{matchingCredits.remainingThisMonth > 1 ? "s" : ""} restant
-                {matchingCredits.remainingThisMonth > 1 ? "s" : ""} ce mois
-              </p>
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {matchingCredits.usedThisMonth} / {matchingCredits.monthlyAllowance}{" "}
-                utilisés
-              </p>
-            </div>
+          <div>
+            <h3 className="font-sans font-semibold text-primary">
+              Matching : service à la mise en relation
+            </h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              Les frais de matching ne sont pas un abonnement. Chaque mise en
+              relation proposée par l&apos;équipe est facturée séparément. Like
+              sens unique : seul le liker paie. Like réciproque : les deux
+              paient. Si un match échoue, les frais s&apos;appliquent à nouveau
+              sur le prochain match.
+            </p>
           </div>
         </section>
       )}
@@ -540,13 +526,9 @@ export function PaymentsView({
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
                   {registrationPaid
-                    ? hasPaidMatching
-                      ? PRICING_TEST_MODE
-                        ? "Tous les matchs sont gratuits pendant la phase test."
-                        : `Vous avez ${matchingCredits.remainingThisMonth} crédit(s) gratuit(s) ce mois. Au-delà, les frais de matching s'appliquent à nouveau.`
-                      : PRICING_TEST_MODE
-                        ? "Chaque match proposé par l'équipe est gratuit pendant la phase test."
-                        : "Votre premier match proposé nécessitera le paiement des frais de matching."
+                    ? PRICING_TEST_MODE
+                      ? "Chaque match proposé par l'équipe est gratuit pendant la phase test."
+                      : "Les frais de matching s'appliquent à chaque mise en relation proposée (service, pas abonnement)."
                     : "Disponible après activation de votre inscription."}
                 </p>
                 <Button

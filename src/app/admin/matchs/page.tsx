@@ -18,6 +18,7 @@ import {
   getMutualLikePairs,
   getOneWayLikePairs,
 } from "@/lib/admin/matching";
+import { requireAdmin } from "@/lib/auth/session";
 import { PageStack } from "@/components/layout/page-header";
 import { cn } from "@/lib/utils";
 
@@ -78,28 +79,36 @@ export default async function AdminMatchsPage({ searchParams }: PageProps) {
   const { tab, queue, user: highlightUserId } = await searchParams;
   const activeTab = tab === "proposer" ? "proposer" : "suivi";
   const activeQueue = parseQueue(queue);
+  const adminProfile = await requireAdmin();
 
-  const [matches, mutualPairs, oneWayPairs] = await Promise.all([
-    getAdminMatches(),
-    getMutualLikePairs(),
-    getOneWayLikePairs(),
-  ]);
+  const matches = await getAdminMatches();
+  const mutualPairs =
+    activeTab === "proposer" ? await getMutualLikePairs() : [];
+  const oneWayPairs =
+    activeTab === "proposer" ? await getOneWayLikePairs() : [];
 
-  const active = matches.filter((m) => m.status === "active").length;
-  const success = matches.filter((m) => m.status === "success").length;
-  const pending = matches.filter(
+  const visibleMatches = matches.filter((m) => !m.deletedAt);
+  const actorRole =
+    adminProfile.role === "superadmin" ? "superadmin" : "admin";
+
+  const active = visibleMatches.filter((m) => m.status === "active").length;
+  const success = visibleMatches.filter((m) => m.status === "success").length;
+  const pending = visibleMatches.filter(
     (m) => m.status === "pending" || m.status === "pending_payment"
   ).length;
-  const failed = matches.filter((m) => m.status === "failed").length;
+  const failed = visibleMatches.filter((m) => m.status === "failed").length;
 
-  const proposeCount = mutualPairs.length + oneWayPairs.length;
+  const proposeCount =
+    activeTab === "proposer"
+      ? mutualPairs.length + oneWayPairs.length
+      : undefined;
 
   const tabs = [
     {
       id: "suivi",
       label: "Suivi des matchs",
       href: "/admin/matchs",
-      count: matches.length,
+      count: visibleMatches.length,
     },
     {
       id: "proposer",
@@ -128,7 +137,7 @@ export default async function AdminMatchsPage({ searchParams }: PageProps) {
             <StatTile
               icon={GitMerge}
               label="Total matchs"
-              value={matches.length}
+              value={visibleMatches.length}
               hint="Toutes propositions"
               iconClassName="bg-[#ede9fe] text-[#5b3d8f]"
             />
@@ -157,7 +166,7 @@ export default async function AdminMatchsPage({ searchParams }: PageProps) {
             />
           </div>
 
-          <MatchesTable matches={matches} />
+          <MatchesTable matches={matches} actorRole={actorRole} />
         </>
       ) : (
         <>

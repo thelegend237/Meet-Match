@@ -22,6 +22,7 @@ import {
 } from "@/components/admin/admin-page";
 import { grantFreeAccessAction } from "@/lib/actions/admin";
 import { AdminDeleteUserButton } from "@/components/admin/admin-delete-user-button";
+import { AdminReactivateUserButton } from "@/components/admin/admin-reactivate-user-button";
 import { AdminRoleManager } from "@/components/admin/admin-role-manager";
 import { roleLabel } from "@/lib/admin/roles";
 import type { Profile } from "@/lib/types/database";
@@ -169,6 +170,14 @@ export function AdminUserDetailView({
                   Envoyer un message
                 </Link>
               </Button>
+              {profile.role === "user" &&
+                profile.status === "inactive" &&
+                profile.deactivation_reason === "match_success" && (
+                  <AdminReactivateUserButton
+                    userId={profile.id}
+                    userName={profile.display_name || profile.email}
+                  />
+                )}
               {profile.role === "user" &&
                 ACCESS_OPTIONS.map((opt) => (
                   <Button

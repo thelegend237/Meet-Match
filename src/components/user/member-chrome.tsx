@@ -1,4 +1,4 @@
-import { requireUser, hasPlatformAccess, canBrowseDiscovery } from "@/lib/auth/session";
+import { requireUser, hasPlatformAccess, canBrowseDiscovery, isDeactivatedAfterMatchSuccess } from "@/lib/auth/session";
 import { isStaffProfile } from "@/lib/auth/staff";
 import { getUnreadCount } from "@/lib/actions/notifications";
 import { getMyLikedIds } from "@/lib/actions/likes";
@@ -17,8 +17,9 @@ export async function MemberChrome({
   children: React.ReactNode;
 }) {
   const profile = await requireUser();
+  const deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
   const welcomeTourEligible =
-    profile.role === "user" && canBrowseDiscovery(profile);
+    profile.role === "user" && canBrowseDiscovery(profile) && !deactivatedAfterMatch;
 
   let unreadCount = 0;
   let likedCount = 0;
@@ -26,16 +27,17 @@ export async function MemberChrome({
   let pendingMatchCount = 0;
 
   try {
-    const [notifications, likedIds] = await Promise.all([
-      getUnreadCount(),
-      getMyLikedIds(),
+    const [notifications, likedIds, messages, matches] = await Promise.all([
+      getUnreadCount(profile.id),
+      getMyLikedIds(profile.id),
+      getUnreadMessageCount(profile.id),
+      getUserMatches(profile.id),
     ]);
     unreadCount = notifications;
     likedCount = likedIds.length;
-    unreadMessageCount = await getUnreadMessageCount(profile.id);
-    const matches = await getUserMatches(profile.id);
+    unreadMessageCount = messages;
     pendingMatchCount = countPendingMatchActions(matches);
-    await touchLastSeen();
+    void touchLastSeen(profile.id);
   } catch (err) {
     console.error("[MemberChrome] sidebar data:", err);
   }
@@ -59,6 +61,8 @@ export async function MemberChrome({
         welcomeTourEligible={welcomeTourEligible}
         showAdminLink={isStaffProfile(profile)}
         notifyPush={profile.notify_push ?? true}
+        profile={profile}
+        deactivatedAfterMatch={deactivatedAfterMatch}
       >
         <UserContentArea>{children}</UserContentArea>
       </UserShell>

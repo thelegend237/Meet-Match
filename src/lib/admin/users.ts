@@ -1,4 +1,5 @@
 import { getCountryName } from "@/lib/geo/countries-data";
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ADMIN_USERS_FETCH_LIMIT } from "@/lib/discover/constants";
 import type {
@@ -17,9 +18,7 @@ function daysSince(dateStr: string): number {
   );
 }
 
-export async function getDistinctUserCountries(): Promise<
-  { code: string; name: string }[]
-> {
+async function fetchDistinctUserCountries(): Promise<{ code: string; name: string }[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
@@ -43,6 +42,12 @@ export async function getDistinctUserCountries(): Promise<
     }))
     .sort((a, b) => a.name.localeCompare(b.name, "fr"));
 }
+
+export const getDistinctUserCountries = unstable_cache(
+  fetchDistinctUserCountries,
+  ["admin-user-countries"],
+  { revalidate: 3600 }
+);
 
 export type AdminUserListResult = {
   users: AdminUserListItem[];

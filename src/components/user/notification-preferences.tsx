@@ -321,7 +321,8 @@ export function NotificationPreferencesForm({
               Notifications par email
             </span>
             <span className="mt-1 block text-sm text-[#6b5f7a]">
-              Recevez un email pour les likes, propositions de match, messages et autres événements.
+              Email uniquement pour les événements importants (likes reçus). Matchs,
+              messages, rappels et autres alertes restent visibles dans l&apos;application.
             </span>
           </span>
         </label>

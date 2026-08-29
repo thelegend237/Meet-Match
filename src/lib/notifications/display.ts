@@ -9,9 +9,11 @@ const MATCH_TYPES = new Set([
 
 const ADMIN_TYPES = new Set([
   "admin_new_member",
+  "admin_like_received",
   "admin_mutual_like",
   "admin_registration_unpaid",
   "admin_match_pending",
+  "admin_reactivation_requested",
 ]);
 
 export function isAdminNotificationType(type: string): boolean {
@@ -46,10 +48,32 @@ export function getNotificationHref(
     return "/admin/matchs?tab=proposer";
   }
 
+  if (notification.type === "admin_like_received") {
+    const fromUserId = meta.from_user_id;
+    if (typeof fromUserId === "string") {
+      return `/admin/matchs?tab=proposer&queue=one_way&user=${fromUserId}`;
+    }
+    return "/admin/matchs?tab=proposer&queue=one_way";
+  }
+
   if (notification.type === "admin_match_pending") {
     const matchId = meta.match_id;
     if (typeof matchId === "string") return `/admin/matchs`;
     return "/admin/matchs";
+  }
+
+  if (notification.type === "admin_reactivation_requested") {
+    const userId = meta.user_id;
+    if (typeof userId === "string") return `/admin/utilisateurs/${userId}`;
+    return "/admin/utilisateurs";
+  }
+
+  if (notification.type === "reactivation_requested") {
+    return "/contact?subject=reactivation";
+  }
+
+  if (notification.type === "account_reactivated") {
+    return "/tableau-de-bord";
   }
 
   if (notification.type === "like_received") {
@@ -141,8 +165,16 @@ export function getNotificationActionLabel(
       return "Contacter le membre →";
     case "admin_mutual_like":
       return "Comparer les profils →";
+    case "admin_like_received":
+      return "Proposer un match →";
     case "admin_match_pending":
       return "Suivre le match →";
+    case "admin_reactivation_requested":
+      return "Examiner la demande →";
+    case "reactivation_requested":
+      return "Contacter l'admin →";
+    case "account_reactivated":
+      return "Retour au tableau de bord →";
     default:
       if (MATCH_TYPES.has(notification.type)) return "Voir le match →";
       return "Voir →";
@@ -167,7 +199,11 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   match_failed: "Match",
   account_deleted: "Compte",
   admin_new_member: "Nouveau membre",
+  admin_like_received: "Like",
   admin_mutual_like: "Like réciproque",
   admin_registration_unpaid: "Inscription",
   admin_match_pending: "Match en attente",
+  admin_reactivation_requested: "Réactivation",
+  reactivation_requested: "Réactivation",
+  account_reactivated: "Compte",
 };

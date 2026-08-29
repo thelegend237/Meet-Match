@@ -306,7 +306,7 @@ export const FUTURE_MATCHING_FEES: Record<string, FeeAmount> = {
   },
 };
 
-export const MONTHLY_FREE_MATCHES = 3;
+export const MONTHLY_FREE_MATCHES = 0;
 
 export function isFreeFee(amount: number): boolean {
   return amount === 0;
@@ -326,7 +326,7 @@ export function formatDisplayPriceDetail(
     if (isLaunchFreeActive()) return "Gratuit — offre de lancement";
     return "Gratuit";
   }
-  return `${formatCurrency(amount, currency)} · paiement unique`;
+  return `${formatCurrency(amount, currency)} · par mise en relation`;
 }
 
 export function formatLaunchOfferEnd(): string | null {
@@ -417,18 +417,24 @@ export const MATCHING_BENEFITS = isMatchingWaived()
     ] as const)
   : ([
       {
-        title: "Payé à la proposition",
+        title: "Payé à chaque match",
         description:
-          "Vous ne payez que lorsqu'un administrateur vous propose un match compatible.",
+          "Service à la mise en relation : vous payez uniquement quand un administrateur vous propose un match.",
       },
       {
-        title: "Discussion encadrée",
+        title: "Like sens unique",
         description:
-          "Ouverture du chat de groupe et accompagnement Meet & Match.",
+          "Si une seule personne a liké, seul le liker paie les frais de matching.",
       },
       {
-        title: "Crédits fidélité",
-        description: `Après votre premier matching payé : ${MONTHLY_FREE_MATCHES} mises en relation gratuites par mois.`,
+        title: "Like réciproque",
+        description:
+          "Si les deux se sont likés, chaque membre paie sa part avant l'ouverture de la discussion.",
+      },
+      {
+        title: "Nouveau match = nouveau paiement",
+        description:
+          "Si un match échoue, les frais s'appliquent à nouveau sur la prochaine mise en relation.",
       },
     ] as const);
 
@@ -443,8 +449,9 @@ export const MATCHING_FEATURES = isMatchingWaived()
     ] as const)
   : ([
       "Proposition de match par un administrateur",
-      `Frais de matching : ${CHARGE_MATCHING_USD} $ US (Afrique : ${CHARGE_MATCHING_USD * AFRICA_PRICE_FACTOR} $ US)`,
-      `${MONTHLY_FREE_MATCHES} matchs gratuits / mois après le 1er paiement`,
+      `Frais de matching : ${CHARGE_MATCHING_USD} $ US par mise en relation (Afrique : ${CHARGE_MATCHING_USD * AFRICA_PRICE_FACTOR} $ US)`,
+      "Like sens unique : seul le liker paie",
+      "Like réciproque : les deux paient",
       "Ouverture de discussion groupée encadrée",
       "Accompagnement Meet & Match",
     ] as const);

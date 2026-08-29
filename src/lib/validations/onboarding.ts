@@ -116,3 +116,68 @@ export const onboardingPreferencesSchema = z
 export type OnboardingPreferencesData = z.infer<
   typeof onboardingPreferencesSchema
 >;
+
+/** Étapes obligatoires pour l'algorithme de compatibilité */
+export const onboardingGenderStepSchema = z.object({
+  gender: z.enum(["male", "female", "other", "prefer_not_say"], {
+    required_error: "Sélectionnez votre genre",
+  }),
+});
+
+export const onboardingBioStepSchema = z.object({
+  bio: z
+    .string()
+    .trim()
+    .min(20, "Décrivez-vous en au moins 20 caractères"),
+});
+
+export const onboardingRelationshipStepSchema = z.object({
+  relationship_type: z.enum(["serious", "friendship", "marriage", "other"], {
+    required_error: "Choisissez un type de relation",
+  }),
+});
+
+export const onboardingSeekGenderStepSchema = z.object({
+  preferred_gender: z.enum(["male", "female", "both"], {
+    required_error: "Indiquez qui vous souhaitez rencontrer",
+  }),
+});
+
+const requiredAgeBound = z
+  .number({ required_error: "Tranche d'âge requise" })
+  .min(18, "Minimum 18 ans")
+  .max(120, "Maximum 120 ans");
+
+export const onboardingAgeRangeStepSchema = z
+  .object({
+    preferred_age_min: requiredAgeBound,
+    preferred_age_max: requiredAgeBound,
+  })
+  .refine((data) => data.preferred_age_min <= data.preferred_age_max, {
+    message: "L'âge minimum doit être inférieur ou égal au maximum",
+    path: ["preferred_age_max"],
+  });
+
+export const onboardingScopeStepSchema = z.object({
+  preferred_relation_scope: z.enum(["local", "national", "international"], {
+    required_error: "Choisissez une portée de recherche",
+  }),
+});
+
+/** Déduit la zone recherchée à partir de la portée et de la localisation membre. */
+export function resolvePreferredLocation(
+  scope: "local" | "national" | "international" | "",
+  countryCode: string,
+  city: string
+): { preferred_country_code: string; preferred_city: string } {
+  if (scope === "local") {
+    return {
+      preferred_country_code: countryCode,
+      preferred_city: city.trim(),
+    };
+  }
+  if (scope === "national") {
+    return { preferred_country_code: countryCode, preferred_city: "" };
+  }
+  return { preferred_country_code: "", preferred_city: "" };
+}

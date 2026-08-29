@@ -39,6 +39,7 @@ import {
 import { useNotificationRealtime } from "@/components/user/notification-realtime-provider";
 import { PushInviteBanner } from "@/components/user/push-invite-banner";
 import { TrialBanner } from "@/components/user/trial-banner";
+import { ReactivationBanner } from "@/components/user/reactivation-banner";
 import type { Profile } from "@/lib/types/database";
 import { getTrialDaysRemaining, isProfileOnTrial } from "@/lib/trial";
 
@@ -56,6 +57,17 @@ const sidebarLinks: NavLink[] = [
   { href: "/matchs", label: "Mon match", icon: Sparkles, exact: true },
   { href: "/messages", label: "Messages", icon: MessageSquare, exact: false },
   { href: "/paiements", label: "Paiements", icon: CreditCard, exact: true },
+  { href: "/contact", label: "Contact admin", icon: Headphones, exact: true },
+];
+
+const deactivatedSidebarLinks: NavLink[] = [
+  {
+    href: "/tableau-de-bord",
+    label: "Tableau de bord",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  { href: "/profil", label: "Mon profil", icon: User, exact: true },
   { href: "/contact", label: "Contact admin", icon: Headphones, exact: true },
 ];
 
@@ -107,6 +119,8 @@ interface UserShellProps {
   notifyPush?: boolean;
   /** Profil pour bannière essai (optionnel). */
   profile?: Profile | null;
+  /** Compte en pause après match réussi — navigation réduite. */
+  deactivatedAfterMatch?: boolean;
   children: React.ReactNode;
 }
 
@@ -121,6 +135,7 @@ export function UserShell({
   showAdminLink = false,
   notifyPush = true,
   profile = null,
+  deactivatedAfterMatch = false,
   children,
 }: UserShellProps) {
   const pathname = usePathname();
@@ -172,9 +187,10 @@ export function UserShell({
   const hideMobileNav = isMessageThread;
 
   function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+    const links = deactivatedAfterMatch ? deactivatedSidebarLinks : sidebarLinks;
     return (
       <>
-        {sidebarLinks.map((link) => {
+        {links.map((link) => {
           const active = isActive(pathname, link.href, link.exact);
           const badge = badgeFor(link.href);
           const Icon = link.icon;
@@ -333,6 +349,7 @@ export function UserShell({
             <SidebarNav />
           </nav>
 
+          {!deactivatedAfterMatch && (
           <div className="mt-auto p-4">
             <div className="rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
               <div className="flex items-start gap-3">
@@ -358,6 +375,7 @@ export function UserShell({
               </Button>
             </div>
           </div>
+          )}
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -373,7 +391,12 @@ export function UserShell({
             )}
           >
             <PushInviteBanner notifyPush={notifyPush} />
-            {profile && isProfileOnTrial(profile) && !pathname.startsWith("/tableau-de-bord") && !pathname.startsWith("/decouvrir") && !pathname.startsWith("/paiements") && (
+            {deactivatedAfterMatch && (
+              <div className="px-4 pt-3 md:px-6 md:pt-4">
+                <ReactivationBanner />
+              </div>
+            )}
+            {profile && isProfileOnTrial(profile) && !deactivatedAfterMatch && !pathname.startsWith("/tableau-de-bord") && !pathname.startsWith("/decouvrir") && !pathname.startsWith("/paiements") && (
               <div className="px-4 pt-3 md:px-6 md:pt-4">
                 <TrialBanner
                   profile={profile}
@@ -390,7 +413,7 @@ export function UserShell({
             aria-label="Navigation principale"
             className={cn(
               "fixed bottom-0 left-0 right-0 z-50 border-t border-border/80 bg-card shadow-[0_-4px_20px_rgba(46,26,71,0.06)] safe-area-pb md:hidden",
-              hideMobileNav && "hidden"
+              (hideMobileNav || deactivatedAfterMatch) && "hidden"
             )}
           >
             <div className="mx-auto flex w-full max-w-lg items-stretch justify-around px-1 py-1">
@@ -449,7 +472,7 @@ export function UserShell({
               </button>
             </div>
             <div className="space-y-1">
-              {sidebarLinks
+              {(deactivatedAfterMatch ? deactivatedSidebarLinks : sidebarLinks)
                 .filter((l) => !mobilePrimary.some((p) => p.href === l.href))
                 .map((link) => {
                 const active = isActive(pathname, link.href, link.exact);

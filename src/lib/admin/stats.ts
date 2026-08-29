@@ -1,8 +1,9 @@
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { AdminStats } from "@/components/admin/admin-stats";
 import { REAL_PAYMENT_PROVIDERS } from "@/lib/payments/providers";
 
-export async function getAdminStats(): Promise<AdminStats> {
+async function fetchAdminStats(): Promise<AdminStats> {
   const supabase = await createClient();
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
@@ -34,19 +35,23 @@ export async function getAdminStats(): Promise<AdminStats> {
     supabase
       .from("matches")
       .select("*", { count: "exact", head: true })
-      .eq("status", "pending_payment"),
+      .eq("status", "pending_payment")
+      .is("deleted_at", null),
     supabase
       .from("matches")
       .select("*", { count: "exact", head: true })
-      .eq("status", "active"),
+      .eq("status", "active")
+      .is("deleted_at", null),
     supabase
       .from("matches")
       .select("*", { count: "exact", head: true })
-      .eq("status", "success"),
+      .eq("status", "success")
+      .is("deleted_at", null),
     supabase
       .from("matches")
       .select("*", { count: "exact", head: true })
-      .in("status", ["failed", "cancelled"]),
+      .in("status", ["failed", "cancelled"])
+      .is("deleted_at", null),
     supabase
       .from("payments")
       .select("amount")
@@ -79,3 +84,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     revenueMatching,
   };
 }
+
+export const getAdminStats = unstable_cache(fetchAdminStats, ["admin-stats"], {
+  revalidate: 30,
+});

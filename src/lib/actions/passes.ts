@@ -45,17 +45,21 @@ export async function passProfile(toUserId: string) {
   return { success: true };
 }
 
-export async function getMyPassedIds(): Promise<string[]> {
+export async function getMyPassedIds(userId?: string): Promise<string[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
+  let uid = userId;
+  if (!uid) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+    uid = user.id;
+  }
 
   const { data } = await supabase
     .from("profile_passes")
     .select("to_user_id")
-    .eq("from_user_id", user.id);
+    .eq("from_user_id", uid);
 
   return data?.map((p) => p.to_user_id) ?? [];
 }
