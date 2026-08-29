@@ -8,7 +8,8 @@ import { AdminUsersAlert } from "@/components/admin/admin-users-alert";
 import { UsersTable } from "@/components/admin/users-table";
 import {
   getDistinctUserCountries,
-  getUsersWithSummaryStats,
+  getAdminUserCounts,
+  getUsersWithSummaryStatsPaginated,
 } from "@/lib/admin/users";
 import { PageStack } from "@/components/layout/page-header";
 
@@ -17,17 +18,13 @@ export const metadata = {
 };
 
 export default async function AdminUsersPage() {
-  const [users, countryOptions] = await Promise.all([
-    getUsersWithSummaryStats(),
+  const [userList, countryOptions, counts] = await Promise.all([
+    getUsersWithSummaryStatsPaginated(),
     getDistinctUserCountries(),
+    getAdminUserCounts(),
   ]);
 
-  const active = users.filter((u) => u.status === "active").length;
-  const paid = users.filter(
-    (u) =>
-      u.registration_payment_status === "paid" ||
-      u.registration_payment_status === "free"
-  ).length;
+  const { users, totalRegistered, truncated } = userList;
 
   return (
     <PageStack>
@@ -40,19 +37,19 @@ export default async function AdminUsersPage() {
         <AdminKpiCard
           icon="users"
           label="Membres inscrits"
-          value={users.length}
+          value={counts.total}
           accent="primary"
         />
         <AdminKpiCard
           icon="userCheck"
           label="Comptes actifs"
-          value={active}
+          value={counts.active}
           accent="success"
         />
         <AdminKpiCard
           icon="checkCircle"
           label="Accès plateforme actif"
-          value={paid}
+          value={counts.withPlatformAccess}
           accent="secondary"
         />
       </AdminKpiGrid>
@@ -61,7 +58,12 @@ export default async function AdminUsersPage() {
         <AdminUsersAlert />
       </Suspense>
 
-      <UsersTable users={users} countryOptions={countryOptions} />
+      <UsersTable
+        users={users}
+        countryOptions={countryOptions}
+        totalRegistered={totalRegistered}
+        truncated={truncated}
+      />
     </PageStack>
   );
 }

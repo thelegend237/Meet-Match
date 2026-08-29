@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
 import { createProximityContext, getViewerLocation } from "@/lib/discover/geo";
 import { loadDiscoveryProfiles } from "@/lib/discover/load-profiles";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discover/constants";
 import { touchLastSeen } from "@/lib/actions/discover";
 import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
 import { viewerHasDiscoveryPhoto } from "@/lib/discover/eligibility";
@@ -48,12 +49,14 @@ export default async function DecouvrirPage() {
   const discoveryProfiles = await loadDiscoveryProfiles(
     supabase,
     excludedUserIds,
-    profile.id
+    profile.id,
+    { limit: DISCOVERY_PAGE_SIZE }
   );
 
   const viewerLocation = getViewerLocation(profile);
   const proximity = createProximityContext(viewerLocation);
   const allProfiles = proximity.sortByDistance(discoveryProfiles);
+  const initialHasMore = discoveryProfiles.length >= DISCOVERY_PAGE_SIZE;
 
   const genderPreference: GenderPreference = profile.preferred_gender ?? "both";
 
@@ -107,6 +110,7 @@ export default async function DecouvrirPage() {
           viewerLocation={viewerLocation}
           canInteract={canInteract}
           viewerProfile={profile}
+          initialHasMore={initialHasMore}
         />
       )}
     </PageStack>

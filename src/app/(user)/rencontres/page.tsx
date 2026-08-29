@@ -15,6 +15,7 @@ import { PageStack } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
 import { loadDiscoveryProfiles } from "@/lib/discover/load-profiles";
+import { DISCOVERY_PAGE_SIZE } from "@/lib/discover/constants";
 import { getRencontresProfiles } from "@/lib/discover/rencontres";
 import { getViewerLocation } from "@/lib/discover/geo";
 import { touchLastSeen } from "@/lib/actions/discover";
@@ -47,7 +48,8 @@ export default async function RencontresPage() {
   const discoveryProfiles = await loadDiscoveryProfiles(
     supabase,
     excludedUserIds,
-    profile.id
+    profile.id,
+    { limit: DISCOVERY_PAGE_SIZE }
   );
   const rencontresProfiles = getRencontresProfiles(
     profile,

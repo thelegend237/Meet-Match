@@ -11,7 +11,7 @@ import {
 import { getAdminStats } from "@/lib/admin/stats";
 import {
   getDistinctUserCountries,
-  getUsersWithSummaryStats,
+  getUsersWithSummaryStatsPaginated,
 } from "@/lib/admin/users";
 import { getTrialUsersWithUnprocessedLikes } from "@/lib/admin/trial-likes-queue";
 import { requireAdmin } from "@/lib/auth/session";
@@ -73,11 +73,12 @@ function StatTile({
 export default async function AdminDashboardPage() {
   const profile = await requireAdmin();
   const stats = await getAdminStats();
-  const [users, countryOptions, trialLikesQueue] = await Promise.all([
-    getUsersWithSummaryStats(),
+  const [userList, countryOptions, trialLikesQueue] = await Promise.all([
+    getUsersWithSummaryStatsPaginated(),
     getDistinctUserCountries(),
     getTrialUsersWithUnprocessedLikes(),
   ]);
+  const users = userList.users;
   const firstName = profile.display_name?.split(" ")[0] ?? "Admin";
 
   const matchesProposed =
@@ -157,7 +158,12 @@ export default async function AdminDashboardPage() {
 
       <AdminTrialLikesAlert items={trialLikesQueue} />
 
-      <UsersTable users={users} countryOptions={countryOptions} />
+      <UsersTable
+        users={users}
+        countryOptions={countryOptions}
+        totalRegistered={userList.totalRegistered}
+        truncated={userList.truncated}
+      />
     </PageStack>
   );
 }

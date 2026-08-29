@@ -26,13 +26,15 @@ interface UsersTableProps {
   users: AdminUserListItem[];
   /** Pays distincts présents en base (profils utilisateurs) */
   countryOptions: { code: string; name: string }[];
+  totalRegistered?: number;
+  truncated?: boolean;
 }
 
 type StatusFilter = "all" | "active" | "inactive" | "suspended" | "deleted";
 type RoleFilter = "all" | "user" | "admin" | "superadmin";
 type PeriodFilter = "all" | "30" | "90" | "365";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 25;
 
 function countryName(code: string | null) {
   if (!code) return "—";
@@ -165,7 +167,12 @@ function Pagination({
   );
 }
 
-export function UsersTable({ users, countryOptions }: UsersTableProps) {
+export function UsersTable({
+  users,
+  countryOptions,
+  totalRegistered,
+  truncated = false,
+}: UsersTableProps) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
@@ -275,6 +282,16 @@ export function UsersTable({ users, countryOptions }: UsersTableProps) {
 
   return (
     <div className="space-y-4">
+      {truncated && (
+        <p className="rounded-xl border border-amber-200/80 bg-amber-50/60 px-4 py-3 text-sm text-amber-950">
+          Affichage des {users.length.toLocaleString("fr-FR")} derniers inscrits
+          {totalRegistered != null
+            ? ` sur ${totalRegistered.toLocaleString("fr-FR")} comptes au total`
+            : ""}
+          . Utilisez la recherche et les filtres sur ce lot, ou ouvrez un profil
+          par email depuis la fiche membre.
+        </p>
+      )}
       <section className="mm-admin-filter-bar">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:gap-5">
           <div className="relative min-w-0 w-full xl:min-w-[220px] xl:flex-[1.45]">

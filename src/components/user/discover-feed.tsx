@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   Heart,
   Layers,
+  Loader2,
   SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,11 +18,14 @@ import {
 } from "@/lib/discover/profile-status";
 import { likeProfile } from "@/lib/actions/likes";
 import { passProfile } from "@/lib/actions/passes";
+import { loadMoreDiscoveryProfiles } from "@/lib/actions/discover";
 import { toast } from "@/hooks/use-toast";
 import { showDiscoverActionError, showSubscriptionRequiredToast } from "@/lib/discover/interaction-toast";
 import { nudgePushAfterFirstLike } from "@/lib/discover/push-after-like";
 import { Reveal } from "@/components/motion/motion";
 import { PaymentActivationBanner } from "@/components/user/payment-activation-banner";
+import { Button } from "@/components/ui/button";
+import { DISCOVERY_MAX_TOTAL } from "@/lib/discover/constants";
 import type { DiscoveryProfile, Profile } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
 
@@ -36,17 +40,22 @@ interface DiscoverFeedProps {
   viewerLocation: ViewerLocation;
   canInteract?: boolean;
   viewerProfile?: Profile;
+  initialHasMore?: boolean;
 }
 
 export function DiscoverFeed({
-  profiles,
+  profiles: initialProfiles,
   likedIds,
   passedIds,
   genderPreference: initialPreference,
   viewerLocation,
   canInteract = true,
   viewerProfile,
+  initialHasMore = false,
 }: DiscoverFeedProps) {
+  const [profiles, setProfiles] = useState(initialProfiles);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loadMorePending, startLoadMore] = useTransition();
   const [selected, setSelected] = useState<DiscoveryProfile | null>(null);
   const [likedSet, setLikedSet] = useState(() => new Set(likedIds));
   const [passedSet, setPassedSet] = useState(() => new Set(passedIds));
@@ -106,6 +115,28 @@ export function DiscoverFeed({
         });
         showDiscoverActionError(result.error);
       }
+    });
+  }
+
+  function handleLoadMore() {
+    if (loadMorePending || !hasMore) return;
+    const loadedIds = profiles.map((p) => p.id);
+    startLoadMore(async () => {
+      const result = await loadMoreDiscoveryProfiles(loadedIds);
+      if ("error" in result && result.error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: result.error,
+        });
+        return;
+      }
+      setProfiles((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        const next = result.profiles.filter((p) => !seen.has(p.id));
+        return [...prev, ...next];
+      });
+      setHasMore(result.hasMore ?? false);
     });
   }
 
@@ -202,7 +233,7 @@ export function DiscoverFeed({
             </>
           ) : (
             <>
-              Catalogue complet des membres éligibles · suggestions du jour dans{" "}
+              Catalogue des membres éligibles · suggestions du jour dans{" "}
             </>
           )}
           <Link href="/rencontres" className="font-medium text-secondary hover:underline">
@@ -230,15 +261,31 @@ export function DiscoverFeed({
         ) : (
           <div className="mm-card p-6 text-center sm:p-10">
             <p className="text-muted-foreground">
-              Vous avez parcouru tous les profils en mode carte.
+              Vous avez parcouru tous les profils chargés en mode carte.
             </p>
-            <button
-              type="button"
-              onClick={() => setViewMode("grid")}
-              className="mt-4 text-sm font-medium text-secondary hover:underline"
-            >
-              Voir la grille complète
-            </button>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {hasMore && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="rounded-full"
+                  disabled={loadMorePending}
+                  onClick={handleLoadMore}
+                >
+                  {loadMorePending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Charger plus de profils
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className="text-sm font-medium text-secondary hover:underline"
+              >
+                Voir la grille
+              </button>
+            </div>
           </div>
         )
       ) : filteredProfiles.length > 0 ? (
@@ -256,6 +303,31 @@ export function DiscoverFeed({
               />
             ))}
           </div>
+          {(hasMore || profiles.length >= DISCOVERY_MAX_TOTAL) && (
+            <div className="mt-8 flex flex-col items-center gap-2">
+              {hasMore ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full"
+                  disabled={loadMorePending}
+                  onClick={handleLoadMore}
+                >
+                  {loadMorePending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Charger plus de profils
+                </Button>
+              ) : null}
+              <p className="text-center text-xs text-muted-foreground">
+                {profiles.length} profil{profiles.length > 1 ? "s" : ""} affiché
+                {profiles.length > 1 ? "s" : ""}
+                {profiles.length >= DISCOVERY_MAX_TOTAL
+                  ? ` — limite de ${DISCOVERY_MAX_TOTAL} atteinte pour cette session`
+                  : ""}
+              </p>
+            </div>
+          )}
         </section>
       ) : (
         <div className="mm-card mt-4 p-6 text-center sm:mt-6 sm:p-10">

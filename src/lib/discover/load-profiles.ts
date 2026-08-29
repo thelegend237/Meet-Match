@@ -1,6 +1,10 @@
 import type { createClient } from "@/lib/supabase/server";
 import type { DiscoveryProfile } from "@/lib/types/database";
 import { getProfileLanguages } from "@/lib/languages";
+import {
+  DISCOVERY_HARD_LIMIT,
+  DISCOVERY_PAGE_SIZE,
+} from "@/lib/discover/constants";
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
@@ -24,8 +28,6 @@ type DiscoverProfileRow = {
   longitude: number | null;
   distance_km?: number | string | null;
 };
-
-const DISCOVERY_LIMIT = 1000;
 
 const DISCOVERY_SELECT = `
   id, display_name, date_of_birth, country_code, city, language,
@@ -103,19 +105,34 @@ function hasVisiblePhoto(
   return false;
 }
 
+export type LoadDiscoveryOptions = {
+  limit?: number;
+};
+
 export async function loadDiscoveryProfiles(
   supabase: SupabaseServer,
   excludedUserIds: Set<string>,
-  viewerId?: string
+  viewerId?: string,
+  options?: LoadDiscoveryOptions
 ): Promise<DiscoveryProfile[]> {
+  const limit = Math.min(
+    options?.limit ?? DISCOVERY_PAGE_SIZE,
+    DISCOVERY_HARD_LIMIT
+  );
+
   const { data: rows, error } = await supabase.rpc("discover_profiles", {
     p_excluded_ids: Array.from(excludedUserIds),
-    p_limit: DISCOVERY_LIMIT,
+    p_limit: limit,
   });
 
   if (error) {
     console.error("[discover] RPC discover_profiles:", error.message);
-    return loadDiscoveryProfilesFallback(supabase, excludedUserIds, viewerId);
+    return loadDiscoveryProfilesFallback(
+      supabase,
+      excludedUserIds,
+      viewerId,
+      limit
+    );
   }
 
   const profiles = (rows as DiscoverProfileRow[] | null) ?? [];
@@ -126,7 +143,8 @@ export async function loadDiscoveryProfiles(
 async function loadDiscoveryProfilesFallback(
   supabase: SupabaseServer,
   excludedUserIds: Set<string>,
-  viewerId?: string
+  viewerId?: string,
+  limit = DISCOVERY_PAGE_SIZE
 ): Promise<DiscoveryProfile[]> {
   let resolvedViewerId = viewerId;
   if (!resolvedViewerId) {
@@ -144,7 +162,7 @@ async function loadDiscoveryProfilesFallback(
     .eq("role", "user")
     .in("registration_payment_status", ["paid", "free", "unpaid"])
     .order("created_at", { ascending: false })
-    .limit(DISCOVERY_LIMIT);
+    .limit(limit);
 
   const result =
     withLanguages.error?.message.includes("languages") ||
@@ -157,7 +175,7 @@ async function loadDiscoveryProfilesFallback(
           .eq("role", "user")
           .in("registration_payment_status", ["paid", "free", "unpaid"])
           .order("created_at", { ascending: false })
-          .limit(DISCOVERY_LIMIT)
+          .limit(limit)
       : withLanguages;
 
   if (result.error) {

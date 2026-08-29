@@ -1,5 +1,6 @@
 import { getCountryName } from "@/lib/geo/countries-data";
 import { createClient } from "@/lib/supabase/server";
+import { ADMIN_USERS_FETCH_LIMIT } from "@/lib/discover/constants";
 import type {
   AdminUserDetail,
   AdminUserListItem,
@@ -43,27 +44,64 @@ export async function getDistinctUserCountries(): Promise<
     .sort((a, b) => a.name.localeCompare(b.name, "fr"));
 }
 
-export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
+export type AdminUserListResult = {
+  users: AdminUserListItem[];
+  totalRegistered: number;
+  truncated: boolean;
+};
+
+/** Compteurs globaux légers (KPI admin). */
+export async function getAdminUserCounts(): Promise<{
+  total: number;
+  active: number;
+  withPlatformAccess: number;
+}> {
   const supabase = await createClient();
 
-  const [{ data: users }, { data: likes }, { data: matches }] =
+  const [{ count: total }, { count: active }, { count: withPlatformAccess }] =
     await Promise.all([
       supabase
         .from("profiles")
-        .select(
-          "id, display_name, email, date_of_birth, primary_photo_url, status, profile_completion, registration_payment_status, city, country_code, is_verified, last_seen_at, created_at, role"
-        )
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false),
+      supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
         .eq("is_deleted", false)
-        .order("created_at", { ascending: false }),
-      supabase.from("likes").select("from_user_id, to_user_id"),
-      supabase.from("matches").select("user_a_id, user_b_id, status"),
+        .eq("status", "active"),
+      supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("is_deleted", false)
+        .in("registration_payment_status", ["paid", "free"]),
     ]);
 
+  return {
+    total: total ?? 0,
+    active: active ?? 0,
+    withPlatformAccess: withPlatformAccess ?? 0,
+  };
+}
+
+function aggregateLikesAndMatches(
+  userIds: string[],
+  likes: { from_user_id: string; to_user_id: string }[],
+  matches: { user_a_id: string; user_b_id: string; status: string }[]
+) {
+  const idSet = new Set(userIds);
   const likesSent = new Map<string, number>();
   const likesReceived = new Map<string, number>();
-  for (const l of likes ?? []) {
-    likesSent.set(l.from_user_id, (likesSent.get(l.from_user_id) ?? 0) + 1);
-    likesReceived.set(l.to_user_id, (likesReceived.get(l.to_user_id) ?? 0) + 1);
+
+  for (const l of likes) {
+    if (idSet.has(l.from_user_id)) {
+      likesSent.set(l.from_user_id, (likesSent.get(l.from_user_id) ?? 0) + 1);
+    }
+    if (idSet.has(l.to_user_id)) {
+      likesReceived.set(
+        l.to_user_id,
+        (likesReceived.get(l.to_user_id) ?? 0) + 1
+      );
+    }
   }
 
   const matchCount = new Map<string, number>();
@@ -74,8 +112,9 @@ export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
   const failedCount = new Map<string, number>();
   const cancelledCount = new Map<string, number>();
 
-  for (const m of matches ?? []) {
+  for (const m of matches) {
     for (const uid of [m.user_a_id, m.user_b_id]) {
+      if (!idSet.has(uid)) continue;
       matchCount.set(uid, (matchCount.get(uid) ?? 0) + 1);
       switch (m.status) {
         case "success":
@@ -102,20 +141,113 @@ export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
     }
   }
 
-  return (users ?? []).map((u) => ({
-    ...u,
-    is_verified: u.is_verified ?? false,
-    likes_sent: likesSent.get(u.id) ?? 0,
-    likes_received: likesReceived.get(u.id) ?? 0,
-    matches_total: matchCount.get(u.id) ?? 0,
-    matches_success: successCount.get(u.id) ?? 0,
-    matches_active: activeCount.get(u.id) ?? 0,
-    matches_pending_payment: pendingPaymentCount.get(u.id) ?? 0,
-    matches_pending: pendingCount.get(u.id) ?? 0,
-    matches_failed: failedCount.get(u.id) ?? 0,
-    matches_cancelled: cancelledCount.get(u.id) ?? 0,
-    member_days: daysSince(u.created_at),
-  })) as AdminUserListItem[];
+  return {
+    likesSent,
+    likesReceived,
+    matchCount,
+    successCount,
+    activeCount,
+    pendingPaymentCount,
+    pendingCount,
+    failedCount,
+    cancelledCount,
+  };
+}
+
+export async function getUsersWithSummaryStats(): Promise<AdminUserListItem[]> {
+  const result = await getUsersWithSummaryStatsPaginated();
+  return result.users;
+}
+
+/** Liste admin : derniers inscrits + stats agrégées sur ce lot uniquement. */
+export async function getUsersWithSummaryStatsPaginated(): Promise<AdminUserListResult> {
+  const supabase = await createClient();
+
+  const {
+    data: users,
+    count: totalRegistered,
+    error: usersError,
+  } = await supabase
+    .from("profiles")
+    .select(
+      "id, display_name, email, date_of_birth, primary_photo_url, status, profile_completion, registration_payment_status, city, country_code, is_verified, last_seen_at, created_at, role",
+      { count: "exact" }
+    )
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: false })
+    .limit(ADMIN_USERS_FETCH_LIMIT);
+
+  if (usersError || !users?.length) {
+    return {
+      users: [],
+      totalRegistered: totalRegistered ?? 0,
+      truncated: (totalRegistered ?? 0) > ADMIN_USERS_FETCH_LIMIT,
+    };
+  }
+
+  const userIds = users.map((u) => u.id);
+
+  const [{ data: likesFrom }, { data: likesTo }, { data: matchesA }, { data: matchesB }] =
+    await Promise.all([
+      supabase.from("likes").select("from_user_id, to_user_id").in("from_user_id", userIds),
+      supabase.from("likes").select("from_user_id, to_user_id").in("to_user_id", userIds),
+      supabase
+        .from("matches")
+        .select("user_a_id, user_b_id, status")
+        .in("user_a_id", userIds),
+      supabase
+        .from("matches")
+        .select("user_a_id, user_b_id, status")
+        .in("user_b_id", userIds),
+    ]);
+
+  const likesMap = new Map<string, { from_user_id: string; to_user_id: string }>();
+  for (const l of [...(likesFrom ?? []), ...(likesTo ?? [])]) {
+    likesMap.set(`${l.from_user_id}:${l.to_user_id}`, l);
+  }
+
+  const matchesMap = new Map<
+    string,
+    { user_a_id: string; user_b_id: string; status: string }
+  >();
+  for (const m of [...(matchesA ?? []), ...(matchesB ?? [])]) {
+    matchesMap.set(`${m.user_a_id}:${m.user_b_id}:${m.status}`, m);
+  }
+
+  const {
+    likesSent,
+    likesReceived,
+    matchCount,
+    successCount,
+    activeCount,
+    pendingPaymentCount,
+    pendingCount,
+    failedCount,
+    cancelledCount,
+  } = aggregateLikesAndMatches(
+    userIds,
+    [...likesMap.values()],
+    [...matchesMap.values()]
+  );
+
+  return {
+    users: users.map((u) => ({
+      ...u,
+      is_verified: u.is_verified ?? false,
+      likes_sent: likesSent.get(u.id) ?? 0,
+      likes_received: likesReceived.get(u.id) ?? 0,
+      matches_total: matchCount.get(u.id) ?? 0,
+      matches_success: successCount.get(u.id) ?? 0,
+      matches_active: activeCount.get(u.id) ?? 0,
+      matches_pending_payment: pendingPaymentCount.get(u.id) ?? 0,
+      matches_pending: pendingCount.get(u.id) ?? 0,
+      matches_failed: failedCount.get(u.id) ?? 0,
+      matches_cancelled: cancelledCount.get(u.id) ?? 0,
+      member_days: daysSince(u.created_at),
+    })) as AdminUserListItem[],
+    totalRegistered: totalRegistered ?? users.length,
+    truncated: (totalRegistered ?? 0) > ADMIN_USERS_FETCH_LIMIT,
+  };
 }
 
 export async function getAdminUserDetail(
