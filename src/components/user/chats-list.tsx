@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { MessageCircle, MessageSquarePlus, Search } from "lucide-react";
+import { MessageCircle, MessageSquarePlus, Search, SearchX } from "lucide-react";
+import { EmptyState } from "@/components/layout/empty-state";
+import { Button } from "@/components/ui/button";
 import { AdminNewConversationButton } from "@/components/admin/admin-new-conversation-button";
 import { AdminNewConversationPanel } from "@/components/admin/admin-new-conversation-panel";
 import { ChatListAvatar } from "@/components/user/chat-list-avatar";
@@ -196,38 +198,38 @@ export function ChatsList({
       </div>
 
       {chats.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
-          <MessageCircle className="h-12 w-12 text-[#e91e8c]/30" />
-          <p className="mt-4 font-semibold text-primary">
-            Aucune conversation ouverte
-          </p>
-          <p className="mt-2 max-w-xs text-sm text-[#6b5f7a]">
-            {isAdmin
+        <EmptyState
+          className="flex-1 border-0 bg-transparent shadow-none"
+          icon={MessageCircle}
+          title="Aucune conversation ouverte"
+          description={
+            isAdmin
               ? "Les fils avec au moins un message s'affichent ici. Utilisez le bouton ci-dessus pour écrire à un membre."
-              : "Vos échanges avec l'équipe et vos matchs apparaîtront ici après le premier message."}
-          </p>
-          {isAdmin ? (
-            <AdminNewConversationButton
-              variant="button"
-              onOpen={() => setNewDiscussionOpen(true)}
-            />
-          ) : (
-            <Link
-              href={emptyCtaHref}
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#7b3d8f] to-[#e91e8c] px-5 py-2.5 text-sm font-semibold text-white shadow-md"
-            >
-              <MessageSquarePlus className="h-4 w-4" />
-              {emptyCtaLabel}
-            </Link>
-          )}
-        </div>
+              : "Vos échanges avec l'équipe et vos matchs apparaîtront ici après le premier message."
+          }
+          action={
+            isAdmin ? (
+              <AdminNewConversationButton
+                variant="button"
+                onOpen={() => setNewDiscussionOpen(true)}
+              />
+            ) : (
+              <Button variant="secondary" className="mt-6 rounded-full" asChild>
+                <Link href={emptyCtaHref}>
+                  <MessageSquarePlus className="mr-2 h-4 w-4" />
+                  {emptyCtaLabel}
+                </Link>
+              </Button>
+            )
+          }
+        />
       ) : filtered.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
-          <p className="text-sm font-medium text-[#2e1a47]">Aucun résultat</p>
-          <p className="mt-1 text-xs text-[#6b5f7a]">
-            Essayez un autre filtre ou une autre recherche.
-          </p>
-        </div>
+        <EmptyState
+          className="flex-1 border-0 bg-transparent py-10 shadow-none"
+          icon={SearchX}
+          title="Aucun résultat"
+          description="Essayez un autre filtre ou une autre recherche."
+        />
       ) : (
         <>
           <ul className="mm-chat-list-scroll">

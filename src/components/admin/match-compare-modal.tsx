@@ -39,6 +39,7 @@ import {
 } from "@/lib/admin/match-fees";
 import type { AdminCompareProfile, MatchProposalPair } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface MatchCompareModalProps {
   pair: MatchProposalPair | null;
@@ -206,7 +207,7 @@ function ProfilePhotoGallery({
               onClick={() =>
                 onChange((photoIndex - 1 + photos.length) % photos.length)
               }
-              className="absolute left-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2e1a47] shadow-md transition hover:bg-white"
+              className="absolute left-2.5 top-1/2 mm-touch-target flex -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2e1a47] shadow-md transition hover:bg-white"
               aria-label="Photo précédente"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -214,7 +215,7 @@ function ProfilePhotoGallery({
             <button
               type="button"
               onClick={() => onChange((photoIndex + 1) % photos.length)}
-              className="absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2e1a47] shadow-md transition hover:bg-white"
+              className="absolute right-2.5 top-1/2 mm-touch-target flex -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2e1a47] shadow-md transition hover:bg-white"
               aria-label="Photo suivante"
             >
               <ChevronRight className="h-4 w-4" />
@@ -553,6 +554,7 @@ export function MatchCompareModal({
   onDismiss,
 }: MatchCompareModalProps) {
   const [mounted, setMounted] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     setMounted(true);
@@ -561,10 +563,17 @@ export function MatchCompareModal({
   useEffect(() => {
     if (!pair) return;
     document.body.style.overflow = "hidden";
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && !pending) onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, [pair]);
+  }, [pair, pending, onClose]);
 
   if (!pair || !mounted) return null;
 
@@ -580,17 +589,26 @@ export function MatchCompareModal({
     currentPair.likedByUserId
   );
 
-  function handleDismiss() {
-    const message =
-      currentPair.source === "manual"
-        ? "Abandonner cette comparaison sans proposer de match ?"
-        : "Écarter ce couple sans proposer de match ?\n\nIl restera disponible dans la file si vous changez d'avis.";
-    if (!window.confirm(message)) return;
+  async function handleDismiss() {
+    const confirmed = await confirm({
+      title:
+        currentPair.source === "manual"
+          ? "Abandonner cette comparaison ?"
+          : "Écarter ce couple ?",
+      description:
+        currentPair.source === "manual"
+          ? "Aucune proposition de match ne sera envoyée."
+          : "Il restera disponible dans la file si vous changez d'avis.",
+      confirmLabel: "Écarter",
+    });
+    if (!confirmed) return;
     onDismiss?.();
     onClose();
   }
 
   return createPortal(
+    <>
+      {dialog}
     <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4 lg:p-6">
       <button
         type="button"
@@ -708,7 +726,8 @@ export function MatchCompareModal({
           </div>
         </div>
       </div>
-    </div>,
+    </div>
+    </>,
     document.body
   );
 }

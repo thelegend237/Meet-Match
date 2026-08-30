@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { CreditCard, FlaskConical, Loader2, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   PaymentMethodPicker,
   resolvePaymentMethodForCheckout,
@@ -25,6 +26,7 @@ export function StaffPaymentTestPanel() {
   const [pendingType, setPendingType] = useState<StaffPaymentTestType | null>(
     null
   );
+  const { confirm, dialog } = useConfirm();
 
   const priceRange = formatStaffPaymentTestPriceRange();
   const regLabel = formatDisplayPrice(
@@ -62,14 +64,13 @@ export function StaffPaymentTestPanel() {
     });
   }
 
-  function handleTest(type: StaffPaymentTestType) {
-    if (
-      !confirm(
-        `Lancer un paiement de test ${type === "registration" ? "inscription" : "matching"} (montant minimal : ${priceRange}) ?\n\nVous serez redirigé vers Stripe, PayPal ou ViaziPay — le montant exact dépend du moyen choisi.`
-      )
-    ) {
-      return;
-    }
+  async function handleTest(type: StaffPaymentTestType) {
+    const confirmed = await confirm({
+      title: "Lancer un paiement de test ?",
+      description: `Type : ${type === "registration" ? "inscription" : "matching"} (montant minimal : ${priceRange}). Vous serez redirigé vers Stripe, PayPal ou ViaziPay.`,
+      confirmLabel: "Continuer",
+    });
+    if (!confirmed) return;
 
     startTransition(async () => {
       const method = await resolvePaymentMethodForCheckout(() => {
@@ -84,6 +85,7 @@ export function StaffPaymentTestPanel() {
 
   return (
     <>
+      {dialog}
       <section className="rounded-2xl border border-dashed border-amber-300/80 bg-gradient-to-br from-amber-50/90 via-white to-[#fff7ed] p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">

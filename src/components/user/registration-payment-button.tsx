@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CreditCard, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   PaymentMethodPicker,
   resolvePaymentMethodForCheckout,
@@ -38,6 +39,7 @@ export function RegistrationPaymentButton({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const { confirm, dialog } = useConfirm();
   const free = isFreeFee(amount);
   const priceLabel = formatDisplayPrice(amount, currency);
 
@@ -70,19 +72,24 @@ export function RegistrationPaymentButton({
     });
   }
 
-  function handlePay() {
+  async function handlePay() {
     if (!skipConfirm) {
-      const message = free
-        ? PRICING_TEST_MODE
-          ? "Activer votre compte gratuitement pendant la phase test ?\n\nAucun paiement ne sera demandé."
-          : "Activer votre compte gratuitement (offre de lancement) ?\n\nAucun paiement ne sera demandé."
-        : PRICING_TEST_MODE
-          ? `Confirmer le paiement de ${priceLabel} pour activer votre compte ?\n\n(Mode test — paiement simulé)`
-          : `Payer ${priceLabel} pour activer votre compte (tarif mondial en USD). Continuer ?`;
-
-      if (!confirm(message)) {
-        return;
-      }
+      const confirmed = await confirm({
+        title: free
+          ? PRICING_TEST_MODE
+            ? "Activer votre compte gratuitement ?"
+            : "Activer votre compte gratuitement ?"
+          : "Activer votre compte ?",
+        description: free
+          ? PRICING_TEST_MODE
+            ? "Aucun paiement ne sera demandé pendant la phase test."
+            : "Offre de lancement — aucun paiement ne sera demandé."
+          : PRICING_TEST_MODE
+            ? `Montant : ${priceLabel} (mode test — paiement simulé).`
+            : `Montant : ${priceLabel} (tarif mondial en USD).`,
+        confirmLabel: free ? "Activer" : "Payer",
+      });
+      if (!confirmed) return;
     }
 
     if (free || PRICING_TEST_MODE) {
@@ -102,6 +109,7 @@ export function RegistrationPaymentButton({
 
   return (
     <>
+      {dialog}
       <Button
         variant="secondary"
         size="lg"

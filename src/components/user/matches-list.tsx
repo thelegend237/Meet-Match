@@ -20,6 +20,8 @@ import {
   resolvePaymentMethodForCheckout,
 } from "@/components/user/payment-method-picker";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { EmptyState } from "@/components/layout/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { matchStatusLabels } from "@/lib/admin/labels";
 import type { PaymentMethodId } from "@/lib/payments/providers";
@@ -55,6 +57,7 @@ function MatchCard({
   const [pending, startTransition] = useTransition();
   const [localPaymentDone, setLocalPaymentDone] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const { confirm, dialog } = useConfirm();
 
   const needsPayment =
     match.status === "pending_payment" &&
@@ -104,20 +107,22 @@ function MatchCard({
     });
   }
 
-  function handlePay() {
+  async function handlePay() {
     if (!match.myPayment) return;
     const { amount, currency } = match.myPayment;
     const priceLabel = formatDisplayPrice(amount, currency);
     const free = isFreeFee(amount);
-    const message = free
-      ? "Confirmer ce match gratuitement ?\n\nAucun paiement ne sera demandé pendant la phase test."
-      : PRICING_TEST_MODE
-        ? `Confirmer le paiement de ${priceLabel} pour ce match ?\n\n(Mode test — paiement simulé)`
-        : `Payer ${priceLabel} pour ce match. Continuer ?`;
 
-    if (!confirm(message)) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: free ? "Confirmer ce match gratuitement ?" : "Confirmer le paiement ?",
+      description: free
+        ? "Aucun paiement ne sera demandé pendant la phase test."
+        : PRICING_TEST_MODE
+          ? `Montant : ${priceLabel} (mode test — paiement simulé).`
+          : `Montant : ${priceLabel} pour ce match.`,
+      confirmLabel: free ? "Confirmer" : "Payer",
+    });
+    if (!confirmed) return;
 
     if (free || PRICING_TEST_MODE) {
       runCheckout();
@@ -135,6 +140,8 @@ function MatchCard({
   }
 
   return (
+    <>
+      {dialog}
     <article
       id={`match-${match.id}`}
       className="mm-card overflow-hidden p-0"
@@ -272,7 +279,7 @@ function MatchCard({
         {match.status === "success" && (
           <div className="flex items-center gap-2 text-sm text-green-700">
             <Heart className="h-4 w-4 fill-current" />
-            Félicitations — cette mise en relation a abouti.
+            Félicitations — cette mise en relation a abouti ! 🥳❤️
           </div>
         )}
 
@@ -294,6 +301,7 @@ function MatchCard({
         )}
       </div>
     </article>
+    </>
   );
 }
 
@@ -322,36 +330,36 @@ export function MatchesList({
   if (matches.length === 0) {
     const analyzing = likesSent > 0;
     return (
-      <div className="mm-card flex flex-col items-center px-5 py-8 text-center sm:px-6 sm:py-12">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent">
-          <Heart className="h-8 w-8 text-secondary/70" />
-        </div>
-        <p className="mt-5 font-sans text-xl font-bold text-primary">
-          {analyzing
+      <EmptyState
+        icon={Heart}
+        title={
+          analyzing
             ? "Dossier en cours d'analyse"
-            : "Aucun match pour le moment"}
-        </p>
-        <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          {analyzing
+            : "Aucun match pour le moment"
+        }
+        description={
+          analyzing
             ? `${likesSent} like${likesSent > 1 ? "s" : ""} envoyé${likesSent > 1 ? "s" : ""} — l'équipe analyse les compatibilités. Une mise en relation apparaîtra ici lorsqu'un administrateur valide un duo.`
-            : "Likez des profils dans Découvrir. Lorsqu'un administrateur vous proposera une mise en relation, elle apparaîtra ici."}
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Button variant="secondary" className="rounded-full" asChild>
-            <Link href="/decouvrir">Continuer à liker</Link>
-          </Button>
-          {analyzing && profileCompletion < 80 && (
-            <Button variant="outline" className="rounded-full" asChild>
-              <Link href="/profil/modifier">Compléter mon profil</Link>
+            : "Likez des profils dans Découvrir. Lorsqu'un administrateur vous proposera une mise en relation, elle apparaîtra ici."
+        }
+        action={
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button variant="secondary" className="rounded-full" asChild>
+              <Link href="/decouvrir">Continuer à liker</Link>
             </Button>
-          )}
-          {analyzing && (
-            <Button variant="outline" className="rounded-full" asChild>
-              <Link href="/contact">Contacter l&apos;équipe</Link>
-            </Button>
-          )}
-        </div>
-      </div>
+            {analyzing && profileCompletion < 80 && (
+              <Button variant="outline" className="rounded-full" asChild>
+                <Link href="/profil/modifier">Compléter mon profil</Link>
+              </Button>
+            )}
+            {analyzing && (
+              <Button variant="outline" className="rounded-full" asChild>
+                <Link href="/contact">Contacter l&apos;équipe</Link>
+              </Button>
+            )}
+          </div>
+        }
+      />
     );
   }
 

@@ -4,7 +4,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Bell,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -14,6 +13,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { remindPaymentAction } from "@/lib/actions/admin";
 import { useAdminAction } from "@/hooks/use-admin-action";
+import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { getPaymentRowStatusLabel, getPaymentProviderLabel, getPaymentProviderBadgeClass } from "@/lib/admin/payment-display";
 import type { Payment, PaymentStatus, PaymentType } from "@/lib/types/database";
@@ -313,21 +313,18 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
               <label htmlFor="admin-payment-type" className="mm-admin-filter-label">
                 Type
               </label>
-              <div className="relative">
-                <select
-                  id="admin-payment-type"
-                  value={typeFilter}
-                  onChange={(e) =>
-                    setTypeFilter(e.target.value as TypeFilter)
-                  }
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Tous les types</option>
-                  <option value="registration">Inscription</option>
-                  <option value="matching">Matching</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-payment-type"
+                value={typeFilter}
+                onChange={(e) =>
+                  setTypeFilter(e.target.value as TypeFilter)
+                }
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Tous les types</option>
+                <option value="registration">Inscription</option>
+                <option value="matching">Matching</option>
+              </Select>
             </div>
 
             <div className="min-w-0 xl:min-w-[150px] xl:flex-1">
@@ -337,24 +334,21 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
               >
                 Statut
               </label>
-              <div className="relative">
-                <select
-                  id="admin-payment-status"
-                  value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value as StatusFilter)
-                  }
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="paid">Payé</option>
-                  <option value="free">Gratuit</option>
-                  <option value="unpaid">Impayé</option>
-                  <option value="failed">Échoué</option>
-                  <option value="refunded">Remboursé</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-payment-status"
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as StatusFilter)
+                }
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="paid">Payé</option>
+                <option value="free">Gratuit</option>
+                <option value="unpaid">Impayé</option>
+                <option value="failed">Échoué</option>
+                <option value="refunded">Remboursé</option>
+              </Select>
             </div>
 
             <div className="min-w-0 xl:min-w-[150px] xl:flex-1">
@@ -364,22 +358,19 @@ export function PaymentsTable({ payments, usersById }: PaymentsTableProps) {
               >
                 Période
               </label>
-              <div className="relative">
-                <select
-                  id="admin-payment-period"
-                  value={periodFilter}
-                  onChange={(e) =>
-                    setPeriodFilter(e.target.value as PeriodFilter)
-                  }
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Toutes les périodes</option>
-                  <option value="30">30 derniers jours</option>
-                  <option value="90">90 derniers jours</option>
-                  <option value="365">12 derniers mois</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-payment-period"
+                value={periodFilter}
+                onChange={(e) =>
+                  setPeriodFilter(e.target.value as PeriodFilter)
+                }
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Toutes les périodes</option>
+                <option value="30">30 derniers jours</option>
+                <option value="90">90 derniers jours</option>
+                <option value="365">12 derniers mois</option>
+              </Select>
             </div>
           </div>
 

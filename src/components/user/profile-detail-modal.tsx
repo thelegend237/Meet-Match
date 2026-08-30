@@ -207,7 +207,7 @@ export function ProfileDetailModal({
             <div className="flex items-center gap-0.5">
               <Link
                 href={`/contact?subject=signalement&profile=${encodeURIComponent(profile.display_name)}`}
-                className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
+                className="mm-touch-target flex items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/15"
                 aria-label="Signaler ce profil"
                 onClick={onClose}
               >
@@ -216,7 +216,7 @@ export function ProfileDetailModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full p-2 text-white transition-colors hover:bg-white/15"
+                className="mm-touch-target flex items-center justify-center rounded-full text-white transition-colors hover:bg-white/15"
                 aria-label="Fermer"
               >
                 <X className="h-6 w-6" />

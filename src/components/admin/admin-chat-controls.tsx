@@ -7,6 +7,7 @@ import {
 } from "@/lib/actions/chats";
 import { updateChatStatusAction } from "@/lib/actions/admin";
 import { useAdminAction } from "@/hooks/use-admin-action";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Info,
   Lock,
@@ -37,6 +38,7 @@ export function AdminChatControls({
 }: AdminChatControlsProps) {
   const router = useRouter();
   const { pending, run } = useAdminAction();
+  const { confirm, dialog } = useConfirm();
   const isSuperadmin = actorRole === "superadmin";
 
   function toggleStatus() {
@@ -47,12 +49,14 @@ export function AdminChatControls({
     });
   }
 
-  function softDelete() {
-    const confirmed = window.confirm(
-      "Supprimer cette conversation ?\n\n" +
-        "Elle sera retirée des listes membres et administrateurs. " +
-        "Seul un super administrateur pourra la supprimer définitivement de la base."
-    );
+  async function softDelete() {
+    const confirmed = await confirm({
+      title: "Supprimer cette conversation ?",
+      description:
+        "Elle sera retirée des listes membres et administrateurs. Seul un super administrateur pourra la supprimer définitivement de la base.",
+      confirmLabel: "Supprimer",
+      destructive: true,
+    });
     if (!confirmed) return;
 
     void run(() => adminSoftDeleteChatAction(chatId), {
@@ -64,12 +68,14 @@ export function AdminChatControls({
     });
   }
 
-  function hardDelete() {
-    const confirmed = window.confirm(
-      "Supprimer DÉFINITIVEMENT cette conversation ?\n\n" +
-        "Tous les messages et participants seront effacés de la base. " +
-        "Cette action est irréversible."
-    );
+  async function hardDelete() {
+    const confirmed = await confirm({
+      title: "Supprimer définitivement cette conversation ?",
+      description:
+        "Tous les messages et participants seront effacés de la base. Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      destructive: true,
+    });
     if (!confirmed) return;
 
     void run(() => superadminHardDeleteChatAction(chatId), {
@@ -120,5 +126,10 @@ export function AdminChatControls({
     });
   }
 
-  return <ChatOverflowMenu items={items} pending={pending} />;
+  return (
+    <>
+      {dialog}
+      <ChatOverflowMenu items={items} pending={pending} />
+    </>
+  );
 }

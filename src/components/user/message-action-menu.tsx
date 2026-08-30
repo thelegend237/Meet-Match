@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { QUICK_REACTIONS } from "@/lib/chat/emojis";
+import { useEscapeKey } from "@/hooks/use-escape-key";
 import { cn } from "@/lib/utils";
 
 interface MessageActionMenuProps {
@@ -52,6 +53,8 @@ export function MessageActionMenu({
   onQuickReact,
   onMoreEmojis,
 }: MessageActionMenuProps) {
+  useEscapeKey(visible, () => onDismiss?.());
+
   if (!visible) return null;
 
   const content = (

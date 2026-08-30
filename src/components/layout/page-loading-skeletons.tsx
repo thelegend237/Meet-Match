@@ -205,3 +205,102 @@ export function UserPageSkeleton() {
     </PageStack>
   );
 }
+
+function AdminFilterBarSkeleton() {
+  return (
+    <div className="mm-admin-filter-bar space-y-4">
+      <Skeleton className="h-11 w-full max-w-md rounded-xl" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-11 w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AdminTableSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <div className="mm-card overflow-hidden">
+      <div className="border-b border-border/50 px-5 py-4">
+        <Skeleton className="h-5 w-48" />
+      </div>
+      <div className="divide-y divide-border/40">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex items-center gap-4 px-5 py-4">
+            <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-56" />
+            </div>
+            <Skeleton className="h-8 w-20 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function AdminTablePageSkeleton() {
+  return (
+    <PageStack className="gap-4">
+      <PageHeaderSkeleton />
+      <AdminFilterBarSkeleton />
+      <AdminTableSkeleton />
+    </PageStack>
+  );
+}
+
+export function AdminMatchsPageSkeleton() {
+  return (
+    <PageStack className="gap-4">
+      <PageHeaderSkeleton />
+      <Skeleton className="h-10 w-full max-w-lg rounded-xl" />
+      <AdminFilterBarSkeleton />
+      <AdminTableSkeleton rows={6} />
+      <CardBlockSkeleton rows={2} />
+    </PageStack>
+  );
+}
+
+export function AdminConversationsPageSkeleton() {
+  return (
+    <PageStack className="gap-4">
+      <PageHeaderSkeleton />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_1fr]">
+        <div className="mm-card space-y-3 p-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex gap-3 py-2">
+              <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <Skeleton className="hidden min-h-[420px] rounded-2xl lg:block" />
+      </div>
+    </PageStack>
+  );
+}
+
+export function AdminMatchingPageSkeleton() {
+  return (
+    <PageStack className="gap-4">
+      <PageHeaderSkeleton />
+      <Skeleton className="h-10 w-full max-w-xl rounded-xl" />
+      <CardBlockSkeleton rows={4} />
+    </PageStack>
+  );
+}
+
+export function AdminNotificationsPageSkeleton() {
+  return (
+    <PageStack className="gap-4">
+      <PageHeaderSkeleton />
+      <CardBlockSkeleton rows={4} />
+    </PageStack>
+  );
+}

@@ -19,11 +19,12 @@ import {
   X,
 } from "lucide-react";
 import { ProfileCardBadges } from "@/components/user/profile-card-badges";
+import { EmptyState } from "@/components/layout/empty-state";
+import { Button } from "@/components/ui/button";
 import { formatProfileDistance } from "@/lib/discover/geo";
 import { formatProfileLanguages } from "@/lib/languages";
 import { getAge, cn } from "@/lib/utils";
 import type { DiscoveryProfile } from "@/lib/types/database";
-import { Button } from "@/components/ui/button";
 import { COUNTRIES } from "@/lib/validations/auth";
 import {
   GENDER_LABELS,
@@ -316,7 +317,7 @@ function SwipeableCard({
           <div className="pointer-events-auto flex items-center gap-1">
             <Link
               href={`/contact?subject=signalement&profile=${encodeURIComponent(profile.display_name)}`}
-              className="rounded-full p-2 text-white/85 transition-colors hover:bg-white/10"
+              className="mm-touch-target flex items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/10"
               aria-label="Signaler ce profil"
               onClick={(e) => e.stopPropagation()}
             >
@@ -329,7 +330,7 @@ function SwipeableCard({
                 triggerPass();
               }}
               disabled={pending || !!exitDir}
-              className="rounded-full p-2 text-white/85 transition-colors hover:bg-white/10 disabled:opacity-50"
+              className="mm-touch-target flex items-center justify-center rounded-full text-white/85 transition-colors hover:bg-white/10 disabled:opacity-50"
               aria-label="Passer ce profil"
             >
               <X className="h-5 w-5" />
@@ -466,28 +467,24 @@ export function DiscoverCardStack({
 
   if (!current) {
     return (
-      <div className="mm-card flex flex-col items-center px-5 py-8 text-center sm:px-6 sm:py-14">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
-          <RotateCcw className="h-8 w-8 text-secondary" />
-        </div>
-        <h2 className="mt-4 font-sans text-xl font-bold text-primary">
-          Plus de profils pour l&apos;instant
-        </h2>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-          Revenez demain ou parcourez tous les profils dans Découvrir.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Button variant="secondary" asChild>
-            <Link href="/decouvrir">Découvrir</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/decouvrir/likes">Mes likes envoyés</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/profil/modifier">Ajuster mes préférences</Link>
-          </Button>
-        </div>
-      </div>
+      <EmptyState
+        icon={RotateCcw}
+        title="Plus de profils pour l'instant"
+        description="Revenez demain ou parcourez tous les profils dans Découvrir."
+        action={
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button variant="secondary" className="rounded-full" asChild>
+              <Link href="/decouvrir">Découvrir</Link>
+            </Button>
+            <Button variant="outline" className="rounded-full" asChild>
+              <Link href="/decouvrir/likes">Mes likes envoyés</Link>
+            </Button>
+            <Button variant="outline" className="rounded-full" asChild>
+              <Link href="/profil/modifier">Ajuster mes préférences</Link>
+            </Button>
+          </div>
+        }
+      />
     );
   }
 

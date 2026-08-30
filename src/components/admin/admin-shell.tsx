@@ -26,9 +26,10 @@ import {
   User,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Logo } from "@/components/public/logo";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+import { useEscapeKey } from "@/hooks/use-escape-key";
 
 const ADMIN_LOGO = "/logo-admin.png";
 import { Button } from "@/components/ui/button";
@@ -57,8 +58,8 @@ const navLinks: NavLink[] = [
 const mobilePrimary: NavLink[] = [
   { id: "home", href: "/admin", label: "Accueil", icon: Home, exact: true },
   { id: "members", href: "/admin/utilisateurs", label: "Membres", icon: Users },
-  { id: "messages", href: "/admin/conversations", label: "Discussions", icon: MessageCircle },
   { id: "matches", href: "/admin/matchs", label: "Matchs", icon: GitMerge },
+  { id: "messages", href: "/admin/conversations", label: "Discussions", icon: MessageCircle },
 ];
 
 const mobileMoreLinks: NavLink[] = [
@@ -161,6 +162,12 @@ export function AdminShell({
 
   useOnClickOutside(accountRef, () => setAccountOpen(false), accountOpen);
 
+  const closeOverlays = useCallback(() => {
+    setDrawerOpen(false);
+    setMoreOpen(false);
+  }, []);
+  useEscapeKey(drawerOpen || moreOpen, closeOverlays);
+
   const hideMobileNav = isAdminConversationThread(pathname);
 
   useEffect(() => {
@@ -219,7 +226,7 @@ export function AdminShell({
         <button
           type="button"
           onClick={() => setAccountOpen((o) => !o)}
-          className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-muted md:pr-3"
+          className="mm-touch-target flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-muted md:pr-3"
           aria-expanded={accountOpen}
           aria-haspopup="menu"
           aria-label="Menu compte"
@@ -304,7 +311,7 @@ export function AdminShell({
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-primary hover:bg-muted"
+              className="mm-touch-target flex items-center justify-center rounded-xl text-primary hover:bg-muted"
               aria-label="Ouvrir le menu"
             >
               <Menu className="h-5 w-5" />
@@ -315,7 +322,7 @@ export function AdminShell({
         <div className="flex items-center gap-3 sm:gap-4">
           <Link
             href="/admin/notifications"
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl text-primary transition-colors hover:bg-muted"
+            className="mm-touch-target relative flex items-center justify-center rounded-xl text-primary transition-colors hover:bg-muted"
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />

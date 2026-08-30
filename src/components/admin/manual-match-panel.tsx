@@ -12,6 +12,7 @@ import {
 import { AdminEmptyState } from "@/components/admin/admin-page";
 import { MatchCompareModal } from "@/components/admin/match-compare-modal";
 import { useAdminAction } from "@/hooks/use-admin-action";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { getInitials } from "@/lib/chat/format";
 import type { MatchProposalPair } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
@@ -173,6 +174,7 @@ export function ManualMatchPanel({
   preselectedUserId?: string;
 }) {
   const { pending, run } = useAdminAction();
+  const { confirm, dialog } = useConfirm();
   const [userA, setUserA] = useState<Candidate | null>(null);
   const [userB, setUserB] = useState<Candidate | null>(null);
   const [selected, setSelected] = useState<MatchProposalPair | null>(null);
@@ -207,8 +209,13 @@ export function ManualMatchPanel({
     setSelected(res.pair);
   }
 
-  function propose(pair: MatchProposalPair) {
-    if (!confirm("Proposer ce match ? Les frais de matching s'appliquent aux deux membres.")) return;
+  async function propose(pair: MatchProposalPair) {
+    const confirmed = await confirm({
+      title: "Proposer ce match ?",
+      description: "Les frais de matching s'appliquent aux deux membres.",
+      confirmLabel: "Proposer",
+    });
+    if (!confirmed) return;
     void run(
       () =>
         proposeMatchAction(pair.userAId, pair.userBId, { source: "manual" }),
@@ -225,6 +232,7 @@ export function ManualMatchPanel({
 
   return (
     <>
+      {dialog}
       <section className="mm-card overflow-hidden">
         <div className="border-b border-border/50 px-5 py-4 sm:px-6">
           <h2 className="text-lg font-bold text-primary">Création manuelle</h2>

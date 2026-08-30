@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -20,6 +19,7 @@ import type { AdminUserListItem } from "@/lib/types/database";
 import { cn, getAge } from "@/lib/utils";
 import { CountryFlag } from "@/components/ui/country-flag";
 import { CountrySelect } from "@/components/ui/country-select";
+import { Select } from "@/components/ui/select";
 import { roleLabel } from "@/lib/admin/roles";
 
 interface UsersTableProps {
@@ -312,41 +312,35 @@ export function UsersTable({
               <label htmlFor="admin-role-filter" className="mm-admin-filter-label">
                 Rôle
               </label>
-              <div className="relative">
-                <select
-                  id="admin-role-filter"
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Tous les rôles</option>
-                  <option value="user">Membres</option>
-                  <option value="admin">Administrateurs</option>
-                  <option value="superadmin">Super administrateurs</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-role-filter"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Tous les rôles</option>
+                <option value="user">Membres</option>
+                <option value="admin">Administrateurs</option>
+                <option value="superadmin">Super administrateurs</option>
+              </Select>
             </div>
 
             <div className="min-w-0 xl:min-w-[150px] xl:flex-1">
               <label htmlFor="admin-status-filter" className="mm-admin-filter-label">
                 Statut
               </label>
-              <div className="relative">
-                <select
-                  id="admin-status-filter"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="active">Actif</option>
-                  <option value="inactive">Inactif</option>
-                  <option value="suspended">Suspendu</option>
-                  <option value="deleted">Supprimé</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-status-filter"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="active">Actif</option>
+                <option value="inactive">Inactif</option>
+                <option value="suspended">Suspendu</option>
+                <option value="deleted">Supprimé</option>
+              </Select>
             </div>
 
             <div className="min-w-0 xl:min-w-[150px] xl:flex-1">
@@ -366,20 +360,17 @@ export function UsersTable({
               <label htmlFor="admin-period-filter" className="mm-admin-filter-label">
                 Inscription
               </label>
-              <div className="relative">
-                <select
-                  id="admin-period-filter"
-                  value={periodFilter}
-                  onChange={(e) => setPeriodFilter(e.target.value as PeriodFilter)}
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Toutes les périodes</option>
-                  <option value="30">30 derniers jours</option>
-                  <option value="90">90 derniers jours</option>
-                  <option value="365">12 derniers mois</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-period-filter"
+                value={periodFilter}
+                onChange={(e) => setPeriodFilter(e.target.value as PeriodFilter)}
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Toutes les périodes</option>
+                <option value="30">30 derniers jours</option>
+                <option value="90">90 derniers jours</option>
+                <option value="365">12 derniers mois</option>
+              </Select>
             </div>
           </div>
 

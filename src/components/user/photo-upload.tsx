@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import Image from "next/image";
 import { Camera, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   uploadProfilePhoto,
@@ -22,6 +23,7 @@ interface PhotoUploadProps {
 
 export function PhotoUpload({ photos }: PhotoUploadProps) {
   const [isPending, startTransition] = useTransition();
+  const { confirm, dialog } = useConfirm();
 
   function uploadFile(file: File) {
     const formData = new FormData();
@@ -49,8 +51,13 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
     });
   }
 
-  function handleDelete(photoId: string) {
-    if (!confirm("Supprimer cette photo ?")) return;
+  async function handleDelete(photoId: string) {
+    const confirmed = await confirm({
+      title: "Supprimer cette photo ?",
+      confirmLabel: "Supprimer",
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     startTransition(async () => {
       const result = await deleteProfilePhoto(photoId);
@@ -63,6 +70,8 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
   }
 
   return (
+    <>
+      {dialog}
     <div className="space-y-6">
       <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 p-5 text-center sm:p-8">
         <Camera className="mx-auto h-10 w-10 text-muted-foreground" />
@@ -148,5 +157,6 @@ export function PhotoUpload({ photos }: PhotoUploadProps) {
         </div>
       )}
     </div>
+    </>
   );
 }

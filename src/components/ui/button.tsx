@@ -13,7 +13,9 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground shadow hover:bg-secondary/90",
         outline:
-          "border-2 border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground",
+          "border border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow hover:bg-destructive/90",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-secondary underline-offset-4 hover:underline",
         gradient:
@@ -23,7 +25,7 @@ const buttonVariants = cva(
         default: "h-11 px-6 py-2",
         sm: "h-9 rounded-full px-4 text-xs",
         lg: "h-12 rounded-full px-8 text-base",
-        icon: "h-10 w-10",
+        icon: "h-11 w-11",
       },
     },
     defaultVariants: {

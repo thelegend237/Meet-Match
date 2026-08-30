@@ -7,6 +7,7 @@ import {
   updateMatchStatusAction,
 } from "@/lib/actions/admin";
 import { useAdminAction } from "@/hooks/use-admin-action";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
 interface AdminMatchActionsProps {
@@ -31,26 +32,37 @@ export function AdminMatchActions({
   className,
 }: AdminMatchActionsProps) {
   const { pending, run } = useAdminAction();
+  const { confirm, dialog } = useConfirm();
   const isSuperadmin = actorRole === "superadmin";
 
-  function cancelMatch() {
-    const message =
-      status === "active"
-        ? "Annuler ce match actif ?\n\nLa discussion sera fermée et les membres ne verront plus cette mise en relation."
-        : "Annuler cette proposition de match ?";
-    if (!window.confirm(message)) return;
+  async function cancelMatch() {
+    const confirmed = await confirm({
+      title:
+        status === "active"
+          ? "Annuler ce match actif ?"
+          : "Annuler cette proposition ?",
+      description:
+        status === "active"
+          ? "La discussion sera fermée et les membres ne verront plus cette mise en relation."
+          : undefined,
+      confirmLabel: "Annuler le match",
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     void run(() => updateMatchStatusAction(matchId, "cancelled"), {
       success: "Match annulé.",
     });
   }
 
-  function softDelete() {
-    const confirmed = window.confirm(
-      "Masquer ce match ?\n\n" +
-        "Il disparaîtra des listes membres et administrateurs. " +
-        "Seul un super administrateur pourra le supprimer définitivement de la base."
-    );
+  async function softDelete() {
+    const confirmed = await confirm({
+      title: "Masquer ce match ?",
+      description:
+        "Il disparaîtra des listes membres et administrateurs. Seul un super administrateur pourra le supprimer définitivement de la base.",
+      confirmLabel: "Masquer",
+      destructive: true,
+    });
     if (!confirmed) return;
 
     void run(() => softDeleteMatchAction(matchId), {
@@ -58,12 +70,14 @@ export function AdminMatchActions({
     });
   }
 
-  function hardDelete() {
-    const confirmed = window.confirm(
-      "Supprimer DÉFINITIVEMENT ce match ?\n\n" +
-        "L'enregistrement sera effacé de la base de données. " +
-        "Cette action est irréversible."
-    );
+  async function hardDelete() {
+    const confirmed = await confirm({
+      title: "Supprimer définitivement ce match ?",
+      description:
+        "L'enregistrement sera effacé de la base de données. Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      destructive: true,
+    });
     if (!confirmed) return;
 
     void run(() => hardDeleteMatchAction(matchId), {
@@ -77,6 +91,8 @@ export function AdminMatchActions({
       : "grid grid-cols-1 gap-2";
 
   return (
+    <>
+      {dialog}
     <div className={cn(containerClass, className)}>
       {!isDeleted && canCancel(status) && (
         <button
@@ -123,5 +139,6 @@ export function AdminMatchActions({
         </button>
       )}
     </div>
+    </>
   );
 }

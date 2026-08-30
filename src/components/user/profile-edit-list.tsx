@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -18,7 +18,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useEscapeKey } from "@/hooks/use-escape-key";
 import { toast } from "@/hooks/use-toast";
 import { updateProfile } from "@/lib/actions/profile";
 import { getMaxBirthDateForMinAge } from "@/lib/validations/age";
@@ -176,8 +178,11 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
   const [form, setForm] = useState<ProfileFormData>(() => profileToForm(profile));
   const [isPending, startTransition] = useTransition();
 
+  const closeEditor = useCallback(() => setActiveField(null), []);
+  useEscapeKey(activeField !== null, closeEditor, { disabled: isPending });
+
   const selectClass =
-    "flex h-12 w-full rounded-xl border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    "h-12 w-full rounded-xl border border-input bg-card px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   function saveField(field: FieldKey) {
     startTransition(async () => {
@@ -200,7 +205,7 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
         <button
           type="button"
           onClick={() => router.push("/profil")}
-          className="rounded-full p-2 hover:bg-muted"
+          className="mm-touch-target flex items-center justify-center rounded-full hover:bg-muted"
           aria-label="Retour"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -304,7 +309,7 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
             type="button"
             className="absolute inset-0 bg-black/50"
             aria-label="Fermer"
-            onClick={() => setActiveField(null)}
+            onClick={closeEditor}
           />
           <div className="relative w-full max-w-md rounded-t-2xl bg-white p-5 pb-8 shadow-xl sm:rounded-2xl">
             <h3 className="font-sans text-lg font-semibold text-primary">
@@ -334,8 +339,9 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                 />
               )}
               {activeField === "gender" && (
-                <select
+                <Select
                   className={selectClass}
+                  wrapperClassName="w-full"
                   value={form.gender ?? ""}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -350,11 +356,12 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
               )}
               {activeField === "country_code" && (
-                <select
+                <Select
                   className={selectClass}
+                  wrapperClassName="w-full"
                   value={form.country_code}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, country_code: e.target.value }))
@@ -365,7 +372,7 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                       {c.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               )}
               {activeField === "city" && (
                 <Input
@@ -402,8 +409,9 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                 />
               )}
               {activeField === "relationship_type" && (
-                <select
+                <Select
                   className={selectClass}
+                  wrapperClassName="w-full"
                   value={form.relationship_type ?? ""}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -418,11 +426,12 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
               )}
               {activeField === "preferred_relation_scope" && (
-                <select
+                <Select
                   className={selectClass}
+                  wrapperClassName="w-full"
                   value={form.preferred_relation_scope ?? ""}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -437,11 +446,12 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
               )}
               {activeField === "preferred_gender" && (
-                <select
+                <Select
                   className={selectClass}
+                  wrapperClassName="w-full"
                   value={form.preferred_gender ?? "both"}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -455,7 +465,7 @@ export function ProfileEditList({ profile }: ProfileEditListProps) {
                       {l}
                     </option>
                   ))}
-                </select>
+                </Select>
               )}
               {activeField === "phone" && (
                 <Input

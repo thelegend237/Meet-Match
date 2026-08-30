@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { EyeOff } from "lucide-react";
 import { hideChatForUserAction } from "@/lib/actions/chats";
 import { ChatOverflowMenu } from "@/components/user/chat-overflow-menu";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { toast } from "@/hooks/use-toast";
 
 interface ChatHideButtonProps {
@@ -14,13 +15,15 @@ interface ChatHideButtonProps {
 export function ChatHideButton({ chatId }: ChatHideButtonProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const { confirm, dialog } = useConfirm();
 
-  function handleHide() {
-    const confirmed = window.confirm(
-      "Masquer cette conversation ?\n\n" +
-        "Elle disparaîtra de votre liste. L'équipe Meet & Match conserve l'historique. " +
-        "Elle réapparaîtra si vous recevez un nouveau message."
-    );
+  async function handleHide() {
+    const confirmed = await confirm({
+      title: "Masquer cette conversation ?",
+      description:
+        "Elle disparaîtra de votre liste. L'équipe Meet & Match conserve l'historique. Elle réapparaîtra si vous recevez un nouveau message.",
+      confirmLabel: "Masquer",
+    });
     if (!confirmed) return;
 
     startTransition(async () => {
@@ -44,7 +47,9 @@ export function ChatHideButton({ chatId }: ChatHideButtonProps) {
   }
 
   return (
-    <ChatOverflowMenu
+    <>
+      {dialog}
+      <ChatOverflowMenu
       pending={pending}
       items={[
         {
@@ -55,5 +60,6 @@ export function ChatHideButton({ chatId }: ChatHideButtonProps) {
         },
       ]}
     />
+    </>
   );
 }

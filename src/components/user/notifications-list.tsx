@@ -3,7 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, Bell } from "lucide-react";
+import { EmptyState } from "@/components/layout/empty-state";
 import { formatDistanceToNow } from "@/lib/utils/date";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,9 +83,11 @@ export function NotificationsList({
 
   if (items.length === 0) {
     return (
-      <div className="mm-card px-5 py-8 text-center sm:px-6 sm:py-12">
-        <p className="text-muted-foreground">Aucune notification pour le moment.</p>
-      </div>
+      <EmptyState
+        icon={Bell}
+        title="Aucune notification"
+        description="Les mises à jour sur vos matchs, messages et paiements apparaîtront ici."
+      />
     );
   }
 

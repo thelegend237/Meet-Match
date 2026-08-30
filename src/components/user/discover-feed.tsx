@@ -2,9 +2,12 @@
 
 import { useMemo, useState, useTransition } from "react";
 import {
+  Compass,
   Heart,
   Layers,
+  LayoutGrid,
   Loader2,
+  SearchX,
   SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
@@ -25,6 +28,7 @@ import { nudgePushAfterFirstLike } from "@/lib/discover/push-after-like";
 import { Reveal } from "@/components/motion/motion";
 import { PaymentActivationBanner } from "@/components/user/payment-activation-banner";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/layout/empty-state";
 import { DISCOVERY_MAX_TOTAL } from "@/lib/discover/constants";
 import type { DiscoveryProfile, Profile } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
@@ -173,33 +177,32 @@ export function DiscoverFeed({
               durable.
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <Link
-              href="/rencontres"
-              className="rounded-full p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
-              aria-label="Rencontres"
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-secondary" asChild>
+              <Link href="/rencontres" aria-label="Rencontres">
+                <Layers className="h-5 w-5" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative text-muted-foreground hover:text-secondary"
+              asChild
             >
-              <Layers className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/decouvrir/likes"
-              className="relative rounded-full p-2.5 text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
-              aria-label="Mes likes"
-            >
-              <Heart className="h-5 w-5" />
-              {likedSet.size > 0 && (
-                <span className="mm-badge-count absolute -right-0.5 -top-0.5">
-                  {likedSet.size > 9 ? "9+" : likedSet.size}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/profil/modifier"
-              className="rounded-full p-2.5 text-muted-foreground hover:bg-muted"
-              aria-label="Préférences"
-            >
-              <SlidersHorizontal className="h-5 w-5" />
-            </Link>
+              <Link href="/decouvrir/likes" aria-label="Mes likes">
+                <Heart className="h-5 w-5" />
+                {likedSet.size > 0 && (
+                  <span className="mm-badge-count absolute -right-0.5 -top-0.5">
+                    {likedSet.size > 9 ? "9+" : likedSet.size}
+                  </span>
+                )}
+              </Link>
+            </Button>
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-secondary" asChild>
+              <Link href="/profil/modifier" aria-label="Préférences">
+                <SlidersHorizontal className="h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
 
@@ -222,13 +225,14 @@ export function DiscoverFeed({
           {viewMode === "swipe" ? (
             <>
               Glissez à droite pour liker, à gauche pour passer · catalogue complet en mode{" "}
-              <button
+              <Button
                 type="button"
+                variant="link"
+                className="h-auto p-0 text-secondary"
                 onClick={() => setViewMode("grid")}
-                className="font-medium text-secondary hover:underline"
               >
                 Grille
-              </button>
+              </Button>
               {" · suggestions du jour dans "}
             </>
           ) : (
@@ -240,7 +244,7 @@ export function DiscoverFeed({
             Rencontres
           </Link>
           {" · "}
-          <Link href="/profil/modifier" className="text-secondary hover:underline">
+          <Link href="/profil/modifier" className="font-medium text-secondary hover:underline">
             modifier vos préférences
           </Link>
         </p>
@@ -259,34 +263,38 @@ export function DiscoverFeed({
             onOpen={setSelected}
           />
         ) : (
-          <div className="mm-card p-6 text-center sm:p-10">
-            <p className="text-muted-foreground">
-              Vous avez parcouru tous les profils chargés en mode carte.
-            </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-3">
-              {hasMore && (
+          <EmptyState
+            icon={Compass}
+            title="Vous avez tout parcouru"
+            description="Tous les profils chargés en mode carte ont été vus. Chargez-en d'autres ou passez en vue grille."
+            action={
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                {hasMore && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="rounded-full"
+                    disabled={loadMorePending}
+                    onClick={handleLoadMore}
+                  >
+                    {loadMorePending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Charger plus de profils
+                  </Button>
+                )}
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outline"
                   className="rounded-full"
-                  disabled={loadMorePending}
-                  onClick={handleLoadMore}
+                  onClick={() => setViewMode("grid")}
                 >
-                  {loadMorePending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  Charger plus de profils
+                  <LayoutGrid className="mr-2 h-4 w-4" />
+                  Voir la grille
                 </Button>
-              )}
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className="text-sm font-medium text-secondary hover:underline"
-              >
-                Voir la grille
-              </button>
-            </div>
-          </div>
+              </div>
+            }
+          />
         )
       ) : filteredProfiles.length > 0 ? (
         <section className="mt-6">
@@ -330,18 +338,21 @@ export function DiscoverFeed({
           )}
         </section>
       ) : (
-        <div className="mm-card mt-4 p-6 text-center sm:mt-6 sm:p-10">
-          <p className="text-muted-foreground">
-            Aucun profil ne correspond à votre filtre pour le moment.
-          </p>
-          <button
-            type="button"
-            onClick={() => setBrowseGender("both")}
-            className="mt-4 text-sm font-medium text-secondary hover:underline"
-          >
-            Voir tous les profils
-          </button>
-        </div>
+        <EmptyState
+          icon={SearchX}
+          title="Aucun profil trouvé"
+          description="Aucun profil ne correspond à votre filtre pour le moment. Élargissez vos critères pour découvrir plus de membres."
+          action={
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-6 rounded-full"
+              onClick={() => setBrowseGender("both")}
+            >
+              Voir tous les profils
+            </Button>
+          }
+        />
       )}
       </Reveal>
       </div>

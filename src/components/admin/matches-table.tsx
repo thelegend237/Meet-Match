@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -23,6 +22,8 @@ import { getInitials } from "@/lib/chat/format";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { AdminMatchActions } from "@/components/admin/admin-match-actions";
 import { useAdminAction } from "@/hooks/use-admin-action";
+import { Select } from "@/components/ui/select";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { formatCurrency, cn } from "@/lib/utils";
 
 interface MatchesTableProps {
@@ -317,6 +318,7 @@ function Pagination({
 
 export function MatchesTable({ matches, actorRole }: MatchesTableProps) {
   const { pending, run } = useAdminAction();
+  const { confirm, dialog } = useConfirm();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
@@ -375,12 +377,16 @@ export function MatchesTable({ matches, actorRole }: MatchesTableProps) {
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, page]);
 
-  function updateStatus(
+  async function updateStatus(
     matchId: string,
     status: "success" | "failed" | "cancelled"
   ) {
     const labels = { success: "réussi", failed: "échoué", cancelled: "annulé" };
-    if (!confirm(`Marquer ce match comme ${labels[status]} ?`)) return;
+    const confirmed = await confirm({
+      title: `Marquer ce match comme ${labels[status]} ?`,
+      confirmLabel: "Confirmer",
+    });
+    if (!confirmed) return;
     void run(() => updateMatchStatusAction(matchId, status), {
       success: "Statut du match mis à jour.",
     });
@@ -448,6 +454,7 @@ export function MatchesTable({ matches, actorRole }: MatchesTableProps) {
 
   return (
     <div className="space-y-4">
+      {dialog}
       <section className="mm-admin-filter-bar">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:gap-5">
           <div className="relative min-w-0 w-full xl:min-w-[220px] xl:flex-[1.45]">
@@ -468,68 +475,59 @@ export function MatchesTable({ matches, actorRole }: MatchesTableProps) {
               <label htmlFor="admin-match-payment" className="mm-admin-filter-label">
                 Paiement
               </label>
-              <div className="relative">
-                <select
-                  id="admin-match-payment"
-                  value={paymentFilter}
-                  onChange={(e) =>
-                    setPaymentFilter(e.target.value as PaymentFilter)
-                  }
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Tous</option>
-                  <option value="incomplete">Impayé (au moins 1)</option>
-                  <option value="complete">Tous payés / gratuits</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-match-payment"
+                value={paymentFilter}
+                onChange={(e) =>
+                  setPaymentFilter(e.target.value as PaymentFilter)
+                }
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Tous</option>
+                <option value="incomplete">Impayé (au moins 1)</option>
+                <option value="complete">Tous payés / gratuits</option>
+              </Select>
             </div>
 
             <div className="min-w-0 xl:min-w-[170px] xl:flex-1">
               <label htmlFor="admin-match-status" className="mm-admin-filter-label">
                 Statut
               </label>
-              <div className="relative">
-                <select
-                  id="admin-match-status"
-                  value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value as StatusFilter)
-                  }
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="pending">En attente</option>
-                  <option value="pending_payment">Paiement requis</option>
-                  <option value="active">Actif</option>
-                  <option value="success">Réussi</option>
-                  <option value="failed">Échoué</option>
-                  <option value="cancelled">Annulé</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-match-status"
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as StatusFilter)
+                }
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="pending">En attente</option>
+                <option value="pending_payment">Paiement requis</option>
+                <option value="active">Actif</option>
+                <option value="success">Réussi</option>
+                <option value="failed">Échoué</option>
+                <option value="cancelled">Annulé</option>
+              </Select>
             </div>
 
             <div className="min-w-0 xl:min-w-[170px] xl:flex-1">
               <label htmlFor="admin-match-period" className="mm-admin-filter-label">
                 Période
               </label>
-              <div className="relative">
-                <select
-                  id="admin-match-period"
-                  value={periodFilter}
-                  onChange={(e) =>
-                    setPeriodFilter(e.target.value as PeriodFilter)
-                  }
-                  className="mm-admin-filter-input appearance-none pr-9"
-                >
-                  <option value="all">Toutes les périodes</option>
-                  <option value="30">30 derniers jours</option>
-                  <option value="90">90 derniers jours</option>
-                  <option value="365">12 derniers mois</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <Select
+                id="admin-match-period"
+                value={periodFilter}
+                onChange={(e) =>
+                  setPeriodFilter(e.target.value as PeriodFilter)
+                }
+                className="mm-admin-filter-input w-full"
+              >
+                <option value="all">Toutes les périodes</option>
+                <option value="30">30 derniers jours</option>
+                <option value="90">90 derniers jours</option>
+                <option value="365">12 derniers mois</option>
+              </Select>
             </div>
           </div>
 

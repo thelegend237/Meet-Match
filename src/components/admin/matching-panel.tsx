@@ -8,6 +8,7 @@ import { AdminEmptyState } from "@/components/admin/admin-page";
 import { MatchCompareModal } from "@/components/admin/match-compare-modal";
 import type { MatchProposalQueue } from "@/components/admin/matching-propose-section";
 import { useAdminAction } from "@/hooks/use-admin-action";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { getInitials } from "@/lib/chat/format";
 import { matchPairKey } from "@/lib/matches/exclusions";
 import { ArrowRight, ChevronRight, Heart } from "lucide-react";
@@ -182,6 +183,7 @@ export function MatchingPanel({
   queue,
 }: MatchingPanelProps) {
   const { pending, run } = useAdminAction();
+  const { confirm, dialog } = useConfirm();
   const [selected, setSelected] = useState<MatchProposalPair | null>(null);
   const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(
     () => new Set()
@@ -206,12 +208,16 @@ export function MatchingPanel({
     if (first) setSelected(first);
   }, [highlightUserId, displayPairs]);
 
-  function propose(pair: MatchProposalPair) {
-    const confirmMsg =
-      pair.source === "one_way"
-        ? "Proposer ce match ? Seul le membre qui a liké paiera les frais de matching."
-        : "Proposer ce match aux deux utilisateurs ? Les frais de matching s'appliquent à chaque partie.";
-    if (!confirm(confirmMsg)) return;
+  async function propose(pair: MatchProposalPair) {
+    const confirmed = await confirm({
+      title: "Proposer ce match ?",
+      description:
+        pair.source === "one_way"
+          ? "Seul le membre qui a liké paiera les frais de matching."
+          : "Les frais de matching s'appliquent à chaque partie.",
+      confirmLabel: "Proposer",
+    });
+    if (!confirmed) return;
     void run(
       () =>
         proposeMatchAction(pair.userAId, pair.userBId, {
@@ -239,6 +245,7 @@ export function MatchingPanel({
 
   return (
     <>
+      {dialog}
       <section className="mm-card overflow-hidden">
         <div className="border-b border-border/50 px-5 py-4 sm:px-6">
           <h2 className="text-lg font-bold text-primary">Couples à analyser</h2>

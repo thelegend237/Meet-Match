@@ -11,6 +11,8 @@ import {
 } from "@/lib/admin/roles";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { AdminSectionCard } from "@/components/admin/admin-page";
 
 interface AdminRoleManagerProps {
@@ -29,6 +31,7 @@ export function AdminRoleManager({
   actorId,
 }: AdminRoleManagerProps) {
   const { pending, run } = useAdminAction();
+  const { confirm, dialog } = useConfirm();
   const [selectedRole, setSelectedRole] = useState<AppUserRole>(currentRole);
   const isSelf = userId === actorId;
   const options = assignableRoles(actorRole);
@@ -39,9 +42,11 @@ export function AdminRoleManager({
     if (!hasChange) return;
 
     const label = USER_ROLE_LABELS[selectedRole];
-    const confirmed = window.confirm(
-      `Attribuer le rôle « ${label} » à ${userName} ?\n\nCette action prend effet immédiatement.`
-    );
+    const confirmed = await confirm({
+      title: `Attribuer le rôle « ${label} » ?`,
+      description: `Cette action prend effet immédiatement pour ${userName}.`,
+      confirmLabel: "Attribuer",
+    });
     if (!confirmed) return;
 
     await run(
@@ -51,6 +56,8 @@ export function AdminRoleManager({
   }
 
   return (
+    <>
+      {dialog}
     <AdminSectionCard
       title="Rôle et accès"
       description="Définissez les droits d'accès à l'espace administration."
@@ -72,21 +79,19 @@ export function AdminRoleManager({
             )}
           </div>
           {canEdit ? (
-            <div className="relative mt-3 max-w-xs">
-              <select
-                id="admin-user-role"
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value as AppUserRole)}
-                disabled={pending}
-                className="mm-admin-filter-input w-full appearance-none pr-9"
-              >
-                {options.map((role) => (
-                  <option key={role} value={role}>
-                    {USER_ROLE_LABELS[role]}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              id="admin-user-role"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value as AppUserRole)}
+              disabled={pending}
+              className="mm-admin-filter-input mt-3 max-w-xs w-full"
+            >
+              {options.map((role) => (
+                <option key={role} value={role}>
+                  {USER_ROLE_LABELS[role]}
+                </option>
+              ))}
+            </Select>
           ) : (
             !isSelf && (
               <p className="text-sm text-muted-foreground">
@@ -110,5 +115,6 @@ export function AdminRoleManager({
         )}
       </div>
     </AdminSectionCard>
+    </>
   );
 }

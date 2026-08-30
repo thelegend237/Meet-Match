@@ -24,8 +24,9 @@ import {
   Shield,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
+import { useEscapeKey } from "@/hooks/use-escape-key";
 import { Logo } from "@/components/public/logo";
 import { MemberWelcomeTourGate } from "@/components/user/member-welcome-tour-gate";
 import { Button } from "@/components/ui/button";
@@ -75,8 +76,8 @@ const mobilePrimary: NavLink[] = [
   { href: "/decouvrir", label: "Découvrir", icon: Compass, exact: true },
   { href: "/rencontres", label: "Rencontres", icon: Layers, exact: true },
   { href: "/decouvrir/likes", label: "Likes", icon: Heart, exact: false },
-  { href: "/messages", label: "Messages", icon: MessageSquare, exact: false },
   { href: "/matchs", label: "Match", icon: Sparkles, exact: true },
+  { href: "/messages", label: "Messages", icon: MessageSquare, exact: false },
 ];
 
 const accountMenuLinks: NavLink[] = [
@@ -152,6 +153,9 @@ export function UserShell({
   }, [pathname]);
 
   useOnClickOutside(accountRef, () => setAccountOpen(false), accountOpen);
+
+  const closeMoreMenu = useCallback(() => setMoreOpen(false), []);
+  useEscapeKey(moreOpen, closeMoreMenu);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -237,7 +241,7 @@ export function UserShell({
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/notifications"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+              className="mm-touch-target relative flex items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" />
@@ -252,7 +256,7 @@ export function UserShell({
               <button
                 type="button"
                 onClick={() => setAccountOpen((o) => !o)}
-                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-muted md:pr-3"
+                className="mm-touch-target flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-muted md:pr-3"
                 aria-expanded={accountOpen}
                 aria-haspopup="menu"
                 aria-label="Menu compte"
@@ -465,7 +469,7 @@ export function UserShell({
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-muted"
+                className="mm-touch-target flex items-center justify-center rounded-xl hover:bg-muted"
                 aria-label="Fermer"
               >
                 <X className="h-5 w-5" />

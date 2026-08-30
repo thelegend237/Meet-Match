@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StepTransition } from "@/components/motion/motion";
+import { useEscapeKey } from "@/hooks/use-escape-key";
 import {
   isMemberTourCompleted,
   markMemberTourCompleted,
@@ -135,6 +136,8 @@ export function MemberWelcomeTour({ eligible }: MemberWelcomeTourProps) {
     [forceWelcome, router]
   );
 
+  useEscapeKey(open, () => close(false));
+
   if (!open) return null;
 
   const current = TOUR_STEPS[step];
@@ -165,7 +168,7 @@ export function MemberWelcomeTour({ eligible }: MemberWelcomeTourProps) {
           <button
             type="button"
             onClick={() => close(false)}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+            className="mm-touch-target flex items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
             aria-label="Fermer la visite"
           >
             <X className="h-5 w-5" />

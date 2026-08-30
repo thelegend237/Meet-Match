@@ -47,7 +47,8 @@ export function AdminQuickReplies({
       </button>
 
       {open ? (
-        <div className="mt-2 flex flex-wrap gap-2 pb-1">
+        <div className="mt-2 max-h-48 overflow-y-auto pb-1">
+          <div className="flex flex-wrap gap-2">
           {ADMIN_QUICK_REPLIES.map((reply) => (
             <button
               key={reply.id}
@@ -60,6 +61,7 @@ export function AdminQuickReplies({
               {reply.label}
             </button>
           ))}
+          </div>
         </div>
       ) : null}
     </div>

@@ -5,6 +5,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import { deleteUserProfileAction } from "@/lib/actions/admin";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { AdminSectionCard } from "@/components/admin/admin-page";
 
 interface AdminDeleteUserButtonProps {
@@ -22,17 +23,20 @@ export function AdminDeleteUserButton({
 }: AdminDeleteUserButtonProps) {
   const router = useRouter();
   const { pending, run } = useAdminAction();
+  const { confirm, dialog } = useConfirm();
   const isSelf = userId === actorId;
   const canDelete = actorRole === "superadmin" && !isSelf;
 
   if (!canDelete) return null;
 
   async function handleDelete() {
-    const confirmed = window.confirm(
-      `Supprimer définitivement le profil de ${userName} ?\n\n` +
-        "Le compte sera désactivé, ses matchs actifs clôturés et ses conversations fermées. " +
-        "Cette action est irréversible."
-    );
+    const confirmed = await confirm({
+      title: `Supprimer le profil de ${userName} ?`,
+      description:
+        "Le compte sera désactivé, ses matchs actifs clôturés et ses conversations fermées. Cette action est irréversible.",
+      confirmLabel: "Supprimer",
+      destructive: true,
+    });
     if (!confirmed) return;
 
     await run(
@@ -45,6 +49,8 @@ export function AdminDeleteUserButton({
   }
 
   return (
+    <>
+      {dialog}
     <AdminSectionCard
       title="Zone de danger"
       description="Suppression définitive du profil membre."
@@ -71,5 +77,6 @@ export function AdminDeleteUserButton({
         </Button>
       </div>
     </AdminSectionCard>
+    </>
   );
 }
