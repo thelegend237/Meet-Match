@@ -100,6 +100,38 @@ export async function listMembersForNewChatAction(): Promise<{
   return { members: (data ?? []) as MemberChatSearchResult[] };
 }
 
+/** Ouvre (ou crée) la discussion admin avec un membre — évite le cache GET /open. */
+export async function openAdminUserConversationAction(
+  userId: string
+): Promise<{ chatId?: string; error?: string }> {
+  const auth = await assertAdminMembersAccess();
+  if (auth.error || !auth.profile) {
+    return { error: auth.error ?? "Accès refusé" };
+  }
+
+  const trimmed = userId.trim();
+  if (!trimmed) return { error: "Membre introuvable" };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_or_create_admin_user_chat", {
+    p_admin_id: auth.profile.id,
+    p_user_id: trimmed,
+  });
+
+  if (error) {
+    console.error("[chats] openAdminUserConversation:", error.message);
+    return { error: "Impossible d'ouvrir la conversation." };
+  }
+
+  if (typeof data !== "string" || !data) {
+    return { error: "Impossible d'ouvrir la conversation." };
+  }
+
+  revalidateChatPaths(data);
+  revalidatePath("/admin/conversations");
+  return { chatId: data };
+}
+
 export async function searchMembersForNewChatAction(
   query: string
 ): Promise<{ error?: string; members: MemberChatSearchResult[] }> {

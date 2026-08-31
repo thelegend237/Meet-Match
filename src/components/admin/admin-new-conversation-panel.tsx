@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Search } from "lucide-react";
 import {
   listMembersForNewChatAction,
+  openAdminUserConversationAction,
   type MemberChatSearchResult,
 } from "@/lib/actions/chats";
 import { getInitials } from "@/lib/chat/format";
@@ -86,7 +87,14 @@ export function AdminNewConversationPanel({
 
   function startWithMember(userId: string) {
     onClose();
-    router.push(`/admin/conversations/open?user=${userId}`);
+    startTransition(async () => {
+      const result = await openAdminUserConversationAction(userId);
+      if (result.error || !result.chatId) {
+        window.alert(result.error ?? "Impossible d'ouvrir la conversation.");
+        return;
+      }
+      router.push(`/admin/conversations/${result.chatId}`);
+    });
   }
 
   return (

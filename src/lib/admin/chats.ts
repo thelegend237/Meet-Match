@@ -199,71 +199,15 @@ export async function getOrCreateAdminUserChat(
 ): Promise<string | null> {
   const supabase = await createClient();
 
-  const { data: userParticipations } = await supabase
-    .from("chat_participants")
-    .select("chat_id")
-    .eq("user_id", userId)
-    .eq("role", "user");
+  const { data, error } = await supabase.rpc("get_or_create_admin_user_chat", {
+    p_admin_id: adminId,
+    p_user_id: userId,
+  });
 
-  const participantChatIds = (userParticipations ?? []).map((p) => p.chat_id);
-
-  if (participantChatIds.length) {
-    const { data: existingChats } = await supabase
-      .from("chats")
-      .select("id, status")
-      .in("id", participantChatIds)
-      .eq("type", "admin_contact")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-
-    const existing =
-      existingChats?.find((c) => c.status === "open") ?? existingChats?.[0];
-
-    if (existing) {
-      const { data: adminParticipation } = await supabase
-        .from("chat_participants")
-        .select("user_id")
-        .eq("chat_id", existing.id)
-        .eq("user_id", adminId)
-        .maybeSingle();
-
-      if (!adminParticipation) {
-        await supabase.from("chat_participants").insert({
-          chat_id: existing.id,
-          user_id: adminId,
-          role: "admin",
-        });
-      }
-
-      return existing.id;
-    }
+  if (error) {
+    console.error("[admin/chats] get_or_create_admin_user_chat:", error.message);
+    return null;
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, email")
-    .eq("id", userId)
-    .single();
-
-  if (!profile) return null;
-
-  const { data: chat, error } = await supabase
-    .from("chats")
-    .insert({
-      type: "admin_contact",
-      status: "open",
-      contact_name: profile.display_name || profile.email,
-      created_by: adminId,
-    })
-    .select("id")
-    .single();
-
-  if (error || !chat) return null;
-
-  await supabase.from("chat_participants").insert([
-    { chat_id: chat.id, user_id: userId, role: "user" },
-    { chat_id: chat.id, user_id: adminId, role: "admin" },
-  ]);
-
-  return chat.id;
+  return typeof data === "string" ? data : null;
 }

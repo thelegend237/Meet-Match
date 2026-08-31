@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { AdminOpenConversationButton } from "@/components/admin/admin-open-conversation-button";
 import {
   ChevronLeft,
   ChevronRight,
@@ -464,13 +465,13 @@ export function UsersTable({
                     <Eye className="h-4 w-4" />
                     Profil
                   </Link>
-                  <Link
-                    href={`/admin/conversations/open?user=${user.id}`}
+                  <AdminOpenConversationButton
+                    userId={user.id}
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-muted/30 text-sm font-medium text-primary"
                   >
                     <MessageCircle className="h-4 w-4" />
                     Message
-                  </Link>
+                  </AdminOpenConversationButton>
                   {user.role === "user" && (
                     <Link
                       href={`/admin/matchs?tab=proposer&queue=manual&user=${user.id}`}
@@ -576,13 +577,13 @@ export function UsersTable({
                         >
                           <Eye className="h-4 w-4 stroke-[1.75]" />
                         </Link>
-                        <Link
-                          href={`/admin/conversations/open?user=${user.id}`}
+                        <AdminOpenConversationButton
+                          userId={user.id}
                           className="mm-touch-target inline-flex items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-secondary"
                           title="Envoyer un message"
                         >
                           <MessageCircle className="h-4 w-4 stroke-[1.75]" />
-                        </Link>
+                        </AdminOpenConversationButton>
                         {user.role === "user" && (
                           <Link
                             href={`/admin/matchs?tab=proposer&queue=manual&user=${user.id}`}

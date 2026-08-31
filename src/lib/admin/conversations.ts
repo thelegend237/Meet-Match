@@ -48,9 +48,15 @@ export async function getAdminContactConversations(): Promise<
   );
 
   const memberByChat = new Map<string, string>();
+  const userCountByChat = new Map<string, number>();
   for (const p of participants ?? []) {
+    userCountByChat.set(p.chat_id, (userCountByChat.get(p.chat_id) ?? 0) + 1);
     const name = profileById.get(p.user_id);
     if (name) memberByChat.set(p.chat_id, name);
+  }
+
+  for (const [chatId, count] of userCountByChat) {
+    if (count !== 1) memberByChat.delete(chatId);
   }
 
   return chats.map((chat) => ({

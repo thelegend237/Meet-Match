@@ -26,6 +26,7 @@ import { AdminReactivateUserButton } from "@/components/admin/admin-reactivate-u
 import { AdminRoleManager } from "@/components/admin/admin-role-manager";
 import { roleLabel } from "@/lib/admin/roles";
 import type { Profile } from "@/lib/types/database";
+import { AdminOpenConversationButton } from "@/components/admin/admin-open-conversation-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/admin/status-badge";
@@ -164,12 +165,13 @@ export function AdminUserDetailView({
               </div>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-              <Button size="sm" variant="secondary" className="min-h-11 w-full rounded-full sm:min-h-9 sm:w-auto" asChild>
-                <Link href={`/admin/conversations/open?user=${profile.id}`}>
-                  <MessageSquare className="h-4 w-4" />
-                  Envoyer un message
-                </Link>
-              </Button>
+              <AdminOpenConversationButton
+                userId={profile.id}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-secondary px-4 text-sm font-semibold text-white sm:min-h-9 sm:w-auto"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Envoyer un message
+              </AdminOpenConversationButton>
               {profile.role === "user" &&
                 profile.status === "inactive" &&
                 profile.deactivation_reason === "match_success" && (
