@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth/session";
+import { requireActiveMember } from "@/lib/auth/session";
 import { OnboardingWizard } from "@/components/public/onboarding-wizard";
 import { Loader2 } from "lucide-react";
 
@@ -16,7 +16,7 @@ function OnboardingFallback() {
 }
 
 export default async function OnboardingPage() {
-  const profile = await requireUser();
+  const profile = await requireActiveMember();
 
   return (
     <div className="mx-auto w-full max-w-lg -mt-2">

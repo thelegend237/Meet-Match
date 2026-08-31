@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth/session";
+import { requireActiveMember } from "@/lib/auth/session";
 import { getUserMatches } from "@/lib/user/matches";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
@@ -14,7 +14,7 @@ export const metadata = {
 };
 
 export default async function MatchsPage() {
-  const profile = await requireUser();
+  const profile = await requireActiveMember();
   const [matches, matchingCredits, likedIds] = await Promise.all([
     getUserMatches(profile.id),
     getMatchingCreditsStatus(profile.id),

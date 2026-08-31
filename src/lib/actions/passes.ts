@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile, canBrowseDiscovery } from "@/lib/auth/session";
 import { SUBSCRIPTION_REQUIRED_ERROR } from "@/lib/discover/subscription";
-import { getDiscoveryExcludedUserIds } from "@/lib/matches/exclusions";
+import { getDiscoveryExcludedUserIds, userIsLockedAfterMatchSuccess } from "@/lib/matches/exclusions";
 
 export async function passProfile(toUserId: string) {
   const supabase = await createClient();
@@ -21,6 +21,13 @@ export async function passProfile(toUserId: string) {
 
   if (user.id === toUserId) {
     return { error: "Action impossible sur votre propre profil." };
+  }
+
+  if (await userIsLockedAfterMatchSuccess(supabase, user.id)) {
+    return {
+      error:
+        "Votre compte est en pause après une mise en relation réussie. Demandez une réactivation à l'équipe pour continuer.",
+    };
   }
 
   const excluded = await getDiscoveryExcludedUserIds(supabase, user.id);

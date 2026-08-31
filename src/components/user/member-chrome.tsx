@@ -1,5 +1,7 @@
 import { requireUser, hasPlatformAccess, canBrowseDiscovery, isDeactivatedAfterMatchSuccess } from "@/lib/auth/session";
 import { isStaffProfile } from "@/lib/auth/staff";
+import { userIsLockedAfterMatchSuccess } from "@/lib/matches/exclusions";
+import { createClient } from "@/lib/supabase/server";
 import { getUnreadCount } from "@/lib/actions/notifications";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { getUnreadMessageCount } from "@/lib/user/messages";
@@ -17,7 +19,14 @@ export async function MemberChrome({
   children: React.ReactNode;
 }) {
   const profile = await requireUser();
-  const deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
+  let deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
+  if (!deactivatedAfterMatch && profile.role === "user") {
+    const supabase = await createClient();
+    deactivatedAfterMatch = await userIsLockedAfterMatchSuccess(
+      supabase,
+      profile.id
+    );
+  }
   const welcomeTourEligible =
     profile.role === "user" && canBrowseDiscovery(profile) && !deactivatedAfterMatch;
 

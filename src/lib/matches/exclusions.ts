@@ -72,6 +72,25 @@ export async function getExistingMatchPairKeys(
   );
 }
 
+/** Compte verrouillé après match réussi (profil ou historique en base). */
+export async function userIsLockedAfterMatchSuccess(
+  supabase: SupabaseServer,
+  userId: string
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc(
+    "user_is_locked_after_match_success",
+    { p_user_id: userId }
+  );
+  if (error) {
+    console.error(
+      "[exclusions] user_is_locked_after_match_success:",
+      error.message
+    );
+    return false;
+  }
+  return Boolean(data);
+}
+
 /** Le membre a-t-il une mise en relation en cours (fidélité) ? */
 export async function userHasBlockingMatch(
   supabase: SupabaseServer,

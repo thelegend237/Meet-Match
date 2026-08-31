@@ -1,4 +1,4 @@
-import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
+import { requireActiveMember, hasPlatformAccess } from "@/lib/auth/session";
 import { getMyLikedProfiles } from "@/lib/actions/likes";
 import { MyLikesList } from "@/components/user/my-likes-list";
 import {
@@ -14,7 +14,7 @@ export const metadata = {
 };
 
 export default async function MesLikesPage() {
-  const profile = await requireUser();
+  const profile = await requireActiveMember();
 
   if (!hasPlatformAccess(profile)) {
     return (

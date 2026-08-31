@@ -8,6 +8,8 @@ import {
   Headphones,
 } from "lucide-react";
 import { requireUser, hasPlatformAccess, isDeactivatedAfterMatchSuccess } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
+import { userIsLockedAfterMatchSuccess } from "@/lib/matches/exclusions";
 import { getUserMatches } from "@/lib/user/matches";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { DashboardNotificationsPreview } from "@/components/user/dashboard-notifications-preview";
@@ -50,7 +52,13 @@ export default async function DashboardPage() {
   const completion = profile.profile_completion ?? 0;
   const onTrial = isProfileOnTrial(profile);
   const trialDays = getTrialDaysRemaining(profile);
-  const deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
+  const deactivatedAfterMatch =
+    isDeactivatedAfterMatchSuccess(profile) ||
+    (profile.role === "user" &&
+      (await userIsLockedAfterMatchSuccess(
+        await createClient(),
+        profile.id
+      )));
 
   if (deactivatedAfterMatch) {
     return (

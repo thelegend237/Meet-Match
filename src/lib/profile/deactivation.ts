@@ -15,6 +15,9 @@ export const DEACTIVATED_MEMBER_ROUTES = [
   "/notifications",
 ] as const;
 
+/** Accueil membre après match réussi (compte en pause). */
+export const DEACTIVATED_MEMBER_HOME = "/tableau-de-bord";
+
 export function isRouteAllowedWhenDeactivated(pathname: string): boolean {
   return DEACTIVATED_MEMBER_ROUTES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)

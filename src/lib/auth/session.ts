@@ -6,7 +6,9 @@ import { USER_HOME } from "@/lib/auth/routes";
 import { isStaffProfile } from "@/lib/auth/staff";
 import {
   isDeactivatedAfterMatchSuccess,
+  DEACTIVATED_MEMBER_HOME,
 } from "@/lib/profile/deactivation";
+import { userIsLockedAfterMatchSuccess } from "@/lib/matches/exclusions";
 import type { Profile } from "@/lib/types/database";
 
 export { isDeactivatedAfterMatchSuccess } from "@/lib/profile/deactivation";
@@ -72,6 +74,23 @@ export async function requireUser(): Promise<Profile> {
   if (!profile || profile.is_deleted || profile.status === "deleted") {
     redirect("/connexion");
   }
+  return profile;
+}
+
+/** Membre actif (non en pause après match réussi). Redirige vers le tableau de bord sinon. */
+export async function requireActiveMember(): Promise<Profile> {
+  const profile = await requireUser();
+  if (isStaffProfile(profile)) return profile;
+
+  if (isDeactivatedAfterMatchSuccess(profile)) {
+    redirect(DEACTIVATED_MEMBER_HOME);
+  }
+
+  const supabase = await createClient();
+  if (await userIsLockedAfterMatchSuccess(supabase, profile.id)) {
+    redirect(DEACTIVATED_MEMBER_HOME);
+  }
+
   return profile;
 }
 

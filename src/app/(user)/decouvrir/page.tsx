@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Compass, Layers } from "lucide-react";
-import { requireUser, hasPlatformAccess } from "@/lib/auth/session";
+import { requireActiveMember, hasPlatformAccess } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getMyLikedIds } from "@/lib/actions/likes";
 import { getMyPassedIds } from "@/lib/actions/passes";
@@ -28,7 +28,7 @@ export const metadata = {
 };
 
 export default async function DecouvrirPage() {
-  const profile = await requireUser();
+  const profile = await requireActiveMember();
   const canInteract = hasPlatformAccess(profile);
 
   if (profile.city && profile.country_code && profile.latitude == null) {

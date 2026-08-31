@@ -13,7 +13,10 @@ import {
 } from "@/lib/supabase/env";
 import { isStaleAuthError } from "@/lib/supabase/auth-errors";
 import { purgeSupabaseAuthCookies } from "@/lib/supabase/purge-auth-cookies";
-import { isRouteAllowedWhenDeactivated } from "@/lib/profile/deactivation";
+import {
+  isRouteAllowedWhenDeactivated,
+  DEACTIVATED_MEMBER_HOME,
+} from "@/lib/profile/deactivation";
 
 const USER_PREFIXES = [
   "/tableau-de-bord",
@@ -207,16 +210,29 @@ export async function updateSession(request: NextRequest) {
 
       const deactivatedAfterMatch =
         profile?.role === "user" &&
-        profile.status === "inactive" &&
-        profile.deactivation_reason === "match_success";
+        (profile.status === "inactive" &&
+          profile.deactivation_reason === "match_success");
+
+      let memberLockedAfterSuccess = deactivatedAfterMatch;
+      if (
+        profile?.role === "user" &&
+        !memberLockedAfterSuccess &&
+        profile.status === "active"
+      ) {
+        const { data: locked } = await supabase.rpc(
+          "user_is_locked_after_match_success",
+          { p_user_id: user.id }
+        );
+        memberLockedAfterSuccess = Boolean(locked);
+      }
 
       if (
-        deactivatedAfterMatch &&
+        memberLockedAfterSuccess &&
         isUserRoute &&
         !isRouteAllowedWhenDeactivated(pathname)
       ) {
         const url = request.nextUrl.clone();
-        url.pathname = USER_HOME;
+        url.pathname = DEACTIVATED_MEMBER_HOME;
         url.search = "";
         return NextResponse.redirect(url);
       }

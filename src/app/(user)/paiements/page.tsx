@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireUser } from "@/lib/auth/session";
+import { requireActiveMember } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getMatchingCreditsStatus } from "@/lib/user/matching-credits";
 import { PaymentsView } from "@/components/user/payments-view";
@@ -16,7 +16,7 @@ export default async function PaiementsPage({
 }: {
   searchParams: Promise<{ welcome?: string; checkout?: string }>;
 }) {
-  const profile = await requireUser();
+  const profile = await requireActiveMember();
   const params = await searchParams;
   const supabase = await createClient();
 

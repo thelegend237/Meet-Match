@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth/session";
+import { requireActiveMember } from "@/lib/auth/session";
 import { markChatMessagesAsRead } from "@/lib/chat/mark-read";
 import { TEAM_AVATAR_URL, TEAM_DISPLAY_NAME } from "@/lib/chat/team";
 import { getChatThread } from "@/lib/user/chats";
@@ -12,7 +12,7 @@ interface PageProps {
 
 export default async function MessageThreadPage({ params }: PageProps) {
   const { chatId } = await params;
-  const profile = await requireUser();
+  const profile = await requireActiveMember();
   const thread = await getChatThread(chatId, profile.id);
 
   if (!thread) notFound();
