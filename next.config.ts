@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    // Les photos Supabase sont déjà servies par leur CDN. Le quota Vercel
+    // Image Optimization renvoie 402 et cassait certaines images en production.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
