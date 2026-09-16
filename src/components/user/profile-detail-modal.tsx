@@ -147,13 +147,13 @@ export function ProfileDetailModal({
         />
 
         <div
-          className="relative mm-motion-card-enter flex max-h-[min(calc(100dvh-2rem),780px)] w-full max-w-md flex-col overflow-hidden rounded-[1.5rem] bg-[#f3eef8] shadow-2xl"
+          className="relative mm-motion-card-enter max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-[1.5rem] bg-[#f3eef8] shadow-2xl"
           role="dialog"
           aria-modal="true"
           aria-labelledby="profile-modal-title"
         >
           {/* Galerie */}
-          <div className="relative h-[min(38dvh,340px)] w-full shrink-0 sm:h-[min(36dvh,380px)]">
+          <div className="relative h-[min(72dvh,620px)] min-h-[430px] w-full sm:h-[min(76dvh,680px)]">
           {currentPhoto ? (
             <>
               <Image
@@ -273,12 +273,12 @@ export function ProfileDetailModal({
         </div>
 
         {/* Détails */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div className="px-5 py-5">
           <ProfileDetailBody profile={profile} liked={liked} />
         </div>
 
         {/* Actions */}
-        <div className="shrink-0 border-t border-[#e8e0f0]/80 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="sticky bottom-0 z-30 border-t border-[#e8e0f0]/80 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md">
           <div className="flex gap-3">
             <Button
               type="button"
