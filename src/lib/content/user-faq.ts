@@ -118,9 +118,9 @@ Meet & Match est une plateforme de rencontre **sérieuse et encadrée** : pas de
 
 ## Liens utiles
 
-- Fonctionnement : https://youmeetnmatch.com/fonctionnement
-- Tarifs : https://youmeetnmatch.com/tarifs
-- Contact : https://youmeetnmatch.com/contact
+- Fonctionnement : https://youmeetnmatch.app/fonctionnement
+- Tarifs : https://youmeetnmatch.app/tarifs
+- Contact : https://youmeetnmatch.app/contact
 
 À très bientôt sur Meet & Match,
 L'équipe Meet & Match
