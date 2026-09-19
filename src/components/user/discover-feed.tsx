@@ -19,6 +19,11 @@ import {
   type GenderPreference,
   filterProfilesByGender,
 } from "@/lib/discover/profile-status";
+import {
+  LOCATION_FILTER_ALL,
+  collectDiscoverCityOptions,
+  filterProfilesByLocation,
+} from "@/lib/discover/location-filter";
 import { likeProfile } from "@/lib/actions/likes";
 import { passProfile } from "@/lib/actions/passes";
 import { loadMoreDiscoveryProfiles } from "@/lib/actions/discover";
@@ -65,9 +70,20 @@ export function DiscoverFeed({
   const [passedSet, setPassedSet] = useState(() => new Set(passedIds));
   const [browseGender, setBrowseGender] =
     useState<GenderPreference>(initialPreference);
+  const [browseCity, setBrowseCity] = useState(LOCATION_FILTER_ALL);
   const [viewMode, setViewMode] = useState<ViewMode>("swipe");
   const [likePendingId, setLikePendingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const cityOptions = useMemo(
+    () => collectDiscoverCityOptions(profiles),
+    [profiles]
+  );
+
+  function resetBrowseFilters() {
+    setBrowseGender("both");
+    setBrowseCity(LOCATION_FILTER_ALL);
+  }
 
   function handleLiked(id: string) {
     setLikedSet((prev) => new Set(prev).add(id));
@@ -145,8 +161,13 @@ export function DiscoverFeed({
   }
 
   const filteredProfiles = useMemo(
-    () => filterProfilesByGender(profiles, browseGender),
-    [profiles, browseGender]
+    () =>
+      filterProfilesByLocation(
+        filterProfilesByGender(profiles, browseGender),
+        LOCATION_FILTER_ALL,
+        browseCity
+      ),
+    [profiles, browseGender, browseCity]
   );
 
   const swipeDeck = useMemo(
@@ -211,6 +232,9 @@ export function DiscoverFeed({
           onViewModeChange={setViewMode}
           browseGender={browseGender}
           onBrowseGenderChange={setBrowseGender}
+          cityOptions={cityOptions}
+          browseCity={browseCity}
+          onBrowseCityChange={setBrowseCity}
           profileCount={
             viewMode === "swipe" ? swipeDeck.length : filteredProfiles.length
           }
@@ -347,7 +371,7 @@ export function DiscoverFeed({
               type="button"
               variant="secondary"
               className="mt-6 rounded-full"
-              onClick={() => setBrowseGender("both")}
+              onClick={resetBrowseFilters}
             >
               Voir tous les profils
             </Button>

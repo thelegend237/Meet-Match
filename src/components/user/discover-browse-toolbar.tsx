@@ -1,17 +1,27 @@
 "use client";
 
-import { Filter, LayoutGrid, Sparkles } from "lucide-react";
+import { ChevronDown, Filter, LayoutGrid, Sparkles } from "lucide-react";
 import { GENDER_FILTERS } from "@/components/user/discover-profile-grid-card";
 import type { GenderPreference } from "@/lib/discover/profile-status";
+import {
+  LOCATION_FILTER_ALL,
+  type DiscoverCityOption,
+} from "@/lib/discover/location-filter";
 import { cn } from "@/lib/utils";
 
 export type DiscoverViewMode = "swipe" | "grid";
+
+const selectTriggerClass =
+  "h-9 min-w-[9.5rem] max-w-[12rem] rounded-full border-0 bg-muted px-3 py-1.5 text-xs font-medium text-foreground shadow-none transition-colors hover:bg-muted/80 sm:h-10 sm:min-w-[11rem] sm:max-w-[14rem] sm:px-4 sm:text-sm";
 
 export function DiscoverBrowseToolbar({
   viewMode,
   onViewModeChange,
   browseGender,
   onBrowseGenderChange,
+  cityOptions,
+  browseCity,
+  onBrowseCityChange,
   profileCount,
   totalCount,
 }: {
@@ -19,6 +29,9 @@ export function DiscoverBrowseToolbar({
   onViewModeChange: (mode: DiscoverViewMode) => void;
   browseGender: GenderPreference;
   onBrowseGenderChange: (gender: GenderPreference) => void;
+  cityOptions: DiscoverCityOption[];
+  browseCity: string;
+  onBrowseCityChange: (city: string) => void;
   profileCount: number;
   totalCount?: number;
 }) {
@@ -71,6 +84,32 @@ export function DiscoverBrowseToolbar({
           {filter.label}
         </button>
       ))}
+
+      {cityOptions.length > 0 || browseCity !== LOCATION_FILTER_ALL ? (
+        <label className="relative inline-flex shrink-0">
+          <span className="sr-only">Filtrer par ville</span>
+          <select
+            value={browseCity || LOCATION_FILTER_ALL}
+            onChange={(event) => onBrowseCityChange(event.target.value)}
+            className={cn(
+              selectTriggerClass,
+              "appearance-none pr-8 text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/30",
+              browseCity !== LOCATION_FILTER_ALL && "text-foreground"
+            )}
+          >
+            <option value={LOCATION_FILTER_ALL}>Toutes les villes</option>
+            {cityOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-muted-foreground">
+            <ChevronDown className="h-3.5 w-3.5" />
+          </span>
+        </label>
+      ) : null}
+
       <div className="ml-auto flex w-full sm:w-auto">
         <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-secondary/10 px-3 py-1.5 text-xs font-medium text-secondary sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
           <Filter className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />

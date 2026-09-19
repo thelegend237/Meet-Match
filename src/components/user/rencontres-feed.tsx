@@ -13,6 +13,11 @@ import {
   type GenderPreference,
   filterProfilesByGender,
 } from "@/lib/discover/profile-status";
+import {
+  LOCATION_FILTER_ALL,
+  collectDiscoverCityOptions,
+  filterProfilesByLocation,
+} from "@/lib/discover/location-filter";
 import type { DiscoveryProfile, Profile } from "@/lib/types/database";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -50,9 +55,15 @@ export function RencontresFeed({
   const [passedSet, setPassedSet] = useState(() => new Set(passedIds));
   const [browseGender, setBrowseGender] =
     useState<GenderPreference>(initialPreference);
+  const [browseCity, setBrowseCity] = useState(LOCATION_FILTER_ALL);
   const [viewMode, setViewMode] = useState<ViewMode>("swipe");
   const [likePendingId, setLikePendingId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const cityOptions = useMemo(
+    () => collectDiscoverCityOptions(profiles),
+    [profiles]
+  );
 
   function handleLiked(id: string) {
     setLikedSet((prev) => new Set(prev).add(id));
@@ -107,8 +118,13 @@ export function RencontresFeed({
   }
 
   const filteredProfiles = useMemo(
-    () => filterProfilesByGender(profiles, browseGender),
-    [profiles, browseGender]
+    () =>
+      filterProfilesByLocation(
+        filterProfilesByGender(profiles, browseGender),
+        LOCATION_FILTER_ALL,
+        browseCity
+      ),
+    [profiles, browseGender, browseCity]
   );
 
   const swipeDeck = useMemo(
@@ -172,7 +188,17 @@ export function RencontresFeed({
           onViewModeChange={setViewMode}
           browseGender={browseGender}
           onBrowseGenderChange={setBrowseGender}
-          profileCount={filteredProfiles.length}
+          cityOptions={cityOptions}
+          browseCity={browseCity}
+          onBrowseCityChange={setBrowseCity}
+          profileCount={
+            viewMode === "swipe" ? swipeDeck.length : filteredProfiles.length
+          }
+          totalCount={
+            viewMode === "swipe" && swipeDeck.length !== filteredProfiles.length
+              ? filteredProfiles.length
+              : undefined
+          }
         />
 
         <p className="hidden text-xs text-muted-foreground sm:block">
@@ -241,7 +267,10 @@ export function RencontresFeed({
           </p>
           <button
             type="button"
-            onClick={() => setBrowseGender("both")}
+            onClick={() => {
+              setBrowseGender("both");
+              setBrowseCity(LOCATION_FILTER_ALL);
+            }}
             className="mt-4 text-sm font-medium text-secondary hover:underline"
           >
             Voir toutes les suggestions
