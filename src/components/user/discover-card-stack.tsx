@@ -7,7 +7,6 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Heart,
@@ -18,6 +17,7 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
+import { MmImage } from "@/components/ui/mm-image";
 import { ProfileCardBadges } from "@/components/user/profile-card-badges";
 import { EmptyState } from "@/components/layout/empty-state";
 import { Button } from "@/components/ui/button";
@@ -66,10 +66,11 @@ function ProfileBackdrop({ profiles }: { profiles: DiscoveryProfile[] }) {
             className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted"
           >
             {profile.primary_photo_url && (
-              <Image
+              <MmImage
                 src={profile.primary_photo_url}
                 alt=""
                 fill
+                optimizeWidth={160}
                 className="object-cover"
                 sizes="120px"
               />
@@ -266,10 +267,11 @@ function SwipeableCard({
           }}
         >
           {nextProfile.primary_photo_url && (
-            <Image
+            <MmImage
               src={nextProfile.primary_photo_url}
               alt=""
               fill
+              optimizeWidth={640}
               className="object-cover"
               sizes="480px"
             />
@@ -295,10 +297,11 @@ function SwipeableCard({
         onPointerCancel={handlePointerCancel}
       >
         {profile.primary_photo_url ? (
-          <Image
+          <MmImage
             src={profile.primary_photo_url}
             alt={profile.display_name}
             fill
+            optimizeWidth={720}
             className="pointer-events-none object-cover object-[center_22%]"
             sizes="(max-width: 640px) 90vw, 560px"
             priority

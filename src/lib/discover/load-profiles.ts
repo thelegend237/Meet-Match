@@ -136,7 +136,10 @@ export async function loadDiscoveryProfiles(
   }
 
   const profiles = (rows as DiscoverProfileRow[] | null) ?? [];
-  return attachPhotos(supabase, profiles);
+  // Liste : primary_photo suffit — la galerie se charge à l'ouverture du profil.
+  return profiles
+    .map((p) => mapDiscoveryProfile(p, {}))
+    .filter((p) => hasVisiblePhoto(p));
 }
 
 /** Repli direct sur profiles (RLS) si la RPC discover_profiles est absente ou en erreur. */

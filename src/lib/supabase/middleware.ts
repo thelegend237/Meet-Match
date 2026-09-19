@@ -208,23 +208,11 @@ export async function updateSession(request: NextRequest) {
         }
       }
 
-      const deactivatedAfterMatch =
+      // Après migration 058, le statut profil suffit (évite un RPC à chaque navigation).
+      const memberLockedAfterSuccess =
         profile?.role === "user" &&
-        (profile.status === "inactive" &&
-          profile.deactivation_reason === "match_success");
-
-      let memberLockedAfterSuccess = deactivatedAfterMatch;
-      if (
-        profile?.role === "user" &&
-        !memberLockedAfterSuccess &&
-        profile.status === "active"
-      ) {
-        const { data: locked } = await supabase.rpc(
-          "user_is_locked_after_match_success",
-          { p_user_id: user.id }
-        );
-        memberLockedAfterSuccess = Boolean(locked);
-      }
+        profile.status === "inactive" &&
+        profile.deactivation_reason === "match_success";
 
       if (
         memberLockedAfterSuccess &&

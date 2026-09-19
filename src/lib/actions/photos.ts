@@ -149,3 +149,26 @@ export async function deleteProfilePhoto(photoId: string) {
   revalidatePath("/admin");
   return { success: true };
 }
+
+/** Galerie d'un membre (chargée à l'ouverture du profil, pas au listing). */
+export async function getProfileGalleryUrls(profileId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Non authentifié" as const, urls: [] as string[] };
+
+  const { data, error } = await supabase
+    .from("profile_photos")
+    .select("url")
+    .eq("profile_id", profileId)
+    .order("sort_order");
+
+  if (error) {
+    return { error: error.message, urls: [] as string[] };
+  }
+
+  return {
+    urls: (data ?? []).map((row) => row.url).filter(Boolean),
+  };
+}

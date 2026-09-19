@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import Link from "next/link";
 import {
   X,
@@ -21,6 +20,8 @@ import {
 } from "@/lib/discover/interaction-toast";
 import { nudgePushAfterFirstLike } from "@/lib/discover/push-after-like";
 import { likeProfile } from "@/lib/actions/likes";
+import { getProfileGalleryUrls } from "@/lib/actions/photos";
+import { MmImage } from "@/components/ui/mm-image";
 import { ProfileCardBadges } from "@/components/user/profile-card-badges";
 import {
   ProfileDetailBody,
@@ -60,6 +61,7 @@ export function ProfileDetailModal({
   const [liked, setLiked] = useState(alreadyLiked);
   const [isPending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
+  const [galleryUrls, setGalleryUrls] = useState<string[] | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -68,7 +70,20 @@ export function ProfileDetailModal({
   useEffect(() => {
     setPhotoIndex(0);
     setLiked(alreadyLiked);
+    setGalleryUrls(null);
   }, [profile?.id, alreadyLiked]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    let cancelled = false;
+    void getProfileGalleryUrls(profile.id).then((result) => {
+      if (cancelled || result.error) return;
+      if (result.urls.length > 0) setGalleryUrls(result.urls);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.id]);
 
   useEffect(() => {
     if (!profile) return;
@@ -87,11 +102,14 @@ export function ProfileDetailModal({
 
   if (!profile || !mounted) return null;
 
-  const photos = profile.photos?.length
-    ? profile.photos
-    : profile.primary_photo_url
-      ? [profile.primary_photo_url]
-      : [];
+  const photos =
+    galleryUrls && galleryUrls.length > 0
+      ? galleryUrls
+      : profile.photos?.length
+        ? profile.photos
+        : profile.primary_photo_url
+          ? [profile.primary_photo_url]
+          : [];
 
   const age = getAge(profile.date_of_birth);
   const currentPhoto = photos[photoIndex] ?? photos[0];
@@ -156,18 +174,21 @@ export function ProfileDetailModal({
           <div className="relative h-[min(72dvh,620px)] min-h-[430px] w-full sm:h-[min(76dvh,680px)]">
           {currentPhoto ? (
             <>
-              <Image
+              <MmImage
                 src={currentPhoto}
                 alt=""
                 fill
+                optimizeWidth={480}
+                quality={50}
                 className="scale-110 object-cover blur-2xl brightness-75"
                 sizes="(max-width: 448px) 100vw, 448px"
                 aria-hidden
               />
-              <Image
+              <MmImage
                 src={currentPhoto}
                 alt={profile.display_name}
                 fill
+                optimizeWidth={900}
                 className="object-cover object-[center_22%]"
                 sizes="(max-width: 448px) 100vw, 448px"
                 priority

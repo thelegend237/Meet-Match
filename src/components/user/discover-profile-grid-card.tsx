@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { MmImage } from "@/components/ui/mm-image";
 import { BadgeCheck, Heart, Loader2, MapPin } from "lucide-react";
 import { ProfileCardBadges } from "@/components/user/profile-card-badges";
 import { formatProfileDistance } from "@/lib/discover/geo";
@@ -43,10 +43,11 @@ export function DiscoverProfileGridCard({
         aria-label={`Voir le profil de ${profile.display_name}`}
       >
         {profile.primary_photo_url ? (
-          <Image
+          <MmImage
             src={profile.primary_photo_url}
             alt={profile.display_name}
             fill
+            optimizeWidth={480}
             className="object-cover object-[center_22%] transition-transform duration-300 hover:scale-105"
             sizes="(max-width: 640px) 50vw, 20vw"
           />
