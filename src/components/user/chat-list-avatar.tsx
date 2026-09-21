@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Image from "next/image";
 import { MmImage } from "@/components/ui/mm-image";
 import { getInitials } from "@/lib/chat/format";
 import { TEAM_AVATAR_URL } from "@/lib/chat/team";
