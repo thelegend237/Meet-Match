@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -28,6 +27,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useOnClickOutside } from "@/hooks/use-on-click-outside";
 import { useEscapeKey } from "@/hooks/use-escape-key";
 import { Logo } from "@/components/public/logo";
+import { MmImage } from "@/components/ui/mm-image";
 import { MemberWelcomeTourGate } from "@/components/user/member-welcome-tour-gate";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -263,10 +263,11 @@ export function UserShell({
               >
                 <div className="relative h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-secondary/30 ring-2 ring-border/50">
                   {avatarUrl ? (
-                    <Image
+                    <MmImage
                       src={avatarUrl}
                       alt=""
                       fill
+                      optimizeWidth={72}
                       className="object-cover"
                       sizes="36px"
                     />

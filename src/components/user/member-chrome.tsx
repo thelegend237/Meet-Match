@@ -1,11 +1,13 @@
-import { requireUser, hasPlatformAccess, canBrowseDiscovery, isDeactivatedAfterMatchSuccess } from "@/lib/auth/session";
+import {
+  requireUser,
+  canBrowseDiscovery,
+  isDeactivatedAfterMatchSuccess,
+} from "@/lib/auth/session";
 import { isStaffProfile } from "@/lib/auth/staff";
-import { userIsLockedAfterMatchSuccess } from "@/lib/matches/exclusions";
-import { createClient } from "@/lib/supabase/server";
 import { getUnreadCount } from "@/lib/actions/notifications";
-import { getMyLikedIds } from "@/lib/actions/likes";
+import { getMyLikedCount } from "@/lib/actions/likes";
 import { getUnreadMessageCount } from "@/lib/user/messages";
-import { getUserMatches, countPendingMatchActions } from "@/lib/user/matches";
+import { getPendingMatchActionCount } from "@/lib/user/matches";
 import { touchLastSeen } from "@/lib/user/touch-last-seen";
 import { LastSeenHeartbeat } from "@/components/user/last-seen-heartbeat";
 import { NotificationRealtimeProvider } from "@/components/user/notification-realtime-provider";
@@ -19,16 +21,12 @@ export async function MemberChrome({
   children: React.ReactNode;
 }) {
   const profile = await requireUser();
-  let deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
-  if (!deactivatedAfterMatch && profile.role === "user") {
-    const supabase = await createClient();
-    deactivatedAfterMatch = await userIsLockedAfterMatchSuccess(
-      supabase,
-      profile.id
-    );
-  }
+  // Après 058 : statut profil suffit (pas de RPC à chaque navigation).
+  const deactivatedAfterMatch = isDeactivatedAfterMatchSuccess(profile);
   const welcomeTourEligible =
-    profile.role === "user" && canBrowseDiscovery(profile) && !deactivatedAfterMatch;
+    profile.role === "user" &&
+    canBrowseDiscovery(profile) &&
+    !deactivatedAfterMatch;
 
   let unreadCount = 0;
   let likedCount = 0;
@@ -36,16 +34,16 @@ export async function MemberChrome({
   let pendingMatchCount = 0;
 
   try {
-    const [notifications, likedIds, messages, matches] = await Promise.all([
+    const [notifications, likes, messages, pendingMatches] = await Promise.all([
       getUnreadCount(profile.id),
-      getMyLikedIds(profile.id),
+      getMyLikedCount(profile.id),
       getUnreadMessageCount(profile.id),
-      getUserMatches(profile.id),
+      getPendingMatchActionCount(profile.id),
     ]);
     unreadCount = notifications;
-    likedCount = likedIds.length;
+    likedCount = likes;
     unreadMessageCount = messages;
-    pendingMatchCount = countPendingMatchActions(matches);
+    pendingMatchCount = pendingMatches;
     void touchLastSeen(profile.id);
   } catch (err) {
     console.error("[MemberChrome] sidebar data:", err);
@@ -62,19 +60,19 @@ export async function MemberChrome({
       >
         <UserShell
           unreadCount={unreadCount}
-        unreadMessageCount={unreadMessageCount}
-        pendingMatchCount={pendingMatchCount}
-        likedCount={likedCount}
-        displayName={profile.display_name || undefined}
-        avatarUrl={profile.primary_photo_url}
-        welcomeTourEligible={welcomeTourEligible}
-        showAdminLink={isStaffProfile(profile)}
-        notifyPush={profile.notify_push ?? true}
-        profile={profile}
-        deactivatedAfterMatch={deactivatedAfterMatch}
-      >
-        <UserContentArea>{children}</UserContentArea>
-      </UserShell>
+          unreadMessageCount={unreadMessageCount}
+          pendingMatchCount={pendingMatchCount}
+          likedCount={likedCount}
+          displayName={profile.display_name || undefined}
+          avatarUrl={profile.primary_photo_url}
+          welcomeTourEligible={welcomeTourEligible}
+          showAdminLink={isStaffProfile(profile)}
+          notifyPush={profile.notify_push ?? true}
+          profile={profile}
+          deactivatedAfterMatch={deactivatedAfterMatch}
+        >
+          <UserContentArea>{children}</UserContentArea>
+        </UserShell>
       </NotificationRealtimeProvider>
     </>
   );

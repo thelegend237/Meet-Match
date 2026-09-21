@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import {
   Compass,
   Heart,
@@ -11,7 +12,6 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Link from "next/link";
-import { ProfileDetailModal } from "@/components/user/profile-detail-modal";
 import { DiscoverCardStack } from "@/components/user/discover-card-stack";
 import { DiscoverBrowseToolbar } from "@/components/user/discover-browse-toolbar";
 import { DiscoverProfileGridCard } from "@/components/user/discover-profile-grid-card";
@@ -37,6 +37,14 @@ import { EmptyState } from "@/components/layout/empty-state";
 import { DISCOVERY_MAX_TOTAL } from "@/lib/discover/constants";
 import type { DiscoveryProfile, Profile } from "@/lib/types/database";
 import { cn } from "@/lib/utils";
+
+const ProfileDetailModal = dynamic(
+  () =>
+    import("@/components/user/profile-detail-modal").then(
+      (m) => m.ProfileDetailModal
+    ),
+  { ssr: false }
+);
 
 type ViewerLocation = Pick<DiscoveryProfile, "city" | "country_code">;
 type ViewMode = "swipe" | "grid";

@@ -88,6 +88,21 @@ export async function getMyLikedIds(userId?: string): Promise<string[]> {
   return data?.map((l) => l.to_user_id) ?? [];
 }
 
+/** Compteur léger pour la barre latérale (évite de charger tous les IDs). */
+export async function getMyLikedCount(userId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("likes")
+    .select("*", { count: "exact", head: true })
+    .eq("from_user_id", userId);
+
+  if (error) {
+    console.error("[likes] count:", error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
 export async function getMyLikedProfiles(): Promise<
   Array<DiscoveryProfile & { liked_at: string }>
 > {
@@ -120,21 +135,6 @@ export async function getMyLikedProfiles(): Promise<
 
   if (!profiles?.length) return [];
 
-  const { data: allPhotos } = await supabase
-    .from("profile_photos")
-    .select("profile_id, url, sort_order")
-    .in("profile_id", ids)
-    .order("sort_order");
-
-  const photosByProfile = (allPhotos ?? []).reduce<Record<string, string[]>>(
-    (acc, ph) => {
-      if (!acc[ph.profile_id]) acc[ph.profile_id] = [];
-      acc[ph.profile_id].push(ph.url);
-      return acc;
-    },
-    {}
-  );
-
   const orderIndex = new Map(ids.map((id, i) => [id, i]));
 
   return profiles
@@ -142,12 +142,7 @@ export async function getMyLikedProfiles(): Promise<
       ...p,
       is_verified: p.is_verified ?? false,
       liked_at: likedAtById.get(p.id) ?? "",
-      photos:
-        photosByProfile[p.id]?.length > 0
-          ? photosByProfile[p.id]
-          : p.primary_photo_url
-            ? [p.primary_photo_url]
-            : [],
+      photos: p.primary_photo_url ? [p.primary_photo_url] : [],
     }))
     .sort(
       (a, b) =>

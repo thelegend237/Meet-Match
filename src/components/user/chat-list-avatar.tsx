@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Image from "next/image";
+import { MmImage } from "@/components/ui/mm-image";
 import { getInitials } from "@/lib/chat/format";
 import { TEAM_AVATAR_URL } from "@/lib/chat/team";
 import { cn } from "@/lib/utils";
@@ -74,10 +76,11 @@ export function ChatListAvatar({
       return (
         <div className={cn("relative shrink-0", s.single, className)}>
           <div className="relative h-full w-full overflow-hidden rounded-full">
-            <Image
+            <MmImage
               src={memberPhoto}
               alt=""
               fill
+              optimizeWidth={128}
               className="object-cover object-center"
               sizes={s.imageSizes}
             />
@@ -127,10 +130,11 @@ export function ChatListAvatar({
             s.stackItem
           )}
         >
-          <Image
+          <MmImage
             src={photos[0]}
             alt=""
             fill
+            optimizeWidth={96}
             className="object-cover object-center"
             sizes={s.imageSizes}
           />
@@ -141,10 +145,11 @@ export function ChatListAvatar({
             s.stackItem
           )}
         >
-          <Image
+          <MmImage
             src={photos[1]}
             alt=""
             fill
+            optimizeWidth={96}
             className="object-cover object-center"
             sizes={s.imageSizes}
           />
@@ -157,10 +162,11 @@ export function ChatListAvatar({
     return (
       <div className={cn("relative shrink-0", s.single, className)}>
         <div className="relative h-full w-full overflow-hidden rounded-full">
-          <Image
+          <MmImage
             src={photo ?? photos[0]!}
             alt=""
             fill
+            optimizeWidth={128}
             className="object-cover object-center"
             sizes={s.imageSizes}
           />

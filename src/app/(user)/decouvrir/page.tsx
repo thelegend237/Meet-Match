@@ -36,11 +36,12 @@ export default async function DecouvrirPage() {
   }
 
   const supabase = await createClient();
-  const [hasPhoto, excludedUserIds, likedIds, passedIds] = await Promise.all([
+  const excludedPromise = getDiscoveryExcludedUserIds(supabase, profile.id);
+  const [hasPhoto, likedIds, passedIds, excludedUserIds] = await Promise.all([
     viewerHasDiscoveryPhoto(supabase, profile.id, profile),
-    getDiscoveryExcludedUserIds(supabase, profile.id),
     getMyLikedIds(profile.id),
     getMyPassedIds(profile.id),
+    excludedPromise,
   ]);
 
   const discoveryProfiles = await loadDiscoveryProfiles(

@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Camera } from "lucide-react";
+import { MmImage } from "@/components/ui/mm-image";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_RING_SIZE = 88;
@@ -40,12 +40,7 @@ export function ProfileAvatarRing({
       className={cn("relative inline-flex shrink-0", className)}
       aria-label="Modifier mes photos"
     >
-      <svg
-        width={size}
-        height={size}
-        className="-rotate-90"
-        aria-hidden
-      >
+      <svg width={size} height={size} className="-rotate-90" aria-hidden>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -69,10 +64,11 @@ export function ProfileAvatarRing({
 
       <div className="absolute inset-[6px] overflow-hidden rounded-full bg-muted">
         {photoUrl ? (
-          <Image
+          <MmImage
             src={photoUrl}
             alt={displayName}
             fill
+            optimizeWidth={Math.max(96, size * 2)}
             className="object-cover"
             sizes={`${size - 12}px`}
           />

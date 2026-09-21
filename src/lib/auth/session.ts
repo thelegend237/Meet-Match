@@ -8,7 +8,6 @@ import {
   isDeactivatedAfterMatchSuccess,
   DEACTIVATED_MEMBER_HOME,
 } from "@/lib/profile/deactivation";
-import { userIsLockedAfterMatchSuccess } from "@/lib/matches/exclusions";
 import type { Profile } from "@/lib/types/database";
 
 export { isDeactivatedAfterMatchSuccess } from "@/lib/profile/deactivation";
@@ -82,12 +81,8 @@ export async function requireActiveMember(): Promise<Profile> {
   const profile = await requireUser();
   if (isStaffProfile(profile)) return profile;
 
+  // Après migration 058, le statut profil suffit (évite un RPC à chaque page).
   if (isDeactivatedAfterMatchSuccess(profile)) {
-    redirect(DEACTIVATED_MEMBER_HOME);
-  }
-
-  const supabase = await createClient();
-  if (await userIsLockedAfterMatchSuccess(supabase, profile.id)) {
     redirect(DEACTIVATED_MEMBER_HOME);
   }
 

@@ -1,8 +1,8 @@
 /** Profils chargés par requête (Découvrir / Rencontres). */
-export const DISCOVERY_PAGE_SIZE = 24;
+export const DISCOVERY_PAGE_SIZE = 16;
 
 /** Plafond côté client pour éviter des chargements excessifs. */
-export const DISCOVERY_MAX_TOTAL = 240;
+export const DISCOVERY_MAX_TOTAL = 160;
 
 /** Ancienne limite globale — conservée pour repli / exports internes. */
 export const DISCOVERY_HARD_LIMIT = 1000;

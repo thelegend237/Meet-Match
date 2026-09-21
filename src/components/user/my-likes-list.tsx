@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { MmImage } from "@/components/ui/mm-image";
 import {
   BadgeCheck,
   Calendar,
@@ -49,10 +49,11 @@ function LikedProfileCard({
         aria-label={`Voir le profil de ${profile.display_name}`}
       >
         {profile.primary_photo_url ? (
-          <Image
+          <MmImage
             src={profile.primary_photo_url}
             alt={profile.display_name}
             fill
+            optimizeWidth={560}
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />

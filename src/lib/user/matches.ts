@@ -90,3 +90,34 @@ export function countPendingMatchActions(matches: UserMatch[]): number {
       m.myPayment?.status === "unpaid"
   ).length;
 }
+
+/** Compteur léger pour la navigation (sans charger partenaires / photos). */
+export async function getPendingMatchActionCount(
+  userId: string
+): Promise<number> {
+  const supabase = await createClient();
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("id")
+    .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`)
+    .eq("status", "pending_payment")
+    .is("deleted_at", null);
+
+  if (!matches?.length) return 0;
+
+  const matchIds = matches.map((m) => m.id);
+  const { count, error } = await supabase
+    .from("payments")
+    .select("*", { count: "exact", head: true })
+    .in("match_id", matchIds)
+    .eq("user_id", userId)
+    .eq("type", "matching")
+    .eq("status", "unpaid");
+
+  if (error) {
+    console.error("[matches] pending action count:", error.message);
+    return 0;
+  }
+
+  return count ?? 0;
+}
