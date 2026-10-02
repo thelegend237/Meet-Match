@@ -28,7 +28,9 @@ export function optimizeSupabaseImageUrl(
     if (options.height != null) {
       parsed.searchParams.set("height", String(Math.round(options.height)));
     }
-    parsed.searchParams.set("resize", options.resize ?? "cover");
+    // contain : réduit la photo en gardant le cadrage. cover recadre au centre
+    // et agrandit trop les portraits dans les petits avatars.
+    parsed.searchParams.set("resize", options.resize ?? "contain");
     parsed.searchParams.set("quality", String(options.quality ?? 70));
     return parsed.toString();
   } catch {

@@ -32,6 +32,7 @@ export function MmImage({
         width: optimizeWidth,
         height: optimizeHeight,
         quality,
+        resize: "contain",
       });
 
   return (
