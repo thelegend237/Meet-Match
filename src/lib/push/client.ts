@@ -1,6 +1,6 @@
 const SW_URL = "/sw.js";
 const SW_SCOPE = "/";
-const PUSH_INVITE_DISMISS_KEY = "mm:push-invite-dismissed-at";
+const PUSH_INVITE_DISMISS_KEY = "mm:push-invite-dismissed-at:app";
 export const PUSH_INVITE_DISMISS_DAYS = 7;
 
 function urlBase64ToUint8Array(base64String: string) {

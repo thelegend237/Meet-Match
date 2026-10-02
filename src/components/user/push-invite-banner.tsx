@@ -105,11 +105,12 @@ export function PushInviteBanner({ notifyPush = true }: PushInviteBannerProps) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[#2e1a47]">
-              Activez les alertes instantanées
+              Réactivez vos alertes sur le nouveau site
             </p>
-            <p className="mt-0.5 hidden text-sm text-[#6b5f7a] sm:block">
-              Recevez une popup dès qu&apos;un like, un match ou un message arrive — même hors
-              de l&apos;application.
+            <p className="mt-0.5 text-sm text-[#6b5f7a]">
+              Meet &amp; Match est maintenant sur youmeetnmatch.app. Vos anciennes
+              notifications ne s&apos;y transfèrent pas : réactivez-les ici pour être prévenu·e
+              d&apos;un like, d&apos;un match ou d&apos;un message.
             </p>
             {error ? <p className="mt-1 text-sm text-destructive">{error}</p> : null}
           </div>

@@ -68,6 +68,10 @@ export function getNotificationHref(
     return "/admin/utilisateurs";
   }
 
+  if (notification.type === "community_note") {
+    return "/decouvrir";
+  }
+
   if (notification.type === "reactivation_requested") {
     return "/contact?subject=reactivation";
   }
@@ -175,6 +179,8 @@ export function getNotificationActionLabel(
       return "Contacter l'admin →";
     case "account_reactivated":
       return "Retour au tableau de bord →";
+    case "community_note":
+      return "Découvrir les profils →";
     default:
       if (MATCH_TYPES.has(notification.type)) return "Voir le match →";
       return "Voir →";
@@ -206,4 +212,5 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   admin_reactivation_requested: "Réactivation",
   reactivation_requested: "Réactivation",
   account_reactivated: "Compte",
+  community_note: "L'équipe",
 };
