@@ -34,14 +34,17 @@ export async function sendNotificationEmail({
     return;
   }
 
+  const configuredFrom = process.env.RESEND_FROM_EMAIL?.trim() || "";
   const from =
-    process.env.RESEND_FROM_EMAIL?.trim() || PRODUCTION_FROM_EMAIL;
+    !configuredFrom || configuredFrom.includes("youmeetnmatch.com")
+      ? PRODUCTION_FROM_EMAIL
+      : configuredFrom;
 
   const safeTitle = escapeHtml(title);
   const safeContent = escapeHtml(content);
   const safeName = escapeHtml(displayName);
 
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from,
     to,
     subject: `${title} — Meet & Match`,
@@ -60,4 +63,8 @@ export async function sendNotificationEmail({
       </div>
     `,
   });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
