@@ -45,10 +45,6 @@ function UserPicker({
   const search = useCallback(
     (value: string) => {
       setQuery(value);
-      if (value.trim().length < 2) {
-        setResults([]);
-        return;
-      }
       startTransition(async () => {
         const res = await searchMatchingCandidatesAction(value, excludeUserId);
         setResults(res.candidates ?? []);
@@ -102,9 +98,12 @@ function UserPicker({
             type="search"
             value={query}
             onChange={(e) => search(e.target.value)}
-            onFocus={() => setOpen(true)}
+            onFocus={() => {
+              setOpen(true);
+              if (results.length === 0) search(query);
+            }}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
-            placeholder="Rechercher par nom ou e-mail…"
+            placeholder="Nouveaux membres, ou rechercher par nom…"
             className="h-11 w-full rounded-xl border border-border/60 bg-white pl-10 pr-3 text-sm shadow-sm focus-visible:border-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/20"
           />
           {open && (pending || results.length > 0 || query.trim().length >= 2) && (

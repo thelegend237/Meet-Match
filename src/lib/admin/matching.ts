@@ -211,12 +211,9 @@ export async function searchMatchingCandidates(
   excludeUserId?: string
 ): Promise<Pick<AdminUserListItem, "id" | "display_name" | "email" | "primary_photo_url" | "city" | "country_code" | "status">[]> {
   const trimmed = query.trim();
-  if (trimmed.length < 2) return [];
-
   const supabase = await createClient();
-  const pattern = `%${trimmed.replace(/[%_]/g, "")}%`;
   const blockingUsers = await getUsersWithBlockingMatch(supabase);
-  const blockedIds = [...blockingUsers];
+  const blocked = new Set(blockingUsers);
 
   let q = supabase
     .from("profiles")
@@ -225,18 +222,28 @@ export async function searchMatchingCandidates(
     )
     .eq("role", "user")
     .eq("is_deleted", false)
-    .eq("status", "active")
-    .or(`display_name.ilike.${pattern},email.ilike.${pattern}`)
-    .order("display_name")
-    .limit(12);
+    .in("status", ["active", "pending"]);
+
+  if (trimmed.length < 2) {
+    q = q
+      .gte(
+        "created_at",
+        new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+      )
+      .order("created_at", { ascending: false })
+      .limit(12);
+  } else {
+    const pattern = `%${trimmed.replace(/[%_]/g, "")}%`;
+    q = q
+      .or(`display_name.ilike.${pattern},email.ilike.${pattern}`)
+      .order("created_at", { ascending: false })
+      .limit(12);
+  }
 
   if (excludeUserId) {
     q = q.neq("id", excludeUserId);
   }
 
   const { data } = await q;
-  const rows = data ?? [];
-  if (blockedIds.length === 0) return rows;
-  const blocked = new Set(blockedIds);
-  return rows.filter((row) => !blocked.has(row.id));
+  return (data ?? []).filter((row) => !blocked.has(row.id));
 }
